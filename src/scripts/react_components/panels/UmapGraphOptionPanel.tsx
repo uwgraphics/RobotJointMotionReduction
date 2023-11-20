@@ -19,6 +19,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { APP } from "../../constants";
 import { PopupHelpPage } from "../popup_help_page";
+import Switch from '@mui/material/Switch';
 
 export interface graph_panel_props {
     robotSceneManager: RobotSceneManager,
@@ -87,6 +88,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
     onAxisColorChange(newValue: string) {
       this.props.robotSceneManager.getCurrUmapGraph()?.setAxisColor(newValue);
       this.props.forceUpdateTabNames(); // trigger the graph update instantaneously
+    }
+
+    toggleShowLines() {
+      this.props.robotSceneManager.getCurrUmapGraph()?.toggleShowLines();
+      console.log("toggle show lines");
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
     render() {
@@ -201,6 +211,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 value={currSelectedGraph?.spread()}
                 onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setSpread.bind(this.props.robotSceneManager.getCurrUmapGraph())}
               />
+              <div>
+                <label>Display:</label>
+                <label>Dots</label>
+                <Switch
+                  checked={currSelectedGraph?.showLines().valueOf()}
+                  onChange={this.toggleShowLines.bind(this)}
+                />
+                <label>Lines</label>
+              </div>
               <Accordion allowZeroExpanded allowMultipleExpanded>
                 <AccordionItem>
                   <AccordionItemHeading>

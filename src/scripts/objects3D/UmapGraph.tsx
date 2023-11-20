@@ -30,6 +30,7 @@ export class UmapGraph {
     protected _nNeighbors: number; // the number of neighbors when calculating umap
     protected _minDis: number; // the min distance when calculating umap
     protected _spread: number; // the spread when calculating umap
+    protected _showLines: Boolean; // true if show lines, otherwise only show dots
 
     /**
      * 
@@ -72,6 +73,15 @@ export class UmapGraph {
         this._nNeighbors = 30;
         this._minDis = 0.1;
         this._spread = 0.1;
+        this._showLines = new Boolean(true);
+    }
+
+    showLines(): Boolean{
+        return this._showLines;
+    }
+
+    toggleShowLines(){
+        this._showLines = new Boolean(!this._showLines.valueOf());
     }
 
     nNeighbors(): number{

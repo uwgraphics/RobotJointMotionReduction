@@ -316,6 +316,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 robotIndex++;
             }
         }
+        // console.log(filteredJointData)
+        // console.log(xVals)
+        // console.log(yVals)
         this.xVals = xVals;
         this.yVals = yVals;
         this.times = _times;
@@ -593,6 +596,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                     </button>
                 </div>
             <UmapLineGraph
+              robotSceneManager={this.props.robotSceneManager}
+              graph={this.props.graph}
               times={this.times}
               xVals={this.xVals}
               yVals={this.yVals}
@@ -608,6 +613,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               selected={this.props.robotSceneManager.getCurrUmapGraph() === this.props.graph}
               lineWidth={this.props.graph.lineWidth()}
               axisColor={this.props.graph.axisColor()}
+              showLines={this.props.graph.showLines()}
               onGraphUpdate={this.onGraphUpdate.bind(this)}
               onCurrChange={this.onCurrTimeChange.bind(this)}
               onStartChange={this.onStartTimeChange.bind(this)}

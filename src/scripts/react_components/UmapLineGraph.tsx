@@ -4,6 +4,8 @@ import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterE
 import _ from 'lodash';
 import { umap_data_entry } from "./panels/UmapGraphPanel";
 import Plot from 'react-plotly.js';
+import { RobotSceneManager } from "../RobotSceneManager";
+import { UmapGraph } from "../objects3D/UmapGraph";
 
 
 /**
@@ -11,6 +13,8 @@ import Plot from 'react-plotly.js';
  * time data
  */
 interface line_graph_props {
+    robotSceneManager: RobotSceneManager,
+    graph: UmapGraph,
     times: number[][],
     xVals: number[][],
     yVals: number[][],
@@ -27,6 +31,7 @@ interface line_graph_props {
     height: number,
     lineWidth: number,
     axisColor: string,
+    showLines: Boolean,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -50,7 +55,11 @@ interface line_graph_state {
     mouseXCoord: number //only need x coordinate
     originalMouseXCoord: number
     currDragItem: dragItem;
-    data: umap_data_entry[][];
+    // umap_data: umap_data_entry[][];
+    plotly_data: any;
+    plotly_layout: any;
+    plotly_frames: any;
+    plotly_config: any;
 }
 type dragItem = "end"|"start"|"curr"|null;
 interface margin_obj{
@@ -86,7 +95,18 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             mouseXCoord: -1,
             originalMouseXCoord: -1,
             currDragItem: null,
-            data: [],
+            // umap_data: [],
+            plotly_data: [], 
+            plotly_layout: {width: width, height: height, font: {color: "white"}, 
+            plot_bgcolor:"rgb(23, 24, 25)", paper_bgcolor:"rgb(23, 24, 25)",
+            yaxis: {
+                showgrid: false
+              },
+            xaxis: {
+                showgrid: false  
+            }}, 
+            plotly_frames: [], 
+            plotly_config: {'scrollZoom': true},
         };
     }
     componentDidMount(): void {
@@ -119,15 +139,53 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         
     }
     componentDidUpdate(prevProps:line_graph_props) {
+
         const boundChangeInZoom =(prevProps.startTime !== this.props.startTime || prevProps.endTime !== this.props.endTime);
         let colorChange = !_.isEqual(new Set(prevProps.line_colors), new Set(this.props.line_colors)) && prevProps.line_colors.length === this.props.line_colors.length;
         let windowChanged = prevProps.height !== this.props.height || prevProps.width !== this.props.width;
         const currTimeChange = prevProps.currTime !== this.props.currTime;
         const lineWidthChange = prevProps.lineWidth !== this.props.lineWidth;
         const axisColorChange = prevProps.axisColor !== this.props.axisColor;
+        if(windowChanged){
+            this.setState({
+                plotly_layout: {
+                    width: this.props.width, height: this.props.height, font: { color: "white" },
+                    plot_bgcolor: "rgb(23, 24, 25)", paper_bgcolor: "rgb(23, 24, 25)",
+                    yaxis: {
+                        showgrid: false
+                    },
+                    xaxis: {
+                        showgrid: false
+                    }
+                },
+            });
+        }
+
+        if (prevProps.showLines !== this.props.showLines) {
+            let plot_data = [];
+            let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
+            for (const data of this.state.plotly_data) {
+                plot_data.push({
+                    x: data.x,
+                    y: data.y,
+                    name: data.name,
+                    showlegend: true,
+                    mode: mode,
+                    marker: {
+                        size: 2
+                    }
+                });
+            }
+            this.setState({
+                plotly_data: plot_data,
+            });
+        }
+
+        
         if (prevProps.times !== this.props.times || prevProps.xVals !== this.props.xVals ||
-            windowChanged ||colorChange || lineWidthChange || axisColorChange ||
+            colorChange || lineWidthChange || axisColorChange ||
             boundChangeInZoom || currTimeChange) {
+                console.log("hello")
             // if(this._graphDiv.current && this._graphDiv.current.children.length > 0){
             //     this._graphDiv.current.removeChild(this._graphDiv.current.children[0]);
             // }
@@ -490,7 +548,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let data:umap_data_entry[][] = [this.parseData(zoomedXValues[0], zoomedYValues[0])];
         for(let i = 1; i < zoomedXValues.length; i++){
             data.push(this.parseData(zoomedXValues[i], zoomedYValues[i]));
-            console.log(i + " " + data[i].length);
+            // console.log(i + " " + data[i].length);
         }  
 
         let xConcat = this.concatData(zoomedXValues);
@@ -506,8 +564,28 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
       
        
         onGraphUpdate(true);
+        let plot_data = [];
+        let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
+        for(let i=0; i<data.length; i++){
+            let x = [], y = [];
+            for(const point of data[i]){
+                x.push(point.x);
+                y.push(point.y);
+            }
+            plot_data.push({
+                x: x,
+                y: y,
+                name: line_names[i],
+                showlegend: true,
+                mode: mode,
+                marker: {
+                    size: 2
+                }
+            });
+        }
         this.setState({
-            data: data
+            plotly_data: plot_data,
+            // umap_data: data,
         });
     }
 
@@ -786,31 +864,33 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
     render() {
         //const {w, h} = this.state;
-        const {isTimeWarp, times, selected, axisColor, width, height} = this.props;
-        const {data} = this.state;
+        const {isTimeWarp, times, selected, axisColor, width, height, line_names} = this.props;
+        // const {umap_data} = this.state;
+        const {plotly_config, plotly_data, plotly_frames, plotly_layout} = this.state;
         let styles = {display: "inline-block", marginBottom: "10px", color: axisColor};
         // if(selected !== undefined && selected)
         //     styles = {display: "inline-block", marginBottom: "10px", color:"yellow"}
         // else
         //     styles = {display: "inline-block", marginBottom: "10px"}
 
-        let plot_data = [];
-        for(let i=0; i<data.length; i++){
-            let x = [], y = [];
-            for(const point of data[i]){
-                x.push(point.x);
-                y.push(point.y);
-            }
-            plot_data.push({
-                x: x,
-                y: y,
-                name: i.toString(),
-                mode: 'markers',
-                marker: {
-                    size: 2
-                }
-            });
-        }
+        // let plot_data = [];
+        // for(let i=0; i<umap_data.length; i++){
+        //     let x = [], y = [];
+        //     for(const point of umap_data[i]){
+        //         x.push(point.x);
+        //         y.push(point.y);
+        //     }
+        //     plot_data.push({
+        //         x: x,
+        //         y: y,
+        //         name: line_names[i],
+        //         showlegend: true,
+        //         mode: 'markers',
+        //         marker: {
+        //             size: 2
+        //         }
+        //     });
+        // }
 
         return (
             <div>
@@ -818,8 +898,46 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 </div>
                 <div className="UmapGraph" id="UmapGraph" ref={this._graphDiv}>
                 <Plot
-                    data={plot_data}
-                    layout={{ width: width, height: height, /*title: 'A Fancy Plot', plot_bgcolor:"black", paper_bgcolor:"#FFF3" */}}
+                    data={plotly_data}
+                    layout={plotly_layout}
+                    frames={plotly_frames}
+                    config={plotly_config}
+                    // data={plot_data}
+                    // layout={{ width: width, height: height, font: {color: "white"}, 
+                    // /*title: 'A Fancy Plot',*/ plot_bgcolor:"rgb(23, 24, 25)", paper_bgcolor:"rgb(23, 24, 25)",
+                    // yaxis: {
+                    //     showgrid: false
+                    //   },
+                    // xaxis: {
+                    //     showgrid: false  
+                    // } }}
+                    onHover={(event) => {
+                        
+                        let pts = '';
+                        for (var i = 0; i < event.points.length; i++) {
+                            pts = 'x = ' + event.points[i].x + '\ny = ' +
+                            event.points[i].y + " from " + event.points[i].data.name + " with index " + event.points[i].pointIndex
+                                + " at time " + this.props.times[0][event.points[i].pointIndex] + '\n\n';
+                            let selected_time = this.props.times[0][event.points[i].pointIndex]
+                            this.props.robotSceneManager.setCurrTime(selected_time);
+                        }
+                        // alert('Closest point clicked:\n\n' + pts);
+                    } }
+                    onLegendDoubleClick={(event) => {   
+                        this.props.graph.setDeleteLine(this.props.line_ids[event.curveNumber], this.props.line_colors[event.curveNumber]);    
+                        console.log(event);
+                        return false;
+                    }}
+                    onInitialized={(figure) => this.setState({
+                        plotly_data: figure.data,
+                        plotly_layout: figure.layout,
+                        plotly_frames: figure.frames
+                    })}
+                    onUpdate={(figure) => this.setState({
+                        plotly_data: figure.data,
+                        plotly_layout: figure.layout,
+                        plotly_frames: figure.frames
+                    })}
                 />
                 </div>
             </div>
