@@ -13,7 +13,7 @@
 
 import { Graph } from "./Graph";
 
-
+ 
 const palettes = ["white", "yellow", "red", "#204BD8", "green",  /*"orange",*/ "brown", "purple", /*"pink"*/];
 export class UmapGraph {
     static counter: number = 0;
