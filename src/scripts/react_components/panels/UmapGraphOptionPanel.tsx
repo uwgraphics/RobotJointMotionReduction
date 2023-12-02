@@ -92,7 +92,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
 
     toggleShowLines() {
       this.props.robotSceneManager.getCurrUmapGraph()?.toggleShowLines();
-      console.log("toggle show lines");
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
+    }
+
+    togglenneighborMode() {
+      this.props.robotSceneManager.getCurrUmapGraph()?.togglenneighborMode();
+      console.log("toggle nneighbor mode");
       this.setState({ // triggers scene option panel to update
         need_update: !this.state.need_update
       });
@@ -219,6 +227,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                   onChange={this.toggleShowLines.bind(this)}
                 />
                 <label>Lines</label>
+              </div>
+              <div>
+                <label>Neighbors:</label>
+                <label>after reduction</label>
+                <Switch
+                  checked={currSelectedGraph?.nneighborMode().valueOf()}
+                  onChange={this.togglenneighborMode.bind(this)}
+                />
+                <label>before reduction</label>
               </div>
               <Accordion allowZeroExpanded allowMultipleExpanded>
                 <AccordionItem>

@@ -31,6 +31,7 @@ export class UmapGraph {
     protected _minDis: number; // the min distance when calculating umap
     protected _spread: number; // the spread when calculating umap
     protected _showLines: Boolean; // true if show lines, otherwise only show dots
+    protected _nneighborMode: Boolean; // true if show nneighbors before the reduction, otherwise show nneighbors after reduction
 
     /**
      * 
@@ -74,6 +75,7 @@ export class UmapGraph {
         this._minDis = 0.1;
         this._spread = 0.1;
         this._showLines = new Boolean(true);
+        this._nneighborMode = new Boolean(true);
     }
 
     showLines(): Boolean{
@@ -82,6 +84,14 @@ export class UmapGraph {
 
     toggleShowLines(){
         this._showLines = new Boolean(!this._showLines.valueOf());
+    }
+
+    nneighborMode(): Boolean{
+        return this._nneighborMode;
+    }
+
+    togglenneighborMode(){
+        this._nneighborMode = new Boolean(!this._nneighborMode.valueOf());
     }
 
     nNeighbors(): number{

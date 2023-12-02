@@ -14,6 +14,7 @@ import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import assert from "assert";
 import { APP } from "../../constants";
 import { PopupHelpPage } from "../popup_help_page";
+import { nearestNeighbors } from "../../nneighbors/umap";
 
 // import { time } from "console";
 //TODO timewarped positions graph
@@ -51,7 +52,9 @@ export interface time_obj{
 }
 export interface umap_data_entry {
     x: number,
-    y: number
+    y: number,
+    nneighbors: number[][],
+    nneighbors_2d: number[][],
 }
 export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_state> {
     protected _panel_resize_observer?: ResizeObserver;
@@ -62,6 +65,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     protected times: number[][]; // times[i] is the array of times for line i
     protected xVals: number[][]; // values[i] is the array of values for line i
     protected yVals: number[][]; // values[i] is the array of values for line i
+    protected umapData: umap_data_entry[][]; // values[i] is the array of values for line i
 
     constructor(props: graph_panel_props) {
         
@@ -93,6 +97,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         this.times = [];
         this.xVals = [];
         this.yVals = [];
+        this.umapData = [];
     }
 
     /**
@@ -160,7 +165,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         return [times, result];
     }
 
-    async convertJointDataToUmap(jointData: number[][]): Promise<number[][]>
+    async convertJointDataToUmap(jointData: number[][]): Promise<umap_data_entry[]>
     {
         APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "UMAP" });
         //await Promise.all([]);
@@ -173,11 +178,37 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         // }
         
         //const embedding = umap.fit(jointData);
+        let umapData: umap_data_entry[] = [];
         const embedding = await umap.fitAsync(jointData, epochNumber => {
             // check progress and give user feedback, or return `false` to stop
           });
+
+        const {knnIndices, knnDistances} = nearestNeighbors(jointData, graph.nNeighbors());
+        let nneighbors: number[][][] = [];
+        for(let i=0; i<knnIndices.length; i++){
+            nneighbors[i] = [];
+            for(let j=0; j<knnIndices[i].length; j++){
+                let index: number = knnIndices[i][j];
+                nneighbors[i].push(embedding[index])
+            }
+        }
+
+        const {knnIndices:knnIndices_2d, knnDistances: knnDistances_2d} = nearestNeighbors(embedding, graph.nNeighbors());
+        let nneighbors_2d: number[][][] = [];
+        for(let i=0; i<knnIndices_2d.length; i++){
+            nneighbors_2d[i] = [];
+            for(let j=0; j<knnIndices_2d[i].length; j++){
+                let index: number = knnIndices_2d[i][j];
+                nneighbors_2d[i].push(embedding[index])
+            }
+        }
+
+        for(let i=0; i<embedding.length; i++){
+            umapData.push({x: embedding[i][0], y: embedding[i][1], nneighbors: nneighbors[i], nneighbors_2d: nneighbors_2d[i]});
+        }
+        // console.log(nneighbors);
         APP.setPopupHelpPage({ page: PopupHelpPage.LoadingSuccess, type: "UMAP"});
-        return embedding;
+        return umapData;
     }
    
 
@@ -240,7 +271,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     }
     
     /**
-     * filter the joint data
+     * filter the joint data, eleminate duplicates
      * @param jointData 
      * @returns 
      */
@@ -269,6 +300,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         let xVals = [];
         let yVals = [];
         let _times = [];
+        let umapData = [];
         let filteredJointData: number[][] = [];
         let filteredTimes: number[][] = [];
         let lengths: number[] = [];
@@ -282,7 +314,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         }
         if (filteredJointData.length !== 0) {
             //APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "umap" });
-            let umapData = await this.convertJointDataToUmap(filteredJointData);
+            let embedding = await this.convertJointDataToUmap(filteredJointData);
             //APP.setPopupHelpPage({ page: PopupHelpPage.LoadingSuccess, type: "umap"});
             let index: number = 0;
             let robotIndex: number = 0;
@@ -290,27 +322,30 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 line_names.push(this.generateLineName(eventName));
                 line_ids.push(eventName);
                 line_colors.push(color_map.get(eventName)!);
-                let currUmap = umapData.slice(index, index + lengths[robotIndex]);
-                let [filteredX, filteredY] = this.decomposeUmapData(currUmap);
-                assert (filteredX.length === lengths[robotIndex]);
-                assert (filteredY.length === lengths[robotIndex]);
+                let currUmap = embedding.slice(index, index + lengths[robotIndex]);
+                // let [filteredX, filteredY] = this.decomposeUmapData(currUmap);
+                // assert (filteredX.length === lengths[robotIndex]);
+                // assert (filteredY.length === lengths[robotIndex]);
 
                 let j = 0;
                 let x: number[] = []; 
                 let y: number[] = [];
                 let t: number[] = [];
+                let filterdUmapData: umap_data_entry[] = [];
                 for (let i = 0; i < times.length; i++) {
                     if (j+1 < filteredTimes[robotIndex].length && times[i] >= filteredTimes[robotIndex][j+1]) {
                         j++;
                     }
-                    x.push(filteredX[j]);
-                    y.push(filteredY[j]);
+                    // x.push(filteredX[j]);
+                    // y.push(filteredY[j]);
+                    filterdUmapData.push(currUmap[j]);
                     t.push(times[i]);
                 }
 
                 xVals.push(x);
                 yVals.push(y);
                 _times.push(times);
+                umapData.push(filterdUmapData);
 
                 index = index + lengths[robotIndex];
                 robotIndex++;
@@ -322,6 +357,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         this.xVals = xVals;
         this.yVals = yVals;
         this.times = _times;
+        this.umapData = umapData;
         this.props.graph.setLineNames(line_names);
         this.props.graph.setLineIds(line_ids);
         this.props.graph.setLineColors(line_colors);
@@ -599,8 +635,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               robotSceneManager={this.props.robotSceneManager}
               graph={this.props.graph}
               times={this.times}
-              xVals={this.xVals}
-              yVals={this.yVals}
+            //   xVals={this.xVals}
+            //   yVals={this.yVals}
+              umapData={this.umapData}
               startTime={prev_times.start}
               endTime={prev_times.end}
               currTime={prev_times.curr}

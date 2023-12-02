@@ -1,11 +1,12 @@
 import { Component, createRef } from "react";
 import * as d3 from 'd3'; 
-import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterEqual, findLargestSmallerElement, genSafeLogger } from "../helpers";
+import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterEqual, findLargestSmallerElement, genSafeLogger, newID } from "../helpers";
 import _ from 'lodash';
 import { umap_data_entry } from "./panels/UmapGraphPanel";
 import Plot from 'react-plotly.js';
 import { RobotSceneManager } from "../RobotSceneManager";
 import { UmapGraph } from "../objects3D/UmapGraph";
+import { LegendClickEvent, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
 
 
 /**
@@ -16,8 +17,9 @@ interface line_graph_props {
     robotSceneManager: RobotSceneManager,
     graph: UmapGraph,
     times: number[][],
-    xVals: number[][],
-    yVals: number[][],
+    // xVals: number[][],
+    // yVals: number[][],
+    umapData: umap_data_entry[][],
     startTime: number,
     endTime: number,
     currTime: number,
@@ -73,7 +75,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     constructor(props:line_graph_props){
         super(props);
         this._graphDiv = createRef();
-        this.drawGraph.bind(this);
+        // this.drawGraph.bind(this);
         const {width, height} = this.props;
         this.state = {
             // w: width,//+300,//1015,
@@ -169,11 +171,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     x: data.x,
                     y: data.y,
                     name: data.name,
+                    id: data.id,
                     showlegend: true,
                     mode: mode,
-                    marker: {
-                        size: 2
-                    }
+                    marker: data.marker
                 });
             }
             this.setState({
@@ -182,10 +183,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
 
         
-        if (prevProps.times !== this.props.times || prevProps.xVals !== this.props.xVals ||
+        if (prevProps.times !== this.props.times || prevProps.umapData !== this.props.umapData ||
             colorChange || lineWidthChange || axisColorChange ||
-            boundChangeInZoom || currTimeChange) {
-                console.log("hello")
+            boundChangeInZoom) {
             // if(this._graphDiv.current && this._graphDiv.current.children.length > 0){
             //     this._graphDiv.current.removeChild(this._graphDiv.current.children[0]);
             // }
@@ -214,19 +214,20 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param endTime 
      * @returns 
      */
-    filterData(startTime: number, endTime: number): [number[][], number[][], number[][]]
+    filterData(startTime: number, endTime: number): [number[][], umap_data_entry[][]]
     {
-        let zoomedTimes: number[][] = [], zoomedXValues: number[][] = [], zoomedYValues: number[][] = [];
-        const {times, xVals, yVals} = this.props;
+        let zoomedTimes: number[][] = [], zoomedUmapData: umap_data_entry[][] = [];
+        const {times, umapData} = this.props;
         if(times.length === 0){
-            return [[[0]], [[0]], [[0]]];
+            return [[[0]], [[{x:0, y:0, nneighbors:[], nneighbors_2d:[]}]]];
         }
         
         for (let i = 0; i < times.length; i++) {
             let index = 0;
             zoomedTimes[i] = [];
-            zoomedXValues[i] = [];
-            zoomedYValues[i] = [];
+            zoomedUmapData[i] = [];
+            // zoomedXValues[i] = [];
+            // zoomedYValues[i] = [];
             let startIndex = binarySearchIndexSmallestGreaterEqual(times[i], startTime);
             let endIndex = binarySearchIndexLargestSmallerEqual(times[i], endTime);
             if(startIndex === undefined) startIndex = 0;
@@ -234,13 +235,14 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             for (let j = startIndex; j < endIndex; j++) {
                 
                 zoomedTimes[i][index] = times[i][j];
-                zoomedXValues[i][index] = xVals[i][j];
-                zoomedYValues[i][index] = yVals[i][j];
+                // zoomedXValues[i][index] = xVals[i][j];
+                // zoomedYValues[i][index] = yVals[i][j];
+                zoomedUmapData[i][index] = umapData[i][j];
                 index++;
             }
         }
         // console.log(vals);
-        return [zoomedTimes, zoomedXValues, zoomedYValues]
+        return [zoomedTimes, zoomedUmapData]
     }
     /**
      * 
@@ -248,14 +250,14 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param b values array
      * @returns list of data entry to plug into d3 graph
      */
-    parseData(x:number[], y: number[]):umap_data_entry[]{
-        let result = [];
-        for(let i = 0; i < x.length; i++){
-            result.push({x: x[i], y: y[i]})
-        }
-        return result;
+    // parseData(x:number[], y: number[]):umap_data_entry[]{
+    //     let result = [];
+    //     for(let i = 0; i < x.length; i++){
+    //         result.push({x: x[i], y: y[i]})
+    //     }
+    //     return result;
 
-    }
+    // }
     /**
      * flatten 2d array to 1d array
      * @param data 2d array
@@ -529,7 +531,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      */
     calculateData(boundChangeInZoom?:boolean, colorChange?:boolean, windowChanged?:boolean):any{
         // return 1;
-        const {times, xVals, yVals, 
+        const {times,
             startTime, endTime, currTime, 
             isTimeWarp, lineWidth, axisColor,
             line_names, line_colors, line_ids,
@@ -543,24 +545,24 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const width = w - margin.left - margin.right,
         height = h - margin.top - margin.bottom;
 
-        let [zoomedTimes, zoomedXValues, zoomedYValues] = this.filterData(startTime, endTime);
+        let [zoomedTimes, data] = this.filterData(startTime, endTime);
 
-        let data:umap_data_entry[][] = [this.parseData(zoomedXValues[0], zoomedYValues[0])];
-        for(let i = 1; i < zoomedXValues.length; i++){
-            data.push(this.parseData(zoomedXValues[i], zoomedYValues[i]));
-            // console.log(i + " " + data[i].length);
-        }  
+        // let data:umap_data_entry[][] = [this.parseData(zoomedXValues[0], zoomedYValues[0])];
+        // for(let i = 1; i < zoomedXValues.length; i++){
+        //     data.push(this.parseData(zoomedXValues[i], zoomedYValues[i]));
+        //     // console.log(i + " " + data[i].length);
+        // }  
 
-        let xConcat = this.concatData(zoomedXValues);
-        let yConcat = this.concatData(zoomedYValues);
-        for(let i=0; i<xVals.length; i++)
-        {
-            let timeIndex = this.getCurrTimeIndex(times[i], currTime);
-            const [currX, currY] = this.getCurrCoordinate(timeIndex, xVals[i], yVals[i], currTime, times[i]);
-            const currXPos = this.calculateOffset(width, d3.min(xConcat), d3.max(xConcat), currX);
-            const currYPos = this.calculateOffset(height, d3.min(yConcat), d3.max(yConcat), currY);
-            const radius = 4;
-        }
+        // let xConcat = this.concatData(zoomedXValues);
+        // let yConcat = this.concatData(zoomedYValues);
+        // for(let i=0; i<xVals.length; i++)
+        // {
+        //     let timeIndex = this.getCurrTimeIndex(times[i], currTime);
+        //     const [currX, currY] = this.getCurrCoordinate(timeIndex, xVals[i], yVals[i], currTime, times[i]);
+        //     const currXPos = this.calculateOffset(width, d3.min(xConcat), d3.max(xConcat), currX);
+        //     const currYPos = this.calculateOffset(height, d3.min(yConcat), d3.max(yConcat), currY);
+        //     const radius = 4;
+        // }
       
        
         onGraphUpdate(true);
@@ -576,6 +578,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 x: x,
                 y: y,
                 name: line_names[i],
+                id: line_ids[i],
                 showlegend: true,
                 mode: mode,
                 marker: {
@@ -589,308 +592,414 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         });
     }
 
-    /**
-     * draws everything in the graph using d3
-     * @param boundChangeInZoom 
-     * @param colorChange 
-     * @param windowChanged 
-     * @returns svg node component
-     */
-    drawGraph(boundChangeInZoom?:boolean, colorChange?:boolean, windowChanged?:boolean):any{
-        // return 1;
-        const {times, xVals, yVals, 
-            startTime, endTime, currTime, 
-            isTimeWarp, lineWidth, axisColor,
-            line_names, line_colors, line_ids,
-            onGraphUpdate} = this.props;
-        const w = this.props.width;
-        const h = this.props.height;
-        const isDataChanged = true;
+    // /**
+    //  * draws everything in the graph using d3
+    //  * @param boundChangeInZoom 
+    //  * @param colorChange 
+    //  * @param windowChanged 
+    //  * @returns svg node component
+    //  */
+    // drawGraph(boundChangeInZoom?:boolean, colorChange?:boolean, windowChanged?:boolean):any{
+    //     // return 1;
+    //     const {times, xVals, yVals, 
+    //         startTime, endTime, currTime, 
+    //         isTimeWarp, lineWidth, axisColor,
+    //         line_names, line_colors, line_ids,
+    //         onGraphUpdate} = this.props;
+    //     const w = this.props.width;
+    //     const h = this.props.height;
+    //     const isDataChanged = true;
         
-        const {margin, prev_x, prev_y} = this.state;
-        //width = w - margin.left - margin.right,
-        const width = w - margin.left - margin.right,
-        height = h - margin.top - margin.bottom;
+    //     const {margin, prev_x, prev_y} = this.state;
+    //     //width = w - margin.left - margin.right,
+    //     const width = w - margin.left - margin.right,
+    //     height = h - margin.top - margin.bottom;
         
-        // create svg component
-        let svg = d3.select(this._graphDiv.current).append("svg").remove()
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},     ${margin.top})`);
+    //     // create svg component
+    //     let svg = d3.select(this._graphDiv.current).append("svg").remove()
+    //         .attr("width", width + margin.left + margin.right)
+    //         .attr("height", height + margin.top + margin.bottom)
+    //         .append("g")
+    //         .attr("transform", `translate(${margin.left},     ${margin.top})`);
 
-        const min = 0, max = 8; // default min and max of x and y axis
-        // if(!times.length || !xVals.length){
-        //     // draw an empty graph
-        //     // log("Warning: Empty times and vals for LineGraph")
+    //     const min = 0, max = 8; // default min and max of x and y axis
+    //     // if(!times.length || !xVals.length){
+    //     //     // draw an empty graph
+    //     //     // log("Warning: Empty times and vals for LineGraph")
 
-        //     // const timeBarStart = LineGraph.xPositionFromTime(width, min, max, startTime);
-        //     // const timeBarCurr = LineGraph.xPositionFromTime(width, min, max, currTime);
-        //     // const timeBarEnd = LineGraph.xPositionFromTime(width, min, max, endTime);
-        //     // console.log(startTime + " " + endTime + " " + width);
-        //     // console.log(this.props.width);
-        //     // svg.append("rect")
-        //     //     .attr("x", timeBarCurr -1)
-        //     //     .attr("y", 0)
-        //     //     .attr("width", 2)
-        //     //     .attr("height", height)
-        //     //     .attr("fill", "#b00")
-        //     //     .attr("fill-opacity","75%");
+    //     //     // const timeBarStart = LineGraph.xPositionFromTime(width, min, max, startTime);
+    //     //     // const timeBarCurr = LineGraph.xPositionFromTime(width, min, max, currTime);
+    //     //     // const timeBarEnd = LineGraph.xPositionFromTime(width, min, max, endTime);
+    //     //     // console.log(startTime + " " + endTime + " " + width);
+    //     //     // console.log(this.props.width);
+    //     //     // svg.append("rect")
+    //     //     //     .attr("x", timeBarCurr -1)
+    //     //     //     .attr("y", 0)
+    //     //     //     .attr("width", 2)
+    //     //     //     .attr("height", height)
+    //     //     //     .attr("fill", "#b00")
+    //     //     //     .attr("fill-opacity","75%");
 
-        //     x_axis = d3.scaleLinear().range([0, width]);
-        //     y_axis = d3.scaleLinear().range([height, 0]);
-        //     x_axis.domain(d3.extent([startTime, endTime]));
-        //     y_axis.domain(d3.extent([min, max]));
-        //     let xAxis = svg.append("g")
-        //         .attr("transform", `translate(0, ${height})`)
-        //         .call(d3.axisBottom(x_axis).tickSize(0));
-        //     let yAxis = svg.append("g")
-        //         .call(d3.axisLeft(y_axis).tickSize(0));
+    //     //     x_axis = d3.scaleLinear().range([0, width]);
+    //     //     y_axis = d3.scaleLinear().range([height, 0]);
+    //     //     x_axis.domain(d3.extent([startTime, endTime]));
+    //     //     y_axis.domain(d3.extent([min, max]));
+    //     //     let xAxis = svg.append("g")
+    //     //         .attr("transform", `translate(0, ${height})`)
+    //     //         .call(d3.axisBottom(x_axis).tickSize(0));
+    //     //     let yAxis = svg.append("g")
+    //     //         .call(d3.axisLeft(y_axis).tickSize(0));
 
-        //     xAxis.selectAll("line, path")
-        //         .style("stroke", axisColor);
-        //     yAxis.selectAll("line, path")
-        //         .style("stroke", axisColor);
-        //     xAxis.selectAll("text")
-        //         .style("fill", axisColor);
-        //     yAxis.selectAll("text")
-        //         .style("fill", axisColor);
+    //     //     xAxis.selectAll("line, path")
+    //     //         .style("stroke", axisColor);
+    //     //     yAxis.selectAll("line, path")
+    //     //         .style("stroke", axisColor);
+    //     //     xAxis.selectAll("text")
+    //     //         .style("fill", axisColor);
+    //     //     yAxis.selectAll("text")
+    //     //         .style("fill", axisColor);
             
-        //     onGraphUpdate(true);
-        //     return svg.node();
-        // }
+    //     //     onGraphUpdate(true);
+    //     //     return svg.node();
+    //     // }
 
-        let [zoomedTimes, zoomedXValues, zoomedYValues] = this.filterData(startTime, endTime);
+    //     let [zoomedTimes, zoomedXValues, zoomedYValues] = this.filterData(startTime, endTime);
 
-        let data:umap_data_entry[][] = [this.parseData(zoomedXValues[0], zoomedYValues[0])];
-        for(let i = 1; i < zoomedXValues.length; i++){
-            data.push(this.parseData(zoomedXValues[i], zoomedYValues[i]));
-            console.log(i + " " + data[i].length);
-        }  
-        // let dragC = d3.drag()
-        //     .on('start', (event:any)=>{this.currMouse(event)})
-        //     .on('drag', (event:any)=>{this.dragCurr(event)})
-        //     .on('end', (event:any)=>{this.endMouse(event)});
+    //     let data:umap_data_entry[][] = [this.parseData(zoomedXValues[0], zoomedYValues[0])];
+    //     for(let i = 1; i < zoomedXValues.length; i++){
+    //         data.push(this.parseData(zoomedXValues[i], zoomedYValues[i]));
+    //         console.log(i + " " + data[i].length);
+    //     }  
+    //     // let dragC = d3.drag()
+    //     //     .on('start', (event:any)=>{this.currMouse(event)})
+    //     //     .on('drag', (event:any)=>{this.dragCurr(event)})
+    //     //     .on('end', (event:any)=>{this.endMouse(event)});
             
-        // let dragS = d3.drag()
-        //     .on('start', (event:any)=>{this.currMouse(event)})
-        //     .on('drag', (event:any)=>{this.dragStart(event)})
-        //     .on('end', (event:any)=>{this.endMouse(event)});
-        // let dragE = d3.drag()
-        //     .on('start', (event:any)=>{this.currMouse(event)})
-        //     .on('drag', (event:any)=>{this.dragEnd(event)})
-        //     .on('end', (event:any)=>{this.endMouse(event)}); 
-        let xConcat = this.concatData(zoomedXValues);
-        let yConcat = this.concatData(zoomedYValues);
-        for(let i=0; i<xVals.length; i++)
-        {
-            let timeIndex = this.getCurrTimeIndex(times[i], currTime);
-            const [currX, currY] = this.getCurrCoordinate(timeIndex, xVals[i], yVals[i], currTime, times[i]);
-            const currXPos = this.calculateOffset(width, d3.min(xConcat), d3.max(xConcat), currX);
-            const currYPos = this.calculateOffset(height, d3.min(yConcat), d3.max(yConcat), currY);
-            const radius = 4;
-            // console.log(currX + " " + currY + " " + currXPos + " " + currYPos);
-            svg.append("circle")
-                .attr("cx", currXPos)
-                .attr("cy", height - currYPos)
-                .attr("r", radius)
-                .attr("fill", "#b00")
-                .attr("fill-opacity","75%");
-        }
+    //     // let dragS = d3.drag()
+    //     //     .on('start', (event:any)=>{this.currMouse(event)})
+    //     //     .on('drag', (event:any)=>{this.dragStart(event)})
+    //     //     .on('end', (event:any)=>{this.endMouse(event)});
+    //     // let dragE = d3.drag()
+    //     //     .on('start', (event:any)=>{this.currMouse(event)})
+    //     //     .on('drag', (event:any)=>{this.dragEnd(event)})
+    //     //     .on('end', (event:any)=>{this.endMouse(event)}); 
+    //     let xConcat = this.concatData(zoomedXValues);
+    //     let yConcat = this.concatData(zoomedYValues);
+    //     for(let i=0; i<xVals.length; i++)
+    //     {
+    //         let timeIndex = this.getCurrTimeIndex(times[i], currTime);
+    //         const [currX, currY] = this.getCurrCoordinate(timeIndex, xVals[i], yVals[i], currTime, times[i]);
+    //         const currXPos = this.calculateOffset(width, d3.min(xConcat), d3.max(xConcat), currX);
+    //         const currYPos = this.calculateOffset(height, d3.min(yConcat), d3.max(yConcat), currY);
+    //         const radius = 4;
+    //         // console.log(currX + " " + currY + " " + currXPos + " " + currYPos);
+    //         svg.append("circle")
+    //             .attr("cx", currXPos)
+    //             .attr("cy", height - currYPos)
+    //             .attr("r", radius)
+    //             .attr("fill", "#b00")
+    //             .attr("fill-opacity","75%");
+    //     }
         
-        // const timeBarStart = LineGraph.xPositionFromTime(width, /*timeMin, timeMax*/d3.min(timeConcat), d3.max(timeConcat), startTime);
+    //     // const timeBarStart = LineGraph.xPositionFromTime(width, /*timeMin, timeMax*/d3.min(timeConcat), d3.max(timeConcat), startTime);
         
-        // const timeBarEnd = LineGraph.xPositionFromTime(width, /*timeMin, timeMax*/d3.min(timeConcat), d3.max(timeConcat), endTime);
-        // console.log(timeBarStart + " " + (timeBarCurr - 2) + " " + (timeBarEnd - timeBarStart));
+    //     // const timeBarEnd = LineGraph.xPositionFromTime(width, /*timeMin, timeMax*/d3.min(timeConcat), d3.max(timeConcat), endTime);
+    //     // console.log(timeBarStart + " " + (timeBarCurr - 2) + " " + (timeBarEnd - timeBarStart));
         
 
-            // svg.append("rect")
-            //     .attr("x", timeBarCurr -1)
-            //     .attr("y", 0)
-            //     .attr("width", 2)
-            //     .attr("height", height)
-            //     .attr("fill", "#b00")
-            //     .attr("fill-opacity","75%");
+    //         // svg.append("rect")
+    //         //     .attr("x", timeBarCurr -1)
+    //         //     .attr("y", 0)
+    //         //     .attr("width", 2)
+    //         //     .attr("height", height)
+    //         //     .attr("fill", "#b00")
+    //         //     .attr("fill-opacity","75%");
 
         
-        // Add X axis and Y axis
-        var x_axis: { (arg0: number): number; (arg0: number): number; domain: any; }; //type is generated by Typescript
-        var y_axis: { (arg0: number): number; (arg0: number): number; domain: any; };
-        if(onGraphUpdate(false) || isDataChanged || boundChangeInZoom || windowChanged || !prev_x || !prev_y){
-            x_axis = d3.scaleLinear().range([0, width]).domain(d3.extent(xConcat));
-            y_axis = d3.scaleLinear().range([height, 0]).domain(d3.extent(yConcat));
-        }else{
-            x_axis = prev_x;
-            y_axis = prev_y;
-        }
+    //     // Add X axis and Y axis
+    //     var x_axis: { (arg0: number): number; (arg0: number): number; domain: any; }; //type is generated by Typescript
+    //     var y_axis: { (arg0: number): number; (arg0: number): number; domain: any; };
+    //     if(onGraphUpdate(false) || isDataChanged || boundChangeInZoom || windowChanged || !prev_x || !prev_y){
+    //         x_axis = d3.scaleLinear().range([0, width]).domain(d3.extent(xConcat));
+    //         y_axis = d3.scaleLinear().range([height, 0]).domain(d3.extent(yConcat));
+    //     }else{
+    //         x_axis = prev_x;
+    //         y_axis = prev_y;
+    //     }
         
-        let bottonAxis = d3.axisBottom(x_axis).tickSize(0).tickValues([]);
-        let leftAxis = d3.axisLeft(y_axis).tickSize(0).tickValues([]);
-        let topAxis = d3.axisTop(x_axis).tickSize(0).tickValues([]);
-        let rightAxis = d3.axisRight(y_axis).tickSize(0).tickValues([]);
+    //     let bottonAxis = d3.axisBottom(x_axis).tickSize(0).tickValues([]);
+    //     let leftAxis = d3.axisLeft(y_axis).tickSize(0).tickValues([]);
+    //     let topAxis = d3.axisTop(x_axis).tickSize(0).tickValues([]);
+    //     let rightAxis = d3.axisRight(y_axis).tickSize(0).tickValues([]);
 
-        let bottomAxisGroup = svg.append("g")
-            .attr("transform", `translate(0, ${height})`)
-            .classed('GraphAxis', true)
-            .call(bottonAxis);
+    //     let bottomAxisGroup = svg.append("g")
+    //         .attr("transform", `translate(0, ${height})`)
+    //         .classed('GraphAxis', true)
+    //         .call(bottonAxis);
         
-        let leftAxisGroup = svg.append("g")
-            .classed('GraphAxis', true)
-            .call(leftAxis);
+    //     let leftAxisGroup = svg.append("g")
+    //         .classed('GraphAxis', true)
+    //         .call(leftAxis);
 
-        let topAxisGroup = svg.append("g")
-            .classed('GraphAxis', true)
-            .call(topAxis);
+    //     let topAxisGroup = svg.append("g")
+    //         .classed('GraphAxis', true)
+    //         .call(topAxis);
 
-        let rightAxisGroup = svg.append("g")
-            .attr("transform", `translate(${width}, 0)`)
-            .classed('GraphAxis', true)
-            .call(rightAxis);
+    //     let rightAxisGroup = svg.append("g")
+    //         .attr("transform", `translate(${width}, 0)`)
+    //         .classed('GraphAxis', true)
+    //         .call(rightAxis);
 
-        bottomAxisGroup.selectAll("line, path")
-            .style("stroke", axisColor);
-        leftAxisGroup.selectAll("line, path")
-            .style("stroke", axisColor);
-        topAxisGroup.selectAll("line, path")
-            .style("stroke", axisColor);
-        rightAxisGroup.selectAll("line, path")
-            .style("stroke", axisColor);
+    //     bottomAxisGroup.selectAll("line, path")
+    //         .style("stroke", axisColor);
+    //     leftAxisGroup.selectAll("line, path")
+    //         .style("stroke", axisColor);
+    //     topAxisGroup.selectAll("line, path")
+    //         .style("stroke", axisColor);
+    //     rightAxisGroup.selectAll("line, path")
+    //         .style("stroke", axisColor);
       
-        // add the Line
-        let id;
-        let valueLine = d3.line()
-                    .x((d:umap_data_entry):number => { return x_axis(d.x); })
-                    .y((d:umap_data_entry):number => { return y_axis(d.y); });
-        if(isTimeWarp){
-            let path1 = svg.append("path").remove()
-                    .append("path")
-                    .data([data[1]])
-                    .attr("class", "line")
-                    .attr("fill", "none")
-                    .attr("stroke", line_colors[1])
-                    .attr("stroke-width", lineWidth)
-                    .attr("d", valueLine)
-                    .node()
+    //     // add the Line
+    //     let id;
+    //     let valueLine = d3.line()
+    //                 .x((d:umap_data_entry):number => { return x_axis(d.x); })
+    //                 .y((d:umap_data_entry):number => { return y_axis(d.y); });
+    //     if(isTimeWarp){
+    //         let path1 = svg.append("path").remove()
+    //                 .append("path")
+    //                 .data([data[1]])
+    //                 .attr("class", "line")
+    //                 .attr("fill", "none")
+    //                 .attr("stroke", line_colors[1])
+    //                 .attr("stroke-width", lineWidth)
+    //                 .attr("d", valueLine)
+    //                 .node()
             
-            svg.node().appendChild(path1);
-            let path2 = svg.append("path").remove()
-                    .append("path")
-                    .data([data[0]])
-                    .attr("class", "line")
-                    .attr("fill", "none")
-                    .attr("stroke", line_colors[0])
-                    .attr("stroke-width", lineWidth)
-                    .attr("d", valueLine)
-                    .node()
+    //         svg.node().appendChild(path1);
+    //         let path2 = svg.append("path").remove()
+    //                 .append("path")
+    //                 .data([data[0]])
+    //                 .attr("class", "line")
+    //                 .attr("fill", "none")
+    //                 .attr("stroke", line_colors[0])
+    //                 .attr("stroke-width", lineWidth)
+    //                 .attr("d", valueLine)
+    //                 .node()
 
-            svg.node().appendChild(path2);
-        }else{
-            // for UMAP, we need to redraw the graph every time when the line changes
-            for(let i = 0; i < data.length; i++){
-                id = line_ids[i];
-                // if(prev_lines.has(id) && !boundChangeInZoom && !colorChange && !windowChanged && !onGraphUpdate(false)){ //not new select and have previous line
-                //     svg.node().appendChild(prev_lines.get(id));            
-                // }else{
-                for (const d of this.filterDataByDistance(data[i])) {
-                    let path = svg.append("path").remove()
-                        .append("path")
-                        .data([d])
-                        .attr("class", "line")
-                        .attr("fill", "none")
-                        .attr("stroke", line_colors[i])
-                        .attr("stroke-width", lineWidth)
-                        .attr("d", valueLine)
-                        .node()
-                    svg.node().appendChild(path);
-                }
+    //         svg.node().appendChild(path2);
+    //     }else{
+    //         // for UMAP, we need to redraw the graph every time when the line changes
+    //         for(let i = 0; i < data.length; i++){
+    //             id = line_ids[i];
+    //             // if(prev_lines.has(id) && !boundChangeInZoom && !colorChange && !windowChanged && !onGraphUpdate(false)){ //not new select and have previous line
+    //             //     svg.node().appendChild(prev_lines.get(id));            
+    //             // }else{
+    //             for (const d of this.filterDataByDistance(data[i])) {
+    //                 let path = svg.append("path").remove()
+    //                     .append("path")
+    //                     .data([d])
+    //                     .attr("class", "line")
+    //                     .attr("fill", "none")
+    //                     .attr("stroke", line_colors[i])
+    //                     .attr("stroke-width", lineWidth)
+    //                     .attr("d", valueLine)
+    //                     .node()
+    //                 svg.node().appendChild(path);
+    //             }
+                
+    //             //     prev_lines.set(id, path);
+    //             // }
+    //         }
+    //     }
+        
+    //     // //add draggable components(just rectangles)
+    //     // svg.append("rect")
+    //     //         .attr("x", timeBarCurr -20)
+    //     //         .attr("y", 0)
+    //     //         .attr("width", 40)
+    //     //         .attr("height", height)
+    //     //         .attr("fill", "#b00")
+    //     //         .attr("fill-opacity","0%")
+    //     //         .call(dragC);
+            
+    //     //     svg.append("rect")
+    //     //         .attr("x", timeBarStart)
+    //     //         .attr("y", 0)
+    //     //         .attr("width", 30)
+    //     //         .attr("height", height)
+    //     //         .attr("fill", "#ff0")
+    //     //         .attr("fill-opacity","0%")
+    //     //         .call(dragS);
+
+    //     //     svg.append("rect")
+    //     //         .attr("x", timeBarEnd-30)
+    //     //         .attr("y", 0)
+    //     //         .attr("width", 30) 
+    //     //         .attr("height", height)
+    //     //         .attr("fill", "#ff0")
+    //     //         .attr("fill-opacity","0%")
+    //     //         .call(dragE);
+
+        
+    //     this.setState({
+    //         // w: width + margin.left + margin.right,
+    //         // h: height + margin.top + margin.bottom,
+    //         // prev_lines: prev_lines,
+    //         prev_x: x_axis,
+    //         prev_y: y_axis,
+    //         // newCurr: newCurr
+
+    //         // time_min: d3.min(timeConcat), 
+    //         // time_max: d3.max(timeConcat),
+    //     });
+    //     // this._graphDiv.current!.appendChild(svg.node());
+    //     // let temp = d3.select(this._graphDiv.current).append("svg")
+    //     //     .attr("width", width + margin.left + margin.right)
+    //     //     .attr("height", height + margin.top + margin.bottom)
+    //     //     .append(svg)
+    //     // this._graphDiv.current!.appendChild(temp);
+    //     // log(svg.node());
+    //     onGraphUpdate(true);
+    //     return svg.node();
+        
+                
                 
                 //     prev_lines.set(id, path);
-                // }
-            }
+
+                //     prev_lines.set(id, path);
+    // }
+
+
+    /**
+     * hover event handler
+     * whenever users hover on a point, set the global time to the corresponding point
+     * @param event 
+     */
+    onPlotlyHover(event: Readonly<PlotHoverEvent>) {
+        const {plotly_data} = this.state;
+        let line_idx: number = -1, point_idx: number = -1;
+        for (var i = 0; i < event.points.length; i++) {
+            line_idx = event.points[i].curveNumber;
+            let line_id: string = plotly_data[line_idx].id;
+            if(line_id.startsWith("nneighbor")) continue;
+            point_idx = event.points[i].pointIndex;
+        }
+        if(point_idx !== -1){
+            let selected_time = this.props.times[0][point_idx]
+            this.props.robotSceneManager.setCurrTime(selected_time);
+        }
+    }
+
+    /**
+     * click event handler
+     * whenever users clicks a point, show its n-neighbors
+     * unless it is a hightlighted n-neighbors point
+     * @param event 
+     */
+    onPlotlyClick(event: Readonly<PlotMouseEvent>) {
+        // console.log(event);
+        const {plotly_data} = this.state;
+        let line_idx: number = 0, point_idx: number = 0;
+        for (let i = 0; i < event.points.length; i++) {
+            line_idx = event.points[i].curveNumber;
+            point_idx = event.points[i].pointIndex;
+        }
+        let line_id: string = plotly_data[line_idx].id;
+        if(line_id.startsWith("nneighbor")) return;
+
+        let plot_data = [];
+        for (const data of plotly_data) {
+            plot_data.push({
+                x: data.x,
+                y: data.y,
+                name: data.name,
+                id: data.id,
+                showlegend: data.showlegend,
+                mode: data.mode,
+                marker: data.marker
+            });
+        }
+
+        let nneighbors = this.props.umapData[line_idx][point_idx].nneighbors;
+        let nneighbors_id = "nneighbors-before reduction" + newID(), nneighbors_name = "nneighbors-before reduction";
+        if(!this.props.graph.nneighborMode().valueOf()){
+            // show nneighbors after reduction
+            nneighbors = this.props.umapData[line_idx][point_idx].nneighbors_2d;
+            nneighbors_id = "nneighbors-after reduction" + newID();
+            nneighbors_name = "nneighbors-after reduction";
         }
         
-        // //add draggable components(just rectangles)
-        // svg.append("rect")
-        //         .attr("x", timeBarCurr -20)
-        //         .attr("y", 0)
-        //         .attr("width", 40)
-        //         .attr("height", height)
-        //         .attr("fill", "#b00")
-        //         .attr("fill-opacity","0%")
-        //         .call(dragC);
-            
-        //     svg.append("rect")
-        //         .attr("x", timeBarStart)
-        //         .attr("y", 0)
-        //         .attr("width", 30)
-        //         .attr("height", height)
-        //         .attr("fill", "#ff0")
-        //         .attr("fill-opacity","0%")
-        //         .call(dragS);
-
-        //     svg.append("rect")
-        //         .attr("x", timeBarEnd-30)
-        //         .attr("y", 0)
-        //         .attr("width", 30) 
-        //         .attr("height", height)
-        //         .attr("fill", "#ff0")
-        //         .attr("fill-opacity","0%")
-        //         .call(dragE);
-
-        
-        this.setState({
-            // w: width + margin.left + margin.right,
-            // h: height + margin.top + margin.bottom,
-            // prev_lines: prev_lines,
-            prev_x: x_axis,
-            prev_y: y_axis,
-            // newCurr: newCurr
-
-            // time_min: d3.min(timeConcat), 
-            // time_max: d3.max(timeConcat),
+        let x = [], y = [];
+        for (const point of nneighbors) {
+            x.push(point[0]);
+            y.push(point[1]);
+        }
+        plot_data.push({
+            x: x,
+            y: y,
+            name: nneighbors_name,
+            id: nneighbors_id,
+            showlegend: true,
+            mode: "markers",
+            marker: {
+                size: 4
+            }
         });
-        // this._graphDiv.current!.appendChild(svg.node());
-        // let temp = d3.select(this._graphDiv.current).append("svg")
-        //     .attr("width", width + margin.left + margin.right)
-        //     .attr("height", height + margin.top + margin.bottom)
-        //     .append(svg)
-        // this._graphDiv.current!.appendChild(temp);
-        // log(svg.node());
-        onGraphUpdate(true);
-        return svg.node();
-        
-
+        this.setState({
+            plotly_data: plot_data,
+        });
     }
+
+    /**
+     * legend double click handler
+     * whenever users double click the legend, the corresponding line will be deleted
+     * @param event 
+     * @returns 
+     */
+    onPlotlyLegendDoubleClick(event: Readonly<LegendClickEvent>) {
+        const { line_ids, line_colors, graph } = this.props;
+        const { plotly_data } = this.state;
+        let line_id: string = plotly_data[event.curveNumber].id;
+
+        let index = -1;
+        for (let i = 0; i < line_ids.length; i++)
+            if (line_ids[i] === line_id) {
+                index = i;
+                break;
+            }
+        if (index > -1) {
+            graph.setDeleteLine(line_ids[index], line_colors[index]);
+        } else{
+            if (line_id.startsWith("nneighbor")) {
+                let plot_data = [];
+                for (let i = 0; i < plotly_data.length; i++) {
+                    if(i === event.curveNumber) continue;
+                    let data = plotly_data[i];
+                    plot_data.push({
+                        x: data.x,
+                        y: data.y,
+                        name: data.name,
+                        id: data.id,
+                        showlegend: data.showlegend,
+                        mode: data.mode,
+                        marker: data.marker
+                    });
+                }
+                this.setState({
+                    plotly_data: plot_data,
+                });
+            }
+        }
+        console.log(event.data[event.curveNumber]);
+        return false;
+    }
+
 
     render() {
         //const {w, h} = this.state;
         const {isTimeWarp, times, selected, axisColor, width, height, line_names} = this.props;
         // const {umap_data} = this.state;
         const {plotly_config, plotly_data, plotly_frames, plotly_layout} = this.state;
-        let styles = {display: "inline-block", marginBottom: "10px", color: axisColor};
-        // if(selected !== undefined && selected)
-        //     styles = {display: "inline-block", marginBottom: "10px", color:"yellow"}
-        // else
-        //     styles = {display: "inline-block", marginBottom: "10px"}
-
-        // let plot_data = [];
-        // for(let i=0; i<umap_data.length; i++){
-        //     let x = [], y = [];
-        //     for(const point of umap_data[i]){
-        //         x.push(point.x);
-        //         y.push(point.y);
-        //     }
-        //     plot_data.push({
-        //         x: x,
-        //         y: y,
-        //         name: line_names[i],
-        //         showlegend: true,
-        //         mode: 'markers',
-        //         marker: {
-        //             size: 2
-        //         }
-        //     });
-        // }
 
         return (
             <div>
@@ -902,32 +1011,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     layout={plotly_layout}
                     frames={plotly_frames}
                     config={plotly_config}
-                    // data={plot_data}
-                    // layout={{ width: width, height: height, font: {color: "white"}, 
-                    // /*title: 'A Fancy Plot',*/ plot_bgcolor:"rgb(23, 24, 25)", paper_bgcolor:"rgb(23, 24, 25)",
-                    // yaxis: {
-                    //     showgrid: false
-                    //   },
-                    // xaxis: {
-                    //     showgrid: false  
-                    // } }}
-                    onHover={(event) => {
-                        
-                        let pts = '';
-                        for (var i = 0; i < event.points.length; i++) {
-                            pts = 'x = ' + event.points[i].x + '\ny = ' +
-                            event.points[i].y + " from " + event.points[i].data.name + " with index " + event.points[i].pointIndex
-                                + " at time " + this.props.times[0][event.points[i].pointIndex] + '\n\n';
-                            let selected_time = this.props.times[0][event.points[i].pointIndex]
-                            this.props.robotSceneManager.setCurrTime(selected_time);
-                        }
-                        // alert('Closest point clicked:\n\n' + pts);
-                    } }
-                    onLegendDoubleClick={(event) => {   
-                        this.props.graph.setDeleteLine(this.props.line_ids[event.curveNumber], this.props.line_colors[event.curveNumber]);    
-                        console.log(event);
-                        return false;
-                    }}
+                    onHover={(event) => this.onPlotlyHover(event)}
+                    onClick={(event) => this.onPlotlyClick(event)}
+                    onLegendDoubleClick={(event) => this.onPlotlyLegendDoubleClick(event)}
                     onInitialized={(figure) => this.setState({
                         plotly_data: figure.data,
                         plotly_layout: figure.layout,
@@ -938,6 +1024,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         plotly_layout: figure.layout,
                         plotly_frames: figure.frames
                     })}
+                    onSelected={(event) => {
+                        console.log("hello")
+                        console.log(event);
+                        // return false;
+                    }}
                 />
                 </div>
             </div>
