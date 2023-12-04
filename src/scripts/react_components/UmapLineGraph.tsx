@@ -6,7 +6,7 @@ import { umap_data_entry } from "./panels/UmapGraphPanel";
 import Plot from 'react-plotly.js';
 import { RobotSceneManager } from "../RobotSceneManager";
 import { UmapGraph } from "../objects3D/UmapGraph";
-import { LegendClickEvent, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
+import { LegendClickEvent, PlotHoverEvent, PlotMouseEvent, PlotSelectionEvent } from "plotly.js";
 
 
 /**
@@ -921,12 +921,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
 
         let nneighbors = this.props.umapData[line_idx][point_idx].nneighbors;
-        let nneighbors_id = "nneighbors-before reduction" + newID(), nneighbors_name = "nneighbors-before reduction";
+        let nneighbors_id = "nneighbors-before reduction" + newID(), nneighbors_name = "nneighbors"+ "<br>" + "before reduction";
         if(!this.props.graph.nneighborMode().valueOf()){
             // show nneighbors after reduction
             nneighbors = this.props.umapData[line_idx][point_idx].nneighbors_2d;
             nneighbors_id = "nneighbors-after reduction" + newID();
-            nneighbors_name = "nneighbors-after reduction";
+            nneighbors_name = "nneighbors"+ "<br>" + "after reduction";
         }
         
         let x = [], y = [];
@@ -942,7 +942,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             showlegend: true,
             mode: "markers",
             marker: {
-                size: 4
+                size: 8,
+                opacity: 0.5,
             }
         });
         this.setState({
@@ -994,6 +995,23 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         return false;
     }
 
+    /**
+     * selected event handler (can be either box select or Lasso select) 
+     * first calculate 9 points that can best represent the data
+     * (if less than 9, then use all points), then show the robot motion
+     * correspond to these points
+     * @param event 
+     */
+    onPlotlySelected(event: Readonly<PlotSelectionEvent>){
+        console.log("selected")
+        if(event === undefined || event.points === undefined) return;
+        console.log(event.points);
+        let points = event.points;
+        if(points.length > 9){
+
+        }
+    }
+
 
     render() {
         //const {w, h} = this.state;
@@ -1024,11 +1042,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         plotly_layout: figure.layout,
                         plotly_frames: figure.frames
                     })}
-                    onSelected={(event) => {
-                        console.log("hello")
-                        console.log(event);
-                        // return false;
-                    }}
+                    onSelected={(event) => this.onPlotlySelected(event)}
                 />
                 </div>
             </div>
