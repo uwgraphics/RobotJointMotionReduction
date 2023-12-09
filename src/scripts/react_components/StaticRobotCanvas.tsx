@@ -183,7 +183,7 @@ export class StaticRobotCanvas extends Component<quaternion_canvas_props, quater
                 this._orbitCamera.rotation.setFromQuaternion(newRot);
                 this.props.staticRobotScene.render();
             });
-            // this.props.robotSceneManager.addSyncViewCallback(this._syncViewCallback);
+            this.props.robotSceneManager.addSyncViewCallback(this._syncViewCallback);
 
             // The SceneView is re-rendered automatically by the RobotScene
             // every time the RobotScene is changed.

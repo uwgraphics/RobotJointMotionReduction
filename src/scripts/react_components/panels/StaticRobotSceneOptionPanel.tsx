@@ -21,6 +21,7 @@ import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { APP } from "../../constants";
 import { PopupHelpPage } from "../popup_help_page";
 import { StaticRobotScene } from "../../scene/StaticRobotScene";
+import { CamerasPanel } from "./CamerasPanel";
 
 
 export interface static_robot_scene_panel_props {
@@ -135,6 +136,9 @@ export class StaticRobotSceneOptionPanel extends Component<static_robot_scene_pa
             onChange={this.onCheckWorldFrame.bind(this)} />
         </div>
 
+        <div style={style3}>
+          <CamerasPanel robotSceneManager={this.props.robotSceneManager} />
+        </div>
 
         <Accordion allowZeroExpanded allowMultipleExpanded>
           <AccordionItem>
