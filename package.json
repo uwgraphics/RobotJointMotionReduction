@@ -25,6 +25,7 @@
     "gapi": "^0.0.3",
     "googleapi": "^1.0.2",
     "googleapis": "^105.0.0",
+    "k-medoids": "^1.0.7",
     "lodash": "^4.17.21",
     "multiselect-react-dropdown": "^2.0.25",
     "plotly.js": "^2.27.0",
