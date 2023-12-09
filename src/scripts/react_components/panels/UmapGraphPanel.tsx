@@ -25,6 +25,7 @@ export interface graph_panel_props {
     getParentDockLayout: () => DockLayout | undefined,
     force_update: boolean,
     setUmapGraphOptionPanelActive: () => void,
+    addNewStaticRobotCanvasPanel: (targetSceneId: string) => void,
 }
 
 interface graph_panel_state {
@@ -655,6 +656,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               onCurrChange={this.onCurrTimeChange.bind(this)}
               onStartChange={this.onStartTimeChange.bind(this)}
               onEndChange={this.onEndTimeChange.bind(this)}
+              addNewStaticRobotCanvasPanel={this.props.addNewStaticRobotCanvasPanel}
             />
           </div>
         );

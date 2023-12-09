@@ -6,7 +6,9 @@ import { umap_data_entry } from "./panels/UmapGraphPanel";
 import Plot from 'react-plotly.js';
 import { RobotSceneManager } from "../RobotSceneManager";
 import { UmapGraph } from "../objects3D/UmapGraph";
-import { LegendClickEvent, PlotHoverEvent, PlotMouseEvent, PlotSelectionEvent } from "plotly.js";
+import { Datum, LegendClickEvent, PlotDatum, PlotHoverEvent, PlotMouseEvent, PlotSelectionEvent } from "plotly.js";
+import { Cluster, Clusterer } from "k-medoids";
+import { StaticRobotScene } from "../scene/StaticRobotScene";
 
 
 /**
@@ -38,6 +40,7 @@ interface line_graph_props {
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
     onEndChange: (newValue:number) => void,
+    addNewStaticRobotCanvasPanel: (targetSceneId: string) => void,
 }
 
 
@@ -995,6 +998,14 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         return false;
     }
 
+    findPoints(clusteredData: Datum[], points: PlotDatum[]){
+        for(const point of points){
+            if(clusteredData[0] === point.x && clusteredData[1] === point.y)
+                return [point.curveNumber, point.pointIndex];
+        }
+        return [-1, -1];
+    }
+
     /**
      * selected event handler (can be either box select or Lasso select) 
      * first calculate 9 points that can best represent the data
@@ -1003,13 +1014,76 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param event 
      */
     onPlotlySelected(event: Readonly<PlotSelectionEvent>){
-        console.log("selected")
-        if(event === undefined || event.points === undefined) return;
-        console.log(event.points);
-        let points = event.points;
-        if(points.length > 9){
+        const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
+        const { plotly_data } = this.state;
 
+        // console.log("selected")
+        if(event === undefined || event.points === undefined) return;
+        // console.log(event.points);
+        let points = event.points;
+        if(points.length === 0) return;
+
+        
+        let curveNumbers = [], pointIndices = [];
+        if(points.length > 9){
+            let data = [];
+            for(const point of points)
+                data.push([point.x, point.y])
+            // find 9 clusters and use the first point in every cluster to represent the cluster
+            const clusterer = Clusterer.getInstance(data, 9);
+            const clusteredData = clusterer.getClusteredData();  
+            for(const data of clusteredData){
+                let [curveNumber, pointIndex] = this.findPoints(data[0], points);
+                curveNumbers.push(curveNumber);
+                pointIndices.push(pointIndex);
+            }
+            //console.log(clusteredData[0][0])   
+        } else{
+            for(const point of points){
+                curveNumbers.push(point.curveNumber);
+                pointIndices.push(point.pointIndex);
+            }
         }
+
+        for (let i = 0; i < curveNumbers.length; i++) {
+            // for (let i = 0; i < 1; i++) {
+            let curveNumber = curveNumbers[i], pointIndex = pointIndices[i];
+            let sceneId = newID();
+            let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
+            this.props.addNewStaticRobotCanvasPanel(sceneId);
+
+            let line_id: string = plotly_data[curveNumber].id;
+
+            let index = -1;
+            for (let i = 0; i < line_ids.length; i++)
+                if (line_ids[i] === line_id) {
+                    index = i;
+                    break;
+                }
+            if (index > -1) {
+                let time = times[index][pointIndex];
+                let line_id = line_ids[index];
+                const [sceneId, robotName] = this.decomposeId(line_id);
+                let scene = robotSceneManager.robotSceneById(sceneId);
+                if (scene === undefined) return;
+                if (!robotSceneManager.isActiveRobotScene(scene))
+                    robotSceneManager.activateRobotScene(scene);
+                let robot = scene.getRobotByName(robotName);
+                if (robot !== undefined) staticRobotScene.addChildRobot(robot, time);
+            }
+        }
+    }
+
+    /**
+     * decompose the id of the drag button
+     * to sceneId, robotName, partName
+     * @param eventName
+     * @returns 
+     */
+    decomposeId(eventName:string)
+    {
+        const [sceneId, robotName] = eventName.split("#");
+        return [sceneId, robotName];
     }
 
 

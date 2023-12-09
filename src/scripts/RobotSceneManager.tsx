@@ -21,6 +21,7 @@ import { BoxBase, LayoutBase, PanelBase, TabBase } from "rc-dock";
 import { Graph } from "./objects3D/Graph";
 import { Id } from "./Id";
 import { PopupHelpPage } from "./react_components/popup_help_page";
+import { StaticRobotScene } from "./scene/StaticRobotScene";
 
 export interface serialized_robot_scene_manager {
 }
@@ -71,6 +72,9 @@ export class RobotSceneManager {
 
     protected _quaternionSpaceScenes: Map<String, QuaternionSpaceScene>; // the quaternion space scenes which behave similarly as robot scenes
     protected _currQuaternionSpaceScene?: QuaternionSpaceScene;
+
+    protected _staticRobotScenes: Map<String, StaticRobotScene>; // store all static robot scenes
+    protected _currStaticRobotScene?: StaticRobotScene;
     
     protected _umapGraphs: Map<String, UmapGraph>; // Umap graphs are also stored in robotscenemanager because it can be managed similiarly as the robot scenes
     protected _currUmapGraph?: UmapGraph;
@@ -89,6 +93,8 @@ export class RobotSceneManager {
         this._allowSelections = true;
 
         this._quaternionSpaceScenes = new Map();
+        
+        this._staticRobotScenes = new Map();
 
         this._umapGraphs = new Map();
         this._graphs = new Map();
@@ -140,6 +146,51 @@ export class RobotSceneManager {
     setRestoreCallBack(restoreCallBack: (savedLayout: LayoutBase | undefined) => void)
     {
         this._restoreCallBack = restoreCallBack;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // the functions below are the helper functions for static robot scenes
+    hasStaticRobotScene(sceneId: string): boolean
+    {
+        return this._staticRobotScenes.has(sceneId);
+    }
+    addStaticRobotScene(scene: StaticRobotScene)
+    {
+        this._staticRobotScenes.set(scene.id().value(), scene);
+    }
+    removeStaticRobotScene(sceneId: string)
+    {
+        let scene = this.getStaticRobotSceneById(sceneId);
+        if(scene !== undefined){
+            this._staticRobotScenes.delete(scene.id().value());
+        }
+    }
+    allStaticRobotScenes(): StaticRobotScene[]
+    {
+        let result: StaticRobotScene[] = [];
+        for(const [, scene] of this._staticRobotScenes)
+            result.push(scene);
+        return result;
+    }
+    setCurrStaticRobotScene(sceneId: string | undefined)
+    {
+        console.log("set static robot scene");
+        if(sceneId === undefined) 
+        {
+            this._currStaticRobotScene = undefined;
+            return;
+        }
+        if(this.hasStaticRobotScene(sceneId))
+            this._currStaticRobotScene = this._staticRobotScenes.get(sceneId);
+    }
+    getCurrStaticRobotScene(): StaticRobotScene | undefined
+    {
+        return this._currStaticRobotScene;
+    }
+    getStaticRobotSceneById(sceneId: string): StaticRobotScene | undefined
+    {
+        return this._staticRobotScenes.get(sceneId);
     }
 
     // ---------------------------

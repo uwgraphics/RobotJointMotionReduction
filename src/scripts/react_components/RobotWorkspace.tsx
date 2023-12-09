@@ -32,6 +32,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { APP } from "../constants";
 import { PopupHelpPage } from "./popup_help_page";
+import { StaticRobotSceneOptionPanel } from "./panels/StaticRobotSceneOptionPanel";
+import { StaticRobotScene } from "../scene/StaticRobotScene";
+import { StaticRobotCanvas } from "./StaticRobotCanvas";
 
 export interface robot_workspace_props {
     robotSceneManager: RobotSceneManager,
@@ -118,6 +121,7 @@ const DEFAULT_GRAPH_KEY = newID(4);
 const DEFAULT_GRAPH_TAB = `Graph&${DEFAULT_GRAPH_KEY}&motion`;
 const QUATERNION_OPTIONS_TAB = "Quaternion Options";
 const UMAP_GRAPH_OPTIONS_TAB = "UMAP Options"
+const STATIC_ROBOT_SCENE_OPTIONS_TAB = "Static Robot Scene Options";
 
 // @ts-ignore
 export const WorkspaceContext:React.Context<ReactContextT> = React.createContext();
@@ -175,6 +179,27 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
         });
     }
 
+    addNewStaticRobotCanvasPanel(targetSceneId: string) {
+        const newTabId = "StaticRobotScene&" + targetSceneId;
+        const updatedLayoutBase = { ...this.state.layoutBase };
+        
+        console.log(updatedLayoutBase.floatbox)
+        if(updatedLayoutBase.floatbox !== undefined){
+            const panel: PanelBase = {
+                tabs:[{id: newTabId}],
+                activeId: newTabId,
+                x: 200,
+                y: 200,
+                w: 400,
+                h: 400,
+            };
+            updatedLayoutBase.floatbox.children.push(panel);
+            this.setState({
+                layoutBase: updatedLayoutBase,
+            });
+        }
+    }
+
     onSaveLayout(): LayoutBase | undefined
     {
         let layout = this.getLayout();
@@ -219,6 +244,10 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
     setUmapGraphOptionPanelActive()
     {
         this.getLayout()?.updateTab(UMAP_GRAPH_OPTIONS_TAB,  null, true);
+    }
+    setStaticRobotSceneOptionPanelActive()
+    {
+        this.getLayout()?.updateTab(STATIC_ROBOT_SCENE_OPTIONS_TAB,  null, true);
     }
 
     /**
@@ -387,6 +416,7 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                             { id: GRAPH_OPTIONS_TAB, },
                                             { id: QUATERNION_OPTIONS_TAB, },
                                             { id: UMAP_GRAPH_OPTIONS_TAB, },
+                                            { id: STATIC_ROBOT_SCENE_OPTIONS_TAB,},
                                             // { id: GRAPH_SELECTION_TAB, },
                                             // { id: GRAPH_OPTION_TAB, },
                                             // { id: EDIT_ANIMATIONS_TAB, },
@@ -706,6 +736,27 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                 ),
             };
         }
+        else if(id === STATIC_ROBOT_SCENE_OPTIONS_TAB)
+        {
+            let sceneManager = this.props.robotSceneManager;
+            return {
+                id: STATIC_ROBOT_SCENE_OPTIONS_TAB,
+                title: STATIC_ROBOT_SCENE_OPTIONS_TAB,
+                
+                content: (
+                    <WorkspaceContext.Consumer>
+                        {(ctx:ReactContextT) => {
+                            return <StaticRobotSceneOptionPanel
+                                    robotSceneManager={sceneManager}
+                                    getParentDockLayout={ctx.getParentDockLayout}
+                                    forceUpdateTabNames={this.forceUpdateTabNames.bind(this)}
+                                    currStaticRobotScene={sceneManager.getCurrStaticRobotScene()}
+                            />;
+                        }}
+                    </WorkspaceContext.Consumer>
+                ),
+            };
+        }
         else if (id === SELECTION_TAB) {
             return {
                 id: SELECTION_TAB,
@@ -998,6 +1049,7 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                     force_update={this.state.force_update}
                                     graph={graph}
                                     setUmapGraphOptionPanelActive={this.setUmapGraphOptionPanelActive.bind(this)}
+                                    addNewStaticRobotCanvasPanel={this.addNewStaticRobotCanvasPanel.bind(this)}
                             />;
                         }}
                     </WorkspaceContext.Consumer>
@@ -1182,6 +1234,109 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                 robotSceneManager={sceneManager} 
                                 setQuaternionSceneOptionPanelActive={this.setQuaternionSceneOptionPanelActive.bind(this)}
                                 />;
+                        }}
+                    </WorkspaceContext.Consumer>
+                ),
+            };
+        }
+        else if (id.startsWith('StaticRobotScene')) {
+            let [, sceneId, type] = id.split("&");
+            let sceneManager = this.props.robotSceneManager;
+
+            let staticRobotScene: StaticRobotScene | undefined = sceneManager.getStaticRobotSceneById(sceneId);
+            if(staticRobotScene === undefined)
+            {
+                staticRobotScene = new StaticRobotScene(sceneManager, sceneId);
+                //sceneManager.setCurrStaticRobotScene(sceneId);
+            }
+
+            return {
+                id: id,
+                closable: true,
+                cached: true,
+                title: staticRobotScene.name(),
+                content: (
+                    <WorkspaceContext.Consumer>
+                        {() => {
+                            if(staticRobotScene === undefined) return;
+                            return <StaticRobotCanvas
+                                        allowSelecting={true}
+                                        key={sceneId}
+                                        staticRobotScene={staticRobotScene}
+                                        robotSceneManager={sceneManager} 
+                                        setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                                        />;
+                    //         return <div>
+                    //             <div style={{display: "flex"}}>
+                    //             <StaticRobotCanvas
+                    //             allowSelecting={true}
+                    //             key={sceneId}
+                    //             staticRobotScene={staticRobotScene}
+                    //             robotSceneManager={sceneManager} 
+                    //             setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                    //             />
+                    //             <StaticRobotCanvas
+                    //             allowSelecting={true}
+                    //             key={sceneId}
+                    //             staticRobotScene={staticRobotScene}
+                    //             robotSceneManager={sceneManager} 
+                    //             setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                    //             />
+                    //             <StaticRobotCanvas
+                    //             allowSelecting={true}
+                    //             key={sceneId}
+                    //             staticRobotScene={staticRobotScene}
+                    //             robotSceneManager={sceneManager} 
+                    //             setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                    //             />
+                    //         </div>
+                    //         <div style={{display: "flex"}}>
+                    //         <StaticRobotCanvas
+                    //         allowSelecting={true}
+                    //         key={sceneId}
+                    //         staticRobotScene={staticRobotScene}
+                    //         robotSceneManager={sceneManager} 
+                    //         setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                    //         />
+                    //         <StaticRobotCanvas
+                    //         allowSelecting={true}
+                    //         key={sceneId}
+                    //         staticRobotScene={staticRobotScene}
+                    //         robotSceneManager={sceneManager} 
+                    //         setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                    //         />
+                    //         <StaticRobotCanvas
+                    //         allowSelecting={true}
+                    //         key={sceneId}
+                    //         staticRobotScene={staticRobotScene}
+                    //         robotSceneManager={sceneManager} 
+                    //         setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                    //         />
+                    //     </div>
+                    //     <div style={{display: "flex"}}>
+                    //     <StaticRobotCanvas
+                    //     allowSelecting={true}
+                    //     key={sceneId}
+                    //     staticRobotScene={staticRobotScene}
+                    //     robotSceneManager={sceneManager} 
+                    //     setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                    //     />
+                    //     <StaticRobotCanvas
+                    //     allowSelecting={true}
+                    //     key={sceneId}
+                    //     staticRobotScene={staticRobotScene}
+                    //     robotSceneManager={sceneManager} 
+                    //     setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                    //     />
+                    //     <StaticRobotCanvas
+                    //     allowSelecting={true}
+                    //     key={sceneId}
+                    //     staticRobotScene={staticRobotScene}
+                    //     robotSceneManager={sceneManager} 
+                    //     setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                    //     />
+                    // </div>
+                    //         </div>;
                         }}
                     </WorkspaceContext.Consumer>
                 ),
