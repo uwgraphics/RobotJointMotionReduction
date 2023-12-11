@@ -1074,6 +1074,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
         this.props.addNewStaticRobotCanvasPanel(sceneIds);
+        this.props.robotSceneManager.setShouldSyncViews(true);
     }
 
     /**
