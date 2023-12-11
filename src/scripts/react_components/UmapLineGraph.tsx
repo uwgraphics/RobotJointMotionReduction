@@ -40,7 +40,7 @@ interface line_graph_props {
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
     onEndChange: (newValue:number) => void,
-    addNewStaticRobotCanvasPanel: (targetSceneId: string) => void,
+    addNewStaticRobotCanvasPanel: (targetSceneIds: string[]) => void,
 }
 
 
@@ -1044,13 +1044,14 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 pointIndices.push(point.pointIndex);
             }
         }
-
+        let sceneIds = [];
         for (let i = 0; i < curveNumbers.length; i++) {
             // for (let i = 0; i < 1; i++) {
             let curveNumber = curveNumbers[i], pointIndex = pointIndices[i];
             let sceneId = newID();
             let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
-            this.props.addNewStaticRobotCanvasPanel(sceneId);
+            sceneIds.push(sceneId)
+            
 
             let line_id: string = plotly_data[curveNumber].id;
 
@@ -1072,6 +1073,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 if (robot !== undefined) staticRobotScene.addChildRobot(robot, time);
             }
         }
+        this.props.addNewStaticRobotCanvasPanel(sceneIds);
     }
 
     /**

@@ -179,8 +179,10 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
         });
     }
 
-    addNewStaticRobotCanvasPanel(targetSceneId: string) {
-        const newTabId = "StaticRobotScene&" + targetSceneId;
+    addNewStaticRobotCanvasPanel(targetSceneIds: string[]) {
+        let newTabId = "StaticRobotScene";
+        for(const sceneId of targetSceneIds)
+            newTabId += "&" + sceneId;
         const updatedLayoutBase = { ...this.state.layoutBase };
         
         console.log(updatedLayoutBase.floatbox)
@@ -189,9 +191,9 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                 tabs:[{id: newTabId}],
                 activeId: newTabId,
                 x: 200,
-                y: 200,
-                w: 400,
-                h: 400,
+                y: 50,
+                w: 1200,
+                h: 600,
             };
             updatedLayoutBase.floatbox.children.push(panel);
             this.setState({
@@ -1240,103 +1242,47 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
             };
         }
         else if (id.startsWith('StaticRobotScene')) {
-            let [, sceneId, type] = id.split("&");
+            let sceneIds = id.split("&").slice(1);
             let sceneManager = this.props.robotSceneManager;
 
-            let staticRobotScene: StaticRobotScene | undefined = sceneManager.getStaticRobotSceneById(sceneId);
-            if(staticRobotScene === undefined)
-            {
-                staticRobotScene = new StaticRobotScene(sceneManager, sceneId);
-                //sceneManager.setCurrStaticRobotScene(sceneId);
+            let staticRobotScenes: StaticRobotScene[][] = []
+            for(let i=0; i<3; i++)
+                staticRobotScenes[i] = [];
+            for(let i=0; i<sceneIds.length; i++){
+                let sceneId = sceneIds[i];
+                let staticRobotScene: StaticRobotScene | undefined = sceneManager.getStaticRobotSceneById(sceneId);
+                if(staticRobotScene === undefined)
+                {
+                    staticRobotScene = new StaticRobotScene(sceneManager, sceneId);
+                    //sceneManager.setCurrStaticRobotScene(sceneId);
+                }
+                staticRobotScenes[Math.floor(i/3)].push(staticRobotScene);
             }
+            
 
             return {
                 id: id,
                 closable: true,
                 cached: true,
-                title: staticRobotScene.name(),
+                title: "nine scenes",
                 content: (
                     <WorkspaceContext.Consumer>
                         {() => {
-                            if(staticRobotScene === undefined) return;
-                            return <StaticRobotCanvas
-                                        allowSelecting={true}
-                                        key={sceneId}
-                                        staticRobotScene={staticRobotScene}
-                                        robotSceneManager={sceneManager} 
-                                        setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                                        />;
-                    //         return <div>
-                    //             <div style={{display: "flex"}}>
-                    //             <StaticRobotCanvas
-                    //             allowSelecting={true}
-                    //             key={sceneId}
-                    //             staticRobotScene={staticRobotScene}
-                    //             robotSceneManager={sceneManager} 
-                    //             setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                    //             />
-                    //             <StaticRobotCanvas
-                    //             allowSelecting={true}
-                    //             key={sceneId}
-                    //             staticRobotScene={staticRobotScene}
-                    //             robotSceneManager={sceneManager} 
-                    //             setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                    //             />
-                    //             <StaticRobotCanvas
-                    //             allowSelecting={true}
-                    //             key={sceneId}
-                    //             staticRobotScene={staticRobotScene}
-                    //             robotSceneManager={sceneManager} 
-                    //             setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                    //             />
-                    //         </div>
-                    //         <div style={{display: "flex"}}>
-                    //         <StaticRobotCanvas
-                    //         allowSelecting={true}
-                    //         key={sceneId}
-                    //         staticRobotScene={staticRobotScene}
-                    //         robotSceneManager={sceneManager} 
-                    //         setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                    //         />
-                    //         <StaticRobotCanvas
-                    //         allowSelecting={true}
-                    //         key={sceneId}
-                    //         staticRobotScene={staticRobotScene}
-                    //         robotSceneManager={sceneManager} 
-                    //         setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                    //         />
-                    //         <StaticRobotCanvas
-                    //         allowSelecting={true}
-                    //         key={sceneId}
-                    //         staticRobotScene={staticRobotScene}
-                    //         robotSceneManager={sceneManager} 
-                    //         setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                    //         />
-                    //     </div>
-                    //     <div style={{display: "flex"}}>
-                    //     <StaticRobotCanvas
-                    //     allowSelecting={true}
-                    //     key={sceneId}
-                    //     staticRobotScene={staticRobotScene}
-                    //     robotSceneManager={sceneManager} 
-                    //     setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                    //     />
-                    //     <StaticRobotCanvas
-                    //     allowSelecting={true}
-                    //     key={sceneId}
-                    //     staticRobotScene={staticRobotScene}
-                    //     robotSceneManager={sceneManager} 
-                    //     setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                    //     />
-                    //     <StaticRobotCanvas
-                    //     allowSelecting={true}
-                    //     key={sceneId}
-                    //     staticRobotScene={staticRobotScene}
-                    //     robotSceneManager={sceneManager} 
-                    //     setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                    //     />
-                    // </div>
-                    //         </div>;
+                            return <div className="NineScenes">
+                                {staticRobotScenes.map(rows => (
+                                <div className="Rows">
+                                {rows.map(staticRobotScene => (
+                                    <StaticRobotCanvas
+                                  key={staticRobotScene.id().value()}
+                                  allowSelecting={true}
+                                  staticRobotScene={staticRobotScene}
+                                  robotSceneManager={sceneManager} 
+                                  setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                                />
+                                ))}
+                                </div>
+                              ))}
+                            </div>;
                         }}
                     </WorkspaceContext.Consumer>
                 ),

@@ -1169,6 +1169,14 @@ html, body {
                         border-style: solid;
                         // margin: 0;
                     }
+
+                    .NineScenes{
+                        height: 100%;
+                        .Rows{
+                            display: flex;
+                            height: 33%;
+                        }
+                    }
                 }
 
                 .sectionTitleDiv {
