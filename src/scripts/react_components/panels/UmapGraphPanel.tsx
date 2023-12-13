@@ -25,7 +25,7 @@ export interface graph_panel_props {
     getParentDockLayout: () => DockLayout | undefined,
     force_update: boolean,
     setUmapGraphOptionPanelActive: () => void,
-    addNewStaticRobotCanvasPanel: (targetSceneIds: string[]) => void,
+    addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean) => void,
 }
 
 interface graph_panel_state {

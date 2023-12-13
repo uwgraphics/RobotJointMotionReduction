@@ -32,7 +32,7 @@ export class UmapGraph {
     protected _spread: number; // the spread when calculating umap
     protected _showLines: Boolean; // true if show lines, otherwise only show dots
     protected _nneighborMode: Boolean; // true if show nneighbors before the reduction, otherwise show nneighbors after reduction
-
+    protected _showNineScenes: Boolean; // true if show nine scenes in one window
     /**
      * 
      * @param id
@@ -76,6 +76,15 @@ export class UmapGraph {
         this._spread = 0.1;
         this._showLines = new Boolean(true);
         this._nneighborMode = new Boolean(true);
+        this._showNineScenes = new Boolean(true);
+    }
+
+    showNineScenes(): Boolean{
+        return this._showNineScenes;
+    }
+
+    toggleShowNineScenes(){
+        this._showNineScenes = new Boolean(!this._showNineScenes.valueOf());
     }
 
     showLines(): Boolean{

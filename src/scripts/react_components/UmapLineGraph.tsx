@@ -40,7 +40,7 @@ interface line_graph_props {
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
     onEndChange: (newValue:number) => void,
-    addNewStaticRobotCanvasPanel: (targetSceneIds: string[]) => void,
+    addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean) => void,
 }
 
 
@@ -1045,35 +1045,66 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
         let sceneIds = [];
-        for (let i = 0; i < curveNumbers.length; i++) {
-            // for (let i = 0; i < 1; i++) {
-            let curveNumber = curveNumbers[i], pointIndex = pointIndices[i];
+        let showNineScenes = this.props.graph.showNineScenes().valueOf();
+        if(showNineScenes){
+            for (let i = 0; i < curveNumbers.length; i++) {
+                let curveNumber = curveNumbers[i], pointIndex = pointIndices[i];
+                let sceneId = newID();
+                let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
+                sceneIds.push(sceneId);
+                
+    
+                let line_id: string = plotly_data[curveNumber].id;
+    
+                let index = -1;
+                for (let i = 0; i < line_ids.length; i++)
+                    if (line_ids[i] === line_id) {
+                        index = i;
+                        break;
+                    }
+                if (index > -1) {
+                    let time = times[index][pointIndex];
+                    let line_id = line_ids[index];
+                    const [sceneId, robotName] = this.decomposeId(line_id);
+                    let scene = robotSceneManager.robotSceneById(sceneId);
+                    if (scene === undefined) return;
+                    if (!robotSceneManager.isActiveRobotScene(scene))
+                        robotSceneManager.activateRobotScene(scene);
+                    let robot = scene.getRobotByName(robotName);
+                    if (robot !== undefined) staticRobotScene.addChildRobot(robot, time);
+                }
+            }
+        } else{
             let sceneId = newID();
             let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
-            sceneIds.push(sceneId)
-            
-
-            let line_id: string = plotly_data[curveNumber].id;
-
-            let index = -1;
-            for (let i = 0; i < line_ids.length; i++)
-                if (line_ids[i] === line_id) {
-                    index = i;
-                    break;
+            sceneIds.push(sceneId);
+            for (let i = 0; i < curveNumbers.length; i++) {
+                let curveNumber = curveNumbers[i], pointIndex = pointIndices[i];
+                let line_id: string = plotly_data[curveNumber].id;
+    
+                let index = -1;
+                for (let i = 0; i < line_ids.length; i++)
+                    if (line_ids[i] === line_id) {
+                        index = i;
+                        break;
+                    }
+                if (index > -1) {
+                    let time = times[index][pointIndex];
+                    let line_id = line_ids[index];
+                    const [sceneId, robotName] = this.decomposeId(line_id);
+                    let scene = robotSceneManager.robotSceneById(sceneId);
+                    if (scene === undefined) return;
+                    if (!robotSceneManager.isActiveRobotScene(scene))
+                        robotSceneManager.activateRobotScene(scene);
+                    let robot = scene.getRobotByName(robotName);
+                    if (robot !== undefined) {
+                        staticRobotScene.addChildRobot(robot, time);
+                        robot.setOpacity(0.5);
+                    }
                 }
-            if (index > -1) {
-                let time = times[index][pointIndex];
-                let line_id = line_ids[index];
-                const [sceneId, robotName] = this.decomposeId(line_id);
-                let scene = robotSceneManager.robotSceneById(sceneId);
-                if (scene === undefined) return;
-                if (!robotSceneManager.isActiveRobotScene(scene))
-                    robotSceneManager.activateRobotScene(scene);
-                let robot = scene.getRobotByName(robotName);
-                if (robot !== undefined) staticRobotScene.addChildRobot(robot, time);
             }
         }
-        this.props.addNewStaticRobotCanvasPanel(sceneIds);
+        this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes);
         this.props.robotSceneManager.setShouldSyncViews(true);
     }
 

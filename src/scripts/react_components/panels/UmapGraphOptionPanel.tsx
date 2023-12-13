@@ -107,6 +107,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
+    toggleShowNineScenes() {
+      this.props.robotSceneManager.getCurrUmapGraph()?.toggleShowNineScenes();
+      console.log("toggle show nine scenes");
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
+    }
+
     render() {
         const {currSelectedGraph} = this.props
 
@@ -236,6 +245,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                   onChange={this.togglenneighborMode.bind(this)}
                 />
                 <label>before reduction</label>
+              </div>
+              <div>
+                <label>Show Robots in </label>
+                <label>one scene</label>
+                <Switch
+                  checked={currSelectedGraph?.showNineScenes().valueOf()}
+                  onChange={this.toggleShowNineScenes.bind(this)}
+                />
+                <label>nine scenes</label>
               </div>
               <Accordion allowZeroExpanded allowMultipleExpanded>
                 <AccordionItem>

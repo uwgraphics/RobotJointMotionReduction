@@ -179,8 +179,9 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
         });
     }
 
-    addNewStaticRobotCanvasPanel(targetSceneIds: string[]) {
-        let newTabId = "StaticRobotScene";
+    addNewStaticRobotCanvasPanel(targetSceneIds: string[], showNineScenes:boolean) {
+        let newTabId = "StaticRobotScene-Nine";
+        if(!showNineScenes) newTabId = "StaticRobotScene-One";
         for(const sceneId of targetSceneIds)
             newTabId += "&" + sceneId;
         const updatedLayoutBase = { ...this.state.layoutBase };
@@ -1241,7 +1242,7 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                 ),
             };
         }
-        else if (id.startsWith('StaticRobotScene')) {
+        else if (id.startsWith('StaticRobotScene-Nine')) {
             let sceneIds = id.split("&").slice(1);
             let sceneManager = this.props.robotSceneManager;
 
@@ -1283,6 +1284,39 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                 </div>
                               ))}
                             </div>;
+                        }}
+                    </WorkspaceContext.Consumer>
+                ),
+            };
+        }
+        else if (id.startsWith('StaticRobotScene-One')) {
+            let sceneIds = id.split("&").slice(1);
+            let sceneManager = this.props.robotSceneManager;
+
+            let sceneId = sceneIds[0];
+            let staticRobotScene: StaticRobotScene | undefined = sceneManager.getStaticRobotSceneById(sceneId);
+            if (staticRobotScene === undefined) {
+                staticRobotScene = new StaticRobotScene(sceneManager, sceneId);
+                //sceneManager.setCurrStaticRobotScene(sceneId);
+            }
+            
+
+            return {
+                id: id,
+                closable: true,
+                cached: true,
+                title: "one scene",
+                content: (
+                    <WorkspaceContext.Consumer>
+                        {() => {
+                            if (staticRobotScene === undefined) return;
+                            return <StaticRobotCanvas
+                                  key={staticRobotScene.id().value()}
+                                  allowSelecting={true}
+                                  staticRobotScene={staticRobotScene}
+                                  robotSceneManager={sceneManager} 
+                                  setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                                />
                         }}
                     </WorkspaceContext.Consumer>
                 ),
