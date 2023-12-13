@@ -73,6 +73,12 @@ interface margin_obj{
     bottom: number, 
     left: number 
 }
+interface PointInfo {
+    x: number,
+    y: number,
+    curveNumber: number, 
+    pointIndex: number,
+}
 export class UmapLineGraph extends Component<line_graph_props, line_graph_state> {
     protected _graphDiv: React.RefObject<HTMLDivElement>;
     constructor(props:line_graph_props){
@@ -910,8 +916,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let line_id: string = plotly_data[line_idx].id;
         if(line_id.startsWith("nneighbor")) return;
 
-        let plot_data = [];
-        for (const data of plotly_data) {
+        let plot_data = [], points: PointInfo[] = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
             plot_data.push({
                 x: data.x,
                 y: data.y,
@@ -921,6 +928,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 mode: data.mode,
                 marker: data.marker
             });
+            for(let j=0; j<data.x.length; j++){
+                points.push({x: data.x[j], y: data.y[j], curveNumber: i, pointIndex: j, });
+            }
         }
 
         let nneighbors = this.props.umapData[line_idx][point_idx].nneighbors;
@@ -952,6 +962,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         this.setState({
             plotly_data: plot_data,
         });
+
+        
     }
 
     /**
@@ -1004,12 +1016,13 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param points 
      * @returns 
      */
-    findPoints(clusteredData: Datum[], points: PlotDatum[]){
+    findPoints(clusteredData: Datum[], points: PlotDatum[] | PointInfo[]): PointInfo{
         for(const point of points){
-            if(clusteredData[0] === point.x && clusteredData[1] === point.y)
-                return [point.curveNumber, point.pointIndex];
+            if(clusteredData[0] === point.x && clusteredData[1] === point.y 
+                && typeof point.x === "number" && typeof point.y === "number")
+                return {x: point.x, y: point.y, curveNumber: point.curveNumber, pointIndex: point.pointIndex};
         }
-        return [-1, -1];
+        return {x: 0, y:0, curveNumber: -1, pointIndex: -1};
     }
 
     /**
@@ -1020,17 +1033,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param event 
      */
     onPlotlySelected(event: Readonly<PlotSelectionEvent>){
-        const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
-        const { plotly_data } = this.state;
-
-        // console.log("selected")
         if(event === undefined || event.points === undefined) return;
-        // console.log(event.points);
         let points = event.points;
         if(points.length === 0) return;
 
         
-        let curveNumbers = [], pointIndices = [];
+        let selectedPoints: PointInfo[] = [];
         if(points.length > 9){
             let data = [];
             for(const point of points)
@@ -1039,22 +1047,31 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             const clusterer = Clusterer.getInstance(data, 9);
             const clusteredData = clusterer.getClusteredData();  
             for(const data of clusteredData){
-                let [curveNumber, pointIndex] = this.findPoints(data[0], points);
-                curveNumbers.push(curveNumber);
-                pointIndices.push(pointIndex);
+                selectedPoints.push(this.findPoints(data[0], points));
             }
-            //console.log(clusteredData[0][0])   
         } else{
             for(const point of points){
-                curveNumbers.push(point.curveNumber);
-                pointIndices.push(point.pointIndex);
+                if(typeof point.x === "number" && typeof point.y === "number")
+                selectedPoints.push({x: point.x, y: point.y, curveNumber: point.curveNumber, pointIndex: point.pointIndex});
             }
         }
+        this.showRobotScenes(selectedPoints);
+    }
+
+    /**
+     * display robots corresponding to the point from the {curveNumber[i]}th curve
+     * at index {pointIndices[i]} in 3D scene(s)
+     * @param selectedPoints 
+     * @returns 
+     */
+    showRobotScenes(selectedPoints: PointInfo[]){
+        const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
+        const { plotly_data } = this.state;
         let sceneIds = [];
-        let showNineScenes = this.props.graph.showNineScenes().valueOf();
+        let showNineScenes = graph.showNineScenes().valueOf();
         if(showNineScenes){ // create nine scenes to show the robots
-            for (let i = 0; i < curveNumbers.length; i++) {
-                let curveNumber = curveNumbers[i], pointIndex = pointIndices[i];
+            for (let i = 0; i < selectedPoints.length; i++) {
+                let curveNumber = selectedPoints[i].curveNumber, pointIndex = selectedPoints[i].pointIndex;
                 let sceneId = newID();
                 let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
                 sceneIds.push(sceneId);
@@ -1084,8 +1101,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let sceneId = newID();
             let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
             sceneIds.push(sceneId);
-            for (let i = 0; i < curveNumbers.length; i++) {
-                let curveNumber = curveNumbers[i], pointIndex = pointIndices[i];
+            for (let i = 0; i < selectedPoints.length; i++) {
+                let curveNumber = selectedPoints[i].curveNumber, pointIndex = selectedPoints[i].pointIndex;
                 let line_id: string = plotly_data[curveNumber].id;
     
                 let index = -1;
