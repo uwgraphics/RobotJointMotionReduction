@@ -192,7 +192,7 @@ export class StaticRobotScene extends ThreeScene {
         if(frameData !== undefined) {
             let robotFrameData = frameData.get(robot);
             if(robotFrameData !== undefined){
-                console.log(robotFrameData)
+                // console.log(robotFrameData)
                 let angle_map = new Map();
                 for(const [joint, angles] of robotFrameData.jointAngles)
                     angle_map.set(joint.name(), angles[0])
@@ -201,7 +201,7 @@ export class StaticRobotScene extends ThreeScene {
                 let rotations = robotFrameData.rotations.get(undefined);
                 if(positions !== undefined) animate_frame.position = positions[0];
                 if(rotations !== undefined) animate_frame.position = rotations[0];
-                console.log(animate_frame)
+                // console.log(animate_frame)
                 newRobot.applyFrame(animate_frame);
             }
         }
