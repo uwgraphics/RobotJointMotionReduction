@@ -998,6 +998,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         return false;
     }
 
+    /**
+     * find the point corresponding to the data in clusteredData
+     * @param clusteredData 
+     * @param points 
+     * @returns 
+     */
     findPoints(clusteredData: Datum[], points: PlotDatum[]){
         for(const point of points){
             if(clusteredData[0] === point.x && clusteredData[1] === point.y)
@@ -1046,7 +1052,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
         let sceneIds = [];
         let showNineScenes = this.props.graph.showNineScenes().valueOf();
-        if(showNineScenes){
+        if(showNineScenes){ // create nine scenes to show the robots
             for (let i = 0; i < curveNumbers.length; i++) {
                 let curveNumber = curveNumbers[i], pointIndex = pointIndices[i];
                 let sceneId = newID();
@@ -1074,7 +1080,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     if (robot !== undefined) staticRobotScene.addChildRobot(robot, time);
                 }
             }
-        } else{
+        } else{ // create one scene to show the robots
             let sceneId = newID();
             let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
             sceneIds.push(sceneId);
