@@ -916,10 +916,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         this.click_on_point = true;
         event.event.stopPropagation();
         const {plotly_data} = this.state;
-        let line_idx: number = 0, point_idx: number = 0;
+        let line_idx: number = 0, point_idx: number = 0, point_x = 0, point_y = 0;
         for (let i = 0; i < event.points.length; i++) {
             line_idx = event.points[i].curveNumber;
             point_idx = event.points[i].pointIndex;
+            point_x = event.points[i].x as number;
+            point_y = event.points[i].y as number;
         }
         let line_id: string = plotly_data[line_idx].id;
         if(line_id.startsWith("nneighbor")) return;
@@ -951,9 +953,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
 
         let selectedPoints: PointInfo[] = [];
-        if (nneighbors.length > 9) {  
+        selectedPoints.push({x: point_x, y: point_y, pointIndex: point_idx, curveNumber: line_idx});
+        if (nneighbors.length > 8) {  
             // find 9 clusters and use the first point in every cluster to represent the cluster
-            const clusterer = Clusterer.getInstance(nneighbors, 9);
+            const clusterer = Clusterer.getInstance(nneighbors, 8);
             const clusteredData = clusterer.getClusteredData();
             for (const data of clusteredData) {
                 selectedPoints.push(this.findPoints(data[0], points));
@@ -962,6 +965,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             for(const data of nneighbors){
                 selectedPoints.push(this.findPoints(data, points));
             }
+        }
+        if(selectedPoints.length > 4){
+            let temp = selectedPoints[4];
+            selectedPoints[4] = selectedPoints[0];
+            selectedPoints[0] = temp;
         }
         // console.log(selectedPoints);
         this.showRobotScenes(selectedPoints);
