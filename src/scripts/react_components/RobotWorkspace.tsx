@@ -186,7 +186,6 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
             newTabId += "&" + sceneId;
         const updatedLayoutBase = { ...this.state.layoutBase };
         
-        console.log(updatedLayoutBase.floatbox)
         if(updatedLayoutBase.floatbox !== undefined){
             const panel: PanelBase = {
                 tabs:[{id: newTabId}],

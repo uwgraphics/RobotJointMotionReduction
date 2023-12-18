@@ -81,9 +81,11 @@ interface PointInfo {
 }
 export class UmapLineGraph extends Component<line_graph_props, line_graph_state> {
     protected _graphDiv: React.RefObject<HTMLDivElement>;
+    protected click_on_point: boolean; // true if the onplotlyclick function is called, stop event from propogating
     constructor(props:line_graph_props){
         super(props);
         this._graphDiv = createRef();
+        this.click_on_point = false;
         // this.drawGraph.bind(this);
         const {width, height} = this.props;
         this.state = {
@@ -899,6 +901,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
     }
 
+    onPanelClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>){
+        if(this.click_on_point) event.stopPropagation();
+        this.click_on_point = false;
+    }
+
     /**
      * click event handler
      * whenever users clicks a point, show its n-neighbors
@@ -906,7 +913,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param event 
      */
     onPlotlyClick(event: Readonly<PlotMouseEvent>) {
-        // console.log(event);
+        this.click_on_point = true;
+        event.event.stopPropagation();
         const {plotly_data} = this.state;
         let line_idx: number = 0, point_idx: number = 0;
         for (let i = 0; i < event.points.length; i++) {
@@ -941,6 +949,22 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             nneighbors_id = "nneighbors-after reduction" + newID();
             nneighbors_name = "nneighbors"+ "<br>" + "after reduction";
         }
+
+        let selectedPoints: PointInfo[] = [];
+        if (nneighbors.length > 9) {  
+            // find 9 clusters and use the first point in every cluster to represent the cluster
+            const clusterer = Clusterer.getInstance(nneighbors, 9);
+            const clusteredData = clusterer.getClusteredData();
+            for (const data of clusteredData) {
+                selectedPoints.push(this.findPoints(data[0], points));
+            }
+        } else{
+            for(const data of nneighbors){
+                selectedPoints.push(this.findPoints(data, points));
+            }
+        }
+        // console.log(selectedPoints);
+        this.showRobotScenes(selectedPoints);
         
         let x = [], y = [];
         for (const point of nneighbors) {
@@ -962,8 +986,6 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         this.setState({
             plotly_data: plot_data,
         });
-
-        
     }
 
     /**
@@ -1154,7 +1176,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             <div>
                 <div style={{textAlign: "center"}}>
                 </div>
-                <div className="UmapGraph" id="UmapGraph" ref={this._graphDiv}>
+                <div className="UmapGraph" id="UmapGraph" ref={this._graphDiv} onClick={(event) => this.onPanelClick(event)}>
                 <Plot
                     data={plotly_data}
                     layout={plotly_layout}
