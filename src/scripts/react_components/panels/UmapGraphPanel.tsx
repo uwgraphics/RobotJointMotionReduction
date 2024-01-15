@@ -502,6 +502,16 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         }
     }
 
+    dataSize(): number{
+        const { currRobots} = this.state;
+        let size = 0;
+        for (const [eventName, [times, jointData]] of currRobots) {
+            let [filteredData, filteredTime] = this.filterJointData(jointData, times);
+            size += filteredData.length;
+        }
+        return size;
+    }
+
     /**
      * handle the change of lines
      * @param eventName // the line id
@@ -529,7 +539,14 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             this.state.currRobots.delete(eventName);
             this.state.color_map.delete(eventName);
         }
-        
+
+        // set the default nneighbor to be 10% of the data
+        // but users are still able to change the nneighbor
+        let nneighbor_default = Math.floor(this.dataSize() * 0.1);
+        this.props.graph.setNNeighbors(nneighbor_default);
+        this.setState({
+            nNeighbors: nneighbor_default,
+        });
         this.fillGraphData();
     }
 
