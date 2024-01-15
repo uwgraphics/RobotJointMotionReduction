@@ -1099,7 +1099,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const { plotly_data } = this.state;
         let sceneIds = [];
         let showNineScenes = graph.showNineScenes().valueOf();
-        if(showNineScenes){ // create nine scenes to show the robots
+        //if(showNineScenes){ // create nine scenes to show the robots
             for (let i = 0; i < selectedPoints.length; i++) {
                 let curveNumber = selectedPoints[i].curveNumber, pointIndex = selectedPoints[i].pointIndex;
                 let sceneId = newID();
@@ -1127,7 +1127,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     if (robot !== undefined) staticRobotScene.addChildRobot(robot, time);
                 }
             }
-        } else{ // create one scene to show the robots
+        //} else{ // create one scene to show the robots
             let sceneId = newID();
             let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
             sceneIds.push(sceneId);
@@ -1156,7 +1156,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     }
                 }
             }
-        }
+        //}
         this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes);
         this.props.robotSceneManager.setShouldSyncViews(true);
     }

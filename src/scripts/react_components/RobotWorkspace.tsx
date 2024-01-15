@@ -180,16 +180,19 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
     }
 
     addNewStaticRobotCanvasPanel(targetSceneIds: string[], showNineScenes:boolean) {
-        let newTabId = "StaticRobotScene-Nine";
-        if(!showNineScenes) newTabId = "StaticRobotScene-One";
-        for(const sceneId of targetSceneIds)
-            newTabId += "&" + sceneId;
+        let newTabId_9 = "StaticRobotScene-Nine";
+        let newTabId_1 = "StaticRobotScene-One";
+        newTabId_1 += "&" + targetSceneIds[targetSceneIds.length-1];
+        // if(!showNineScenes) newTabId = "StaticRobotScene-One";
+        for(let i=0; i<targetSceneIds.length-1; i++)
+            newTabId_9 += "&" + targetSceneIds[i];
+        
         const updatedLayoutBase = { ...this.state.layoutBase };
         
         if(updatedLayoutBase.floatbox !== undefined){
             const panel: PanelBase = {
-                tabs:[{id: newTabId}],
-                activeId: newTabId,
+                tabs:[{id: newTabId_9}, {id: newTabId_1}],
+                activeId: newTabId_1,
                 x: 200,
                 y: 50,
                 w: 1200,
