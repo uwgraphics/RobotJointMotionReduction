@@ -78,6 +78,26 @@ let ESC_MAP: { [key: string]: string } = {
     "'": '&#39;'
 };
 
+
+/**
+ * take two number array and calculate their euclidean distance
+ * @param point1 
+ * @param point2 
+ * @returns 
+ */
+export function euclideanDistance(point1: number[], point2: number[]) {
+    if (point1.length !== point2.length) {
+        throw new Error('Points must have the same dimensionality');
+    }
+
+    let sumOfSquares = 0;
+    for (let i = 0; i < point1.length; i++) {
+        sumOfSquares += Math.pow(point1[i] - point2[i], 2);
+    }
+
+    return Math.sqrt(sumOfSquares);
+}
+
 /**
  * Sanatizes text so that it is safe to put into the DOM.
  * @param s The text to sanatize.

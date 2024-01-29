@@ -669,6 +669,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               lineWidth={this.props.graph.lineWidth()}
               axisColor={this.props.graph.axisColor()}
               showLines={this.props.graph.showLines()}
+              displayGap={this.props.graph.displayGap()}
+              min2DGapDis={this.props.graph.min2DGapDis()}
               onGraphUpdate={this.onGraphUpdate.bind(this)}
               onCurrChange={this.onCurrTimeChange.bind(this)}
               onStartChange={this.onStartTimeChange.bind(this)}

@@ -1,6 +1,6 @@
 import { Component, createRef } from "react";
 import * as d3 from 'd3'; 
-import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterEqual, findLargestSmallerElement, genSafeLogger, newID } from "../helpers";
+import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterEqual, euclideanDistance, findLargestSmallerElement, genSafeLogger, newID } from "../helpers";
 import _ from 'lodash';
 import { umap_data_entry } from "./panels/UmapGraphPanel";
 import Plot from 'react-plotly.js';
@@ -36,6 +36,8 @@ interface line_graph_props {
     lineWidth: number,
     axisColor: string,
     showLines: Boolean,
+    displayGap: Boolean,
+    min2DGapDis: number,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -172,6 +174,21 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     }
                 },
             });
+        }
+
+        if (prevProps.displayGap !== this.props.displayGap) {
+            if(this.props.displayGap.valueOf()){
+                this.displayGaps(this.props.min2DGapDis);
+            } else{
+                this.removeGaps();
+            }
+        }
+
+        if (prevProps.min2DGapDis !== this.props.min2DGapDis) {
+            if(this.props.displayGap.valueOf()){
+                this.displayGaps(this.props.min2DGapDis);
+            }
+                
         }
 
         if (prevProps.showLines !== this.props.showLines) {
@@ -1159,6 +1176,82 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         //}
         this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes);
         this.props.robotSceneManager.setShouldSyncViews(true);
+    }
+
+    
+    /**
+     * connect two points that are ajacent in their original high dimension
+     * but their distance in 2D is greater than min_dis
+     * @param min_dis 
+     */
+    displayGaps(min_dis: number){
+        const { plotly_data } = this.state;
+
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            plot_data.push({
+                x: data.x,
+                y: data.y,
+                name: data.name,
+                id: data.id,
+                showlegend: data.showlegend,
+                mode: data.mode,
+                marker: data.marker
+            });
+        }
+
+        for(const data of plotly_data){
+            let xs = data.x, ys = data.y;
+            for(let i=1; i<xs.length; i++){
+                if(euclideanDistance([xs[i-1], ys[i-1]], [xs[i], ys[i]]) > min_dis){
+                    // console.log("gap")
+                    // console.log(xs[i-1] + " " + ys[i-1])
+                    // console.log(xs[i] + " " + ys[i])
+                    plot_data.push({
+                        x: [xs[i-1], xs[i]],
+                        y: [ys[i-1], ys[i]],
+                        id: "gap",
+                        showlegend: false,
+                        mode: "lines",
+                        line: {
+                            color: 'rgb(219, 64, 82)',
+                            width: 3,
+                        }
+                    });
+                }
+            }
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * remove all the lines that connect the gaps
+     */
+    removeGaps(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let id = data.id as string;
+            if(id.startsWith("gap")) continue;
+            plot_data.push({
+                x: data.x,
+                y: data.y,
+                name: data.name,
+                id: data.id,
+                showlegend: data.showlegend,
+                mode: data.mode,
+                marker: data.marker
+            });
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
     }
 
     /**

@@ -33,6 +33,8 @@ export class UmapGraph {
     protected _showLines: Boolean; // true if show lines, otherwise only show dots
     protected _nneighborMode: Boolean; // true if show nneighbors before the reduction, otherwise show nneighbors after reduction
     protected _showNineScenes: Boolean; // true if show nine scenes in one window
+    protected _displayGap: Boolean; // true if display the gaps
+    protected _min2DGapDis: number; // the min gap distance in the 2D map
     /**
      * 
      * @param id
@@ -77,6 +79,24 @@ export class UmapGraph {
         this._showLines = new Boolean(true);
         this._nneighborMode = new Boolean(true);
         this._showNineScenes = new Boolean(true);
+        this._displayGap = new Boolean(false);
+        this._min2DGapDis = 1;
+    }
+
+    min2DGapDis(): number{
+        return this._min2DGapDis;
+    }
+
+    setMin2DGapDis(dis: number) {
+        this._min2DGapDis = dis;
+    }
+
+    displayGap(): Boolean{
+        return this._displayGap;
+    }
+
+    toggleDisplayGap(){
+        this._displayGap = new Boolean(!this._displayGap.valueOf());
     }
 
     showNineScenes(): Boolean{
