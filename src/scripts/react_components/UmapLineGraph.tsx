@@ -63,7 +63,7 @@ interface line_graph_state {
     originalMouseXCoord: number
     currDragItem: dragItem;
     // umap_data: umap_data_entry[][];
-    plotly_data: any;
+    plotly_data: any[];
     plotly_layout: any;
     plotly_frames: any;
     plotly_config: any;
