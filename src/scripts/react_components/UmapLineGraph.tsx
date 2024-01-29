@@ -1092,9 +1092,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 data.push([point.x, point.y])
             // find 9 clusters and use the first point in every cluster to represent the cluster
             const clusterer = Clusterer.getInstance(data, 9);
-            const clusteredData = clusterer.getClusteredData();  
-            for(const data of clusteredData){
-                selectedPoints.push(this.findPoints(data[0], points));
+            //const clusteredData = clusterer.getClusteredData();  
+            for(const data of clusterer.Medoids){
+                selectedPoints.push(this.findPoints(data, points));
             }
         } else{
             for(const point of points){
