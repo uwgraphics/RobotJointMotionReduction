@@ -49,6 +49,7 @@ interface line_graph_props {
 interface line_graph_state {
     // w: number,
     // h: number,
+    zoomedTimes: number[][],
     prev_x: any,
     prev_y: any,
     margin: margin_obj,
@@ -616,6 +617,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
         this.setState({
             plotly_data: plot_data,
+            zoomedTimes: zoomedTimes,
             // umap_data: data,
         });
     }
@@ -913,7 +915,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             point_idx = event.points[i].pointIndex;
         }
         if(point_idx !== -1){
-            let selected_time = this.props.times[0][point_idx]
+            let selected_time = this.state.zoomedTimes[0][point_idx]
             this.props.robotSceneManager.setCurrTime(selected_time);
         }
     }
@@ -1113,7 +1115,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      */
     showRobotScenes(selectedPoints: PointInfo[]){
         const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
-        const { plotly_data } = this.state;
+        const { plotly_data, zoomedTimes } = this.state;
         let sceneIds = [];
         let showNineScenes = graph.showNineScenes().valueOf();
         //if(showNineScenes){ // create nine scenes to show the robots
@@ -1133,7 +1135,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         break;
                     }
                 if (index > -1) {
-                    let time = times[index][pointIndex];
+                    let time = zoomedTimes[index][pointIndex];
                     let line_id = line_ids[index];
                     const [sceneId, robotName] = this.decomposeId(line_id);
                     let scene = robotSceneManager.robotSceneById(sceneId);
@@ -1159,7 +1161,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         break;
                     }
                 if (index > -1) {
-                    let time = times[index][pointIndex];
+                    let time = zoomedTimes[index][pointIndex];
                     let line_id = line_ids[index];
                     const [sceneId, robotName] = this.decomposeId(line_id);
                     let scene = robotSceneManager.robotSceneById(sceneId);
