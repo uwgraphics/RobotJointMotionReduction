@@ -18,7 +18,7 @@ import { StaticRobotScene } from "../scene/StaticRobotScene";
 interface line_graph_props {
     robotSceneManager: RobotSceneManager,
     graph: UmapGraph,
-    times: number[][],
+    times: number[][], // the global time array that ignores the time range selected by the users
     // xVals: number[][],
     // yVals: number[][],
     umapData: umap_data_entry[][],
@@ -49,7 +49,7 @@ interface line_graph_props {
 interface line_graph_state {
     // w: number,
     // h: number,
-    zoomedTimes: number[][],
+    zoomedTimes: number[][], // the time array that corresponds to the time range selected by the users
     prev_x: any,
     prev_y: any,
     margin: margin_obj,
@@ -94,6 +94,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         this.state = {
             // w: width,//+300,//1015,
             // h: height,//600,
+            zoomedTimes: [],
             prev_x: null,
             prev_y: null,
             margin: {
