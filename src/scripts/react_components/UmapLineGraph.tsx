@@ -21,6 +21,7 @@ interface line_graph_props {
     times: number[][], // the global time array that ignores the time range selected by the users
     // xVals: number[][],
     // yVals: number[][],
+    jointData: number[][][],
     umapData: umap_data_entry[][],
     startTime: number,
     endTime: number,
@@ -38,6 +39,8 @@ interface line_graph_props {
     showLines: Boolean,
     displayGap: Boolean,
     min2DGapDis: number,
+    displayFalseProximity: Boolean,
+    minHighDGapDis: number,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -50,6 +53,7 @@ interface line_graph_state {
     // w: number,
     // h: number,
     zoomedTimes: number[][], // the time array that corresponds to the time range selected by the users
+    zoomedUMAPData: umap_data_entry[][],
     prev_x: any,
     prev_y: any,
     margin: margin_obj,
@@ -95,6 +99,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             // w: width,//+300,//1015,
             // h: height,//600,
             zoomedTimes: [],
+            zoomedUMAPData: [],
             prev_x: null,
             prev_y: null,
             margin: {
@@ -193,6 +198,14 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 
         }
 
+        if (prevProps.displayFalseProximity !== this.props.displayFalseProximity) {
+            if(this.props.displayFalseProximity.valueOf()){
+                this.displayFalseProximity(0.1, this.props.minHighDGapDis);
+            } else{
+                this.removeFalseProximity();
+            }
+        }
+
         if (prevProps.showLines !== this.props.showLines) {
             let plot_data = [];
             let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
@@ -249,7 +262,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let zoomedTimes: number[][] = [], zoomedUmapData: umap_data_entry[][] = [];
         const {times, umapData} = this.props;
         if(times.length === 0){
-            return [[[0]], [[{x:0, y:0, nneighbors:[], nneighbors_2d:[]}]]];
+            return [[[0]], [[{x:0, y:0, nneighbors:[], nneighbors_2d:[], point: []}]]];
         }
         
         for (let i = 0; i < times.length; i++) {
@@ -619,7 +632,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         this.setState({
             plotly_data: plot_data,
             zoomedTimes: zoomedTimes,
-            // umap_data: data,
+            zoomedUMAPData: data,
         });
     }
 
@@ -1241,6 +1254,108 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let data = plotly_data[i];
             let id = data.id as string;
             if(id.startsWith("gap")) continue;
+            plot_data.push({
+                x: data.x,
+                y: data.y,
+                name: data.name,
+                id: data.id,
+                showlegend: data.showlegend,
+                mode: data.mode,
+                marker: data.marker
+            });
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * show two points that are ajacent (distance smaller than max_dis_2D) in 2D
+     * but their distance in original high dimension is greater than min_dis_HD
+     * @param max_dis_2D
+     * @param min_dis_HD 
+     */
+    displayFalseProximity(max_dis_2D: number, min_dis_HD: number){
+        const { plotly_data, zoomedUMAPData } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            plot_data.push({
+                x: data.x,
+                y: data.y,
+                name: data.name,
+                id: data.id,
+                showlegend: data.showlegend,
+                mode: data.mode,
+                marker: data.marker
+            });
+        }
+
+        // compare every pair of points in the 2D allDisplayedData array
+        for(let i=0; i<zoomedUMAPData.length; i++){
+            for(let k=0; k<zoomedUMAPData[i].length-1; k++){
+                for(let l=k+1; l<zoomedUMAPData[i].length; l++){
+                    let x1 = zoomedUMAPData[i][k].x, y1 = zoomedUMAPData[i][k].y;
+                    let x2 = zoomedUMAPData[i][l].x, y2 = zoomedUMAPData[i][l].y;
+                    let point1 = zoomedUMAPData[i][k].point, point2 = zoomedUMAPData[i][l].point;
+                    if(euclideanDistance([x1, y1], [x2, y2]) < max_dis_2D && 
+                        euclideanDistance(point1, point2) > min_dis_HD){
+                        console.log("false proximity")
+                        plot_data.push({
+                            x: [x1, x2],
+                            y: [y1, y2],
+                            id: "false proximity",
+                            showlegend: false,
+                            mode: "markers",
+                            marker:{
+                                color: 'rgb(195, 178, 153)',
+                            }
+                        });
+                    }
+                }
+            }
+                
+            for(let j=i+1; j<zoomedUMAPData.length; j++){
+                for(let k=0; k<zoomedUMAPData[i].length; k++){
+                    for(let l=0; l<zoomedUMAPData[j].length; l++){
+                        let x1 = zoomedUMAPData[i][k].x, y1 = zoomedUMAPData[i][k].y;
+                        let x2 = zoomedUMAPData[j][l].x, y2 = zoomedUMAPData[j][l].y;
+                        let point1 = zoomedUMAPData[i][k].point, point2 = zoomedUMAPData[j][l].point;
+                        if(euclideanDistance([x1, y1], [x2, y2]) < max_dis_2D && 
+                            euclideanDistance(point1, point2) > min_dis_HD){
+                            console.log("false proximity")
+                            plot_data.push({
+                                x: [x1, x2],
+                                y: [y1, y2],
+                                id: "false proximity",
+                                showlegend: false,
+                                mode: "markers",
+                                marker:{
+                                    color: 'rgb(195, 178, 153)',
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * remove all false proximity points
+     */
+    removeFalseProximity(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let id = data.id as string;
+            if(id.startsWith("false proximity")) continue;
             plot_data.push({
                 x: data.x,
                 y: data.y,

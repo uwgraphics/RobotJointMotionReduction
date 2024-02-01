@@ -56,6 +56,7 @@ export interface umap_data_entry {
     y: number,
     nneighbors: number[][],
     nneighbors_2d: number[][],
+    point: number[], // the point in the original dimension
 }
 export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_state> {
     protected _panel_resize_observer?: ResizeObserver;
@@ -67,6 +68,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     protected xVals: number[][]; // values[i] is the array of values for line i
     protected yVals: number[][]; // values[i] is the array of values for line i
     protected umapData: umap_data_entry[][]; // values[i] is the array of values for line i
+    protected jointData: number[][][]; // jointData[i] is a 2D array of the joint data for robot i
 
     constructor(props: graph_panel_props) {
         
@@ -99,6 +101,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         this.xVals = [];
         this.yVals = [];
         this.umapData = [];
+        this.jointData = [];
     }
 
     /**
@@ -205,7 +208,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         }
 
         for(let i=0; i<embedding.length; i++){
-            umapData.push({x: embedding[i][0], y: embedding[i][1], nneighbors: nneighbors[i], nneighbors_2d: nneighbors_2d[i]});
+            umapData.push({x: embedding[i][0], y: embedding[i][1], nneighbors: nneighbors[i], nneighbors_2d: nneighbors_2d[i], point: jointData[i]});
         }
         // console.log(nneighbors);
         APP.setPopupHelpPage({ page: PopupHelpPage.LoadingSuccess, type: "UMAP"});
@@ -305,8 +308,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         let filteredJointData: number[][] = [];
         let filteredTimes: number[][] = [];
         let lengths: number[] = [];
-
+        let allJointData: number[][][] = [];
         for (const [eventName, [times, jointData]] of currRobots) {
+            allJointData.push(jointData);
             let [filteredData, filteredTime] = this.filterJointData(jointData, times);
             filteredJointData = filteredJointData.concat(filteredData);
             filteredTimes.push(filteredTime);
@@ -359,6 +363,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         this.yVals = yVals;
         this.times = _times;
         this.umapData = umapData;
+        this.jointData = allJointData;
         this.props.graph.setLineNames(line_names);
         this.props.graph.setLineIds(line_ids);
         this.props.graph.setLineColors(line_colors);
@@ -655,6 +660,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               times={this.times}
             //   xVals={this.xVals}
             //   yVals={this.yVals}
+              jointData={this.jointData}
               umapData={this.umapData}
               startTime={prev_times.start}
               endTime={prev_times.end}
@@ -671,6 +677,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               showLines={this.props.graph.showLines()}
               displayGap={this.props.graph.displayGap()}
               min2DGapDis={this.props.graph.min2DGapDis()}
+              displayFalseProximity={this.props.graph.displayFalseProximity()}
+              minHighDGapDis={this.props.graph.minHighDGapDis()}
               onGraphUpdate={this.onGraphUpdate.bind(this)}
               onCurrChange={this.onCurrTimeChange.bind(this)}
               onStartChange={this.onStartTimeChange.bind(this)}

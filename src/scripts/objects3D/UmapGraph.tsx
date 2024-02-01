@@ -35,6 +35,8 @@ export class UmapGraph {
     protected _showNineScenes: Boolean; // true if show nine scenes in one window
     protected _displayGap: Boolean; // true if display the gaps
     protected _min2DGapDis: number; // the min gap distance in the 2D map
+    protected _displayFalseProximity: Boolean; // true if display the false proximity
+    protected _minHighDGapDis: number; // the min gap distance in the original high dimension
     /**
      * 
      * @param id
@@ -81,6 +83,24 @@ export class UmapGraph {
         this._showNineScenes = new Boolean(true);
         this._displayGap = new Boolean(false);
         this._min2DGapDis = 1;
+        this._displayFalseProximity = new Boolean(false);
+        this._minHighDGapDis = 1;
+    }
+
+    minHighDGapDis(): number{
+        return this._minHighDGapDis;
+    }
+
+    setMinHighDGapDis(dis: number) {
+        this._minHighDGapDis = dis;
+    }
+
+    displayFalseProximity(): Boolean{
+        return this._displayFalseProximity;
+    }
+
+    toggleDisplayFalseProximity(){
+        this._displayFalseProximity = new Boolean(!this._displayFalseProximity.valueOf());
     }
 
     min2DGapDis(): number{
