@@ -1151,7 +1151,7 @@ export class GraphPanel extends Component<graph_panel_props, graph_panel_state> 
         this._panel_resize_observer = new ResizeObserver((entries)=>{
             // console.log(entries[0].contentRect);
             this.setState({
-                panelWidth: (entries[0].contentRect.width),
+                panelWidth: (entries[0].contentRect.width) * 0.9,
                 panelHeight: (entries[0].contentRect.height) * 0.85,
             });
         });
