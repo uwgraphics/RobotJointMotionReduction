@@ -1112,6 +1112,7 @@ html, body {
                         height: 100%;
                         display: block;
                         color: var(--panel-text-color);
+                        overflow: auto;
                         .LegendMessage{
                             margin: 1rem;
                             align-items: center;
