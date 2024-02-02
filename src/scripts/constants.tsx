@@ -6,6 +6,7 @@ import { AssertionError } from "assert";
 import { AnimationTable } from "./AnimationTable";
 import App from "./react_components/App";
 import { PopupHelpPage, PopupHelpPageParams } from "./react_components/popup_help_page";
+import MersenneTwister from 'mersennetwister';
 
 let _debug: boolean = true;
 export function DEBUG(): boolean { return _debug; }
@@ -13,6 +14,8 @@ export function setDEBUG(debug: boolean) { _debug = debug }
 
 /// Maximum frames per second.
 export const MAX_FRAMERATE = 60;
+
+export const mt = new MersenneTwister(20);
 
 /**
  * Used by the ThreeScene to never run two functions with the same role.

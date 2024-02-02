@@ -12,7 +12,7 @@ import { UmapGraph } from "../../objects3D/UmapGraph";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import assert from "assert";
-import { APP } from "../../constants";
+import { APP, mt } from "../../constants";
 import { PopupHelpPage } from "../popup_help_page";
 import { nearestNeighbors } from "../../nneighbors/umap";
 
@@ -174,7 +174,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "UMAP" });
         //await Promise.all([]);
         const {graph} = this.props;
-        const umap = new UMAP({nNeighbors: graph.nNeighbors(), minDist: graph.minDis(), spread: graph.spread()});
+        const umap = new UMAP({nNeighbors: graph.nNeighbors(), minDist: graph.minDis(), spread: graph.spread(), random: mt.random.bind(mt)});
 
         // for (let i = 0; i < 1000; i++) {
         //     let a = Array(jointData[0].length).fill(Math.random() * Math.PI * 2 - Math.PI);
