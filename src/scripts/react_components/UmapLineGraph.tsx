@@ -1242,7 +1242,6 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     gap_points.push({x: xs[i-1], y: ys[i-1], curveNumber: curveNumber, pointIndex: i-1});
                     gap_points.push({x: xs[i], y: ys[i], curveNumber: curveNumber, pointIndex: i});
                     this.showRobotScenes(gap_points);
-                    console.log(gap_points)
                 }
             }
         }
@@ -1300,8 +1299,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             });
         }
         let zoomedUMAPData = [];
-        for(const [,data] of this.state.zoomedUMAPData)
-            zoomedUMAPData.push(data);
+        for(const [i, data] of plotly_data.entries()){
+            let line_id = data.id;
+            let umapData = this.state.zoomedUMAPData.get(line_id);
+            if(umapData !== undefined) zoomedUMAPData.push(umapData);
+        }
+            
         // compare every pair of points in the 2D allDisplayedData array
         for(let i=0; i<zoomedUMAPData.length; i++){
             for(let k=0; k<zoomedUMAPData[i].length-1; k++){
@@ -1322,6 +1325,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                                 color: 'rgb(195, 178, 153)',
                             }
                         });
+
+                        let gap_points: PointInfo[] = [];
+                        gap_points.push({x: x1, y: y1, curveNumber: i, pointIndex: k});
+                        gap_points.push({x: x2, y: y2, curveNumber: i, pointIndex: l});
+                        this.showRobotScenes(gap_points);
                     }
                 }
             }
@@ -1345,6 +1353,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                                     color: 'rgb(195, 178, 153)',
                                 }
                             });
+                            let gap_points: PointInfo[] = [];
+                            gap_points.push({x: x1, y: y1, curveNumber: i, pointIndex: k});
+                            gap_points.push({x: x2, y: y2, curveNumber: j, pointIndex: l});
+                            this.showRobotScenes(gap_points);
                         }
                     }
                 }
