@@ -53,7 +53,7 @@ interface line_graph_state {
     // w: number,
     // h: number,
     zoomedTimes: number[][], // the time array that corresponds to the time range selected by the users
-    zoomedUMAPData: umap_data_entry[][],
+    zoomedUMAPData: Map<string, umap_data_entry[]>,
     prev_x: any,
     prev_y: any,
     margin: margin_obj,
@@ -99,7 +99,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             // w: width,//+300,//1015,
             // h: height,//600,
             zoomedTimes: [],
-            zoomedUMAPData: [],
+            zoomedUMAPData: new Map(),
             prev_x: null,
             prev_y: null,
             margin: {
@@ -611,6 +611,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         onGraphUpdate(true);
         let plot_data = [];
         let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
+        let UmapData: Map<string, umap_data_entry[]> = new Map();
         for(let i=0; i<data.length; i++){
             let x = [], y = [];
             for(const point of data[i]){
@@ -628,11 +629,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     size: 2
                 }
             });
+            UmapData.set(line_ids[i], data[i]);
         }
         this.setState({
             plotly_data: plot_data,
             zoomedTimes: zoomedTimes,
-            zoomedUMAPData: data,
+            zoomedUMAPData: UmapData,
         });
     }
 
@@ -1277,7 +1279,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param min_dis_HD 
      */
     displayFalseProximity(max_dis_2D: number, min_dis_HD: number){
-        const { plotly_data, zoomedUMAPData } = this.state;
+        const { plotly_data} = this.state;
         let plot_data = [];
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
@@ -1291,7 +1293,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 marker: data.marker
             });
         }
-
+        let zoomedUMAPData = [];
+        for(const [,data] of this.state.zoomedUMAPData)
+            zoomedUMAPData.push(data);
         // compare every pair of points in the 2D allDisplayedData array
         for(let i=0; i<zoomedUMAPData.length; i++){
             for(let k=0; k<zoomedUMAPData[i].length-1; k++){
