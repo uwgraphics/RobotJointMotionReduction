@@ -296,7 +296,7 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 />
               </div>
               <LabeledSlider
-                label={"min 2D gap distance: "}
+                label={"min HD gap distance: "}
                 min={0.1}
                 max={4}
                 step={0.01}
