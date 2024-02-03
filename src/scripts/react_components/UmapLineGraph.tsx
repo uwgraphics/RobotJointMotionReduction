@@ -53,7 +53,7 @@ interface line_graph_state {
     // w: number,
     // h: number,
     zoomedTimes: number[][], // the time array that corresponds to the time range selected by the users
-    zoomedUMAPData: Map<string, umap_data_entry[]>,
+    zoomedUMAPData: Map<string, umap_data_entry[]>, // key is the line id, value is the corresponding umap data presented in the graph
     prev_x: any,
     prev_y: any,
     margin: margin_obj,
