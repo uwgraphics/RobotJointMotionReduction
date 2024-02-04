@@ -12,10 +12,10 @@ import { UmapGraph } from "../../objects3D/UmapGraph";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import assert from "assert";
-import { APP, mt } from "../../constants";
+import { APP} from "../../constants";
 import { PopupHelpPage } from "../popup_help_page";
 import { nearestNeighbors } from "../../nneighbors/umap";
-
+import MersenneTwister from 'mersennetwister';
 // import { time } from "console";
 //TODO timewarped positions graph
 export interface graph_panel_props {
@@ -44,6 +44,7 @@ interface graph_panel_state {
     nNeighbors: number; // the number of neighbors when calculating umap
     minDis: number; // the min distance when calculating umap
     spread: number; // the spread when calculating umap
+    randomSeed: number; // the random seed for the UMAP algo
 }
 
 export interface time_obj{
@@ -95,6 +96,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             nNeighbors: this.props.graph.nNeighbors(),
             minDis: this.props.graph.minDis(),
             spread: this.props.graph.spread(),
+            randomSeed: this.props.graph.randomSeed(),
         };
         this._graphDiv = createRef();
         this.times = [];
@@ -174,6 +176,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "UMAP" });
         //await Promise.all([]);
         const {graph} = this.props;
+        let mt = new MersenneTwister(this.props.graph.randomSeed());
         const umap = new UMAP({nNeighbors: graph.nNeighbors(), minDist: graph.minDis(), spread: graph.spread(), random: mt.random.bind(mt)});
 
         // for (let i = 0; i < 1000; i++) {
@@ -424,11 +427,13 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
 
         if(this.props.graph.nNeighbors() !== this.state.nNeighbors 
         || this.props.graph.minDis() !== this.state.minDis 
-        || this.props.graph.spread() !== this.state.spread){
+        || this.props.graph.spread() !== this.state.spread
+        || this.props.graph.randomSeed() !== this.state.randomSeed){
             this.setState({
                 nNeighbors: this.props.graph.nNeighbors(),
                 minDis: this.props.graph.minDis(),
                 spread: this.props.graph.spread(),
+                randomSeed: this.props.graph.randomSeed(),
             });
             this.props.graph.resetColor();
             this.fillGraphData();

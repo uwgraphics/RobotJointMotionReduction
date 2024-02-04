@@ -246,6 +246,14 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 value={currSelectedGraph?.spread()}
                 onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setSpread.bind(this.props.robotSceneManager.getCurrUmapGraph())}
               />
+              <LabeledSlider
+                label={"random seed: "}
+                min={1}
+                max={100}
+                step={1}
+                value={currSelectedGraph?.randomSeed()}
+                onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setRamdomSeed.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+              />
               <div>
                 <label>Display:</label>
                 <label>Dots</label>

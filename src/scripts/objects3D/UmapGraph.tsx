@@ -37,6 +37,7 @@ export class UmapGraph {
     protected _min2DGapDis: number; // the min gap distance in the 2D map
     protected _displayFalseProximity: Boolean; // true if display the false proximity
     protected _minHighDGapDis: number; // the min gap distance in the original high dimension
+    protected _randomSeed: number; // the random seed for the UMAP algo
     /**
      * 
      * @param id
@@ -85,7 +86,17 @@ export class UmapGraph {
         this._min2DGapDis = 1;
         this._displayFalseProximity = new Boolean(false);
         this._minHighDGapDis = 1;
+        this._randomSeed = 20;
     }
+
+    randomSeed(): number{
+        return this._randomSeed;
+    }
+
+    setRamdomSeed(randomSeed: number){
+        this._randomSeed = randomSeed;
+    }
+
 
     minHighDGapDis(): number{
         return this._minHighDGapDis;

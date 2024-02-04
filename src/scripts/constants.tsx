@@ -15,7 +15,7 @@ export function setDEBUG(debug: boolean) { _debug = debug }
 /// Maximum frames per second.
 export const MAX_FRAMERATE = 60;
 
-export const mt = new MersenneTwister(20);
+// export const mt = new MersenneTwister(20);
 
 /**
  * Used by the ThreeScene to never run two functions with the same role.
