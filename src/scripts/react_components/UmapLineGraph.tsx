@@ -41,6 +41,7 @@ interface line_graph_props {
     min2DGapDis: number,
     displayFalseProximity: Boolean,
     minHighDGapDis: number,
+    showAllTraces: Boolean,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -181,6 +182,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     }
                 },
             });
+        }
+
+        if (prevProps.showAllTraces !== this.props.showAllTraces) {
+            this.dispalyAllTraces(this.props.showAllTraces.valueOf());
         }
 
         if (prevProps.displayGap !== this.props.displayGap) {
@@ -1386,6 +1391,38 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 showlegend: data.showlegend,
                 mode: data.mode,
                 marker: data.marker
+            });
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * 
+     * @param show true if show all traces, false if hide them
+     */
+    dispalyAllTraces(show: boolean){
+        console.log("display all traces");
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let id = data.id as string;
+            if(id.startsWith("gap") || id.startsWith("false proximity")){
+                plot_data.push(data);
+                continue;
+            }
+            plot_data.push({
+                x: data.x,
+                y: data.y,
+                name: data.name,
+                id: data.id,
+                showlegend: data.showlegend,
+                mode: data.mode,
+                marker: data.marker,
+                visible: show,
             });
         }
 

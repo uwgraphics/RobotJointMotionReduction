@@ -98,6 +98,14 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
+    toggleShowAllTraces() {
+      this.props.robotSceneManager.getCurrUmapGraph()?.toggleShowAllTraces();
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
+    }
+
     togglenneighborMode() {
       this.props.robotSceneManager.getCurrUmapGraph()?.togglenneighborMode();
       console.log("toggle nneighbor mode");
@@ -255,13 +263,22 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setRamdomSeed.bind(this.props.robotSceneManager.getCurrUmapGraph())}
               />
               <div>
-                <label>Display:</label>
+                <label>Display: </label>
                 <label>Dots</label>
                 <Switch
                   checked={currSelectedGraph?.showLines().valueOf()}
                   onChange={this.toggleShowLines.bind(this)}
                 />
                 <label>Lines</label>
+              </div>
+              <div>
+                <label>All Traces: </label>
+                <label>Hide</label>
+                <Switch
+                  checked={currSelectedGraph?.showAllTraces().valueOf()}
+                  onChange={this.toggleShowAllTraces.bind(this)}
+                />
+                <label>Show</label>
               </div>
               <div>
                 <label>Neighbors:</label>

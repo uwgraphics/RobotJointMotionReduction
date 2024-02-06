@@ -38,6 +38,7 @@ export class UmapGraph {
     protected _displayFalseProximity: Boolean; // true if display the false proximity
     protected _minHighDGapDis: number; // the min gap distance in the original high dimension
     protected _randomSeed: number; // the random seed for the UMAP algo
+    protected _showAllTraces: Boolean; // true if show all traces, otherwise hide them
     /**
      * 
      * @param id
@@ -86,7 +87,16 @@ export class UmapGraph {
         this._min2DGapDis = 1;
         this._displayFalseProximity = new Boolean(false);
         this._minHighDGapDis = 1;
+        this._showAllTraces = new Boolean(true);
         this._randomSeed = 20;
+    }
+
+    showAllTraces(): Boolean{
+        return this._showAllTraces;
+    }
+
+    toggleShowAllTraces(){
+        this._showAllTraces = new Boolean(!this._showAllTraces.valueOf());
     }
 
     randomSeed(): number{
