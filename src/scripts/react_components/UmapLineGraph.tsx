@@ -997,16 +997,15 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if (nneighbors.length > 8) {  
             // find 9 clusters and use the first point in every cluster to represent the cluster
             const clusterer = Clusterer.getInstance(nneighbors, 8);
-            const clusteredData = clusterer.getClusteredData();
-            for (const data of clusteredData) {
-                selectedPoints.push(this.findPoints(data[0], points));
+            for (const data of clusterer.Medoids) {
+                selectedPoints.push(this.findPoints(data, points));
             }
         } else{
             for(const data of nneighbors){
                 selectedPoints.push(this.findPoints(data, points));
             }
         }
-        if(selectedPoints.length > 4){
+        if(selectedPoints.length > 4){  // make sure that the robot pose corresponding to the selected point is in the middle
             let temp = selectedPoints[4];
             selectedPoints[4] = selectedPoints[0];
             selectedPoints[0] = temp;
