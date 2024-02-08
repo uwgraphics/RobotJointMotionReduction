@@ -16,6 +16,7 @@ import { APP} from "../../constants";
 import { PopupHelpPage } from "../popup_help_page";
 import { nearestNeighbors } from "../../nneighbors/umap";
 import MersenneTwister from 'mersennetwister';
+import axios from 'axios';
 // import { time } from "console";
 //TODO timewarped positions graph
 export interface graph_panel_props {
@@ -171,6 +172,39 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         return [times, result];
     }
 
+  
+
+    async sendDataToPython(jointData: number[][]): Promise<umap_data_entry[]> {
+        // APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "umap" });
+        const dataToSend = {
+            nneighbors:  this.props.graph.nNeighbors(),
+            min_dis: this.props.graph.minDis(),
+            spread: this.props.graph.spread(),
+            random_seed: this.props.graph.randomSeed(),
+            data: jointData,
+        };
+        let umapData: umap_data_entry[] = [];
+        try {
+            const response = await axios.post('http://localhost:5000/api/data', dataToSend);
+            console.log(response.data.UMAPData);
+            for(let i=0; i<jointData.length; i++){
+                let twoDPlot = response.data.UMAPData[i];
+                let nneighbors_HD_indices = response.data.nneighbors_HD[i];
+                let nneighbors_2D_indices = response.data.nneighbors_2D[i];
+                let nneighbors_HD: number[][] = [], nneighbors_2D: number[][] = [];
+                for(const index of nneighbors_HD_indices)
+                    nneighbors_HD.push(response.data.UMAPData[index]);
+                for(const index of nneighbors_2D_indices)
+                    nneighbors_2D.push(response.data.UMAPData[index]);
+                umapData.push({x: twoDPlot[0], y: twoDPlot[1], nneighbors: nneighbors_HD, 
+                    nneighbors_2d: nneighbors_2D, point: jointData[i]});
+            }
+        } catch (error) {
+            console.error('Error sending data to Python:', error);
+        }
+        return umapData;
+    };
+
     async convertJointDataToUmap(jointData: number[][]): Promise<umap_data_entry[]>
     {
         APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "UMAP" });
@@ -302,6 +336,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
      */
     async fillGraphData(): Promise<void>
     {
+        APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "umap" });
         const { currRobots, color_map } = this.state;
         let line_names = [], line_ids = [], line_colors = [];
         let xVals = [];
@@ -321,9 +356,12 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             lengths.push(filteredData.length);
         }
         if (filteredJointData.length !== 0) {
-            //APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "umap" });
-            let embedding = await this.convertJointDataToUmap(filteredJointData);
-            //APP.setPopupHelpPage({ page: PopupHelpPage.LoadingSuccess, type: "umap"});
+            
+            let embedding = await this.sendDataToPython(filteredJointData);
+            // let embedding = await this.convertJointDataToUmap(filteredJointData);
+
+            
+
             let index: number = 0;
             let robotIndex: number = 0;
             for (const [eventName, [times, jointData]] of currRobots) {
@@ -376,6 +414,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             line_ids: line_ids,
             need_update: false,
         })
+        APP.setPopupHelpPage({ page: PopupHelpPage.LoadingSuccess, type: "umap"});
     }
 
     componentWillUnmount() {
