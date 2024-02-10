@@ -142,6 +142,18 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
+    toggleUMAPType() {
+      if(this.props.robotSceneManager.getCurrUmapGraph()?.UMAPType() === "Parametric")
+        this.props.robotSceneManager.getCurrUmapGraph()?.setUMAPType("Regular");
+      else
+        this.props.robotSceneManager.getCurrUmapGraph()?.setUMAPType("Parametric");
+      console.log("toggle UMAP type");
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
+    }
+
     render() {
         const {currSelectedGraph} = this.props
 
@@ -220,6 +232,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
               /> */}
             </div>
             <div>
+              <div>
+                <label>UMAP Type: </label>
+                <label>Regular</label>
+                <Switch
+                  checked={currSelectedGraph?.UMAPType() === "Parametric"}
+                  onChange={this.toggleUMAPType.bind(this)}
+                />
+                <label>Parametric</label>
+              </div>
               <LabeledSlider
                 label={"Line width: "}
                 min={0.1}

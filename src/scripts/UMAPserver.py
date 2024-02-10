@@ -3,14 +3,15 @@ from flask_cors import CORS  # Import CORS from flask_cors
 import umap
 import numpy as np
 from umap.umap_ import nearest_neighbors
+from umap.parametric_umap import ParametricUMAP
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 @app.route('/api/data', methods=['POST'])
 def receive_data():
     data = request.get_json()
-    print("Received data")
-    embedding = embedding_UMAP(data["nneighbors"], data["min_dis"], data["spread"], data["random_seed"], data["data"])
+    print("Received data", " type is ", data["type"])
+    embedding = embedding_UMAP(data["type"], data["nneighbors"], data["min_dis"], data["spread"], data["random_seed"], data["data"])
     
     (nneighbors_HD, nneighbors_HD_dis) = calc_nneighbor(data["nneighbors"], data["random_seed"], np.array(data["data"]))
     (nneighbors_2D, nneighbors_2D_dis) = calc_nneighbor(data["nneighbors"], data["random_seed"], embedding)
@@ -25,9 +26,13 @@ def receive_data():
                     "nneighbors_2D": nneighbors_2D, "nneighbors_2D_dis": nneighbors_2D_dis})
 
 
-def embedding_UMAP(nneighbors, min_dis, spread, random_seed, data):
-    reducer = umap.UMAP(n_neighbors=nneighbors, min_dist=min_dis, spread=spread, random_state=random_seed)
-    embedding = reducer.fit_transform(data)
+def embedding_UMAP(type_UMAP, nneighbors, min_dis, spread, random_seed, data):
+    if type_UMAP == "Parametric":
+        embedder = ParametricUMAP()
+    else:
+        embedder = umap.UMAP(n_neighbors=nneighbors, min_dist=min_dis, spread=spread, random_state=random_seed)
+    # embedding = reducer.fit_transform(data)
+    embedding = embedder.fit_transform(data)
     return embedding
 
 def calc_nneighbor(nneighbors, random_seed, data):

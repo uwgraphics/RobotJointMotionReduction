@@ -8,7 +8,7 @@ import DockLayout from "rc-dock";
 import { DragButton } from "../DragButton";
 import { UMAP } from "umap-js";
 import { UmapLineGraph } from "../UmapLineGraph";
-import { UmapGraph } from "../../objects3D/UmapGraph";
+import { UmapGraph, umap_type } from "../../objects3D/UmapGraph";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import assert from "assert";
@@ -46,6 +46,7 @@ interface graph_panel_state {
     minDis: number; // the min distance when calculating umap
     spread: number; // the spread when calculating umap
     randomSeed: number; // the random seed for the UMAP algo
+    UMAPType: umap_type;
 }
 
 export interface time_obj{
@@ -98,6 +99,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             minDis: this.props.graph.minDis(),
             spread: this.props.graph.spread(),
             randomSeed: this.props.graph.randomSeed(),
+            UMAPType: this.props.graph.UMAPType(),
         };
         this._graphDiv = createRef();
         this.times = [];
@@ -177,6 +179,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     async sendDataToPython(jointData: number[][]): Promise<umap_data_entry[]> {
         // APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "umap" });
         const dataToSend = {
+            type: this.props.graph.UMAPType(),
             nneighbors:  this.props.graph.nNeighbors(),
             min_dis: this.props.graph.minDis(),
             spread: this.props.graph.spread(),
@@ -467,12 +470,14 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         if(this.props.graph.nNeighbors() !== this.state.nNeighbors 
         || this.props.graph.minDis() !== this.state.minDis 
         || this.props.graph.spread() !== this.state.spread
-        || this.props.graph.randomSeed() !== this.state.randomSeed){
+        || this.props.graph.randomSeed() !== this.state.randomSeed
+        || this.props.graph.UMAPType() !== this.state.UMAPType){
             this.setState({
                 nNeighbors: this.props.graph.nNeighbors(),
                 minDis: this.props.graph.minDis(),
                 spread: this.props.graph.spread(),
                 randomSeed: this.props.graph.randomSeed(),
+                UMAPType: this.props.graph.UMAPType(),
             });
             this.props.graph.resetColor();
             this.fillGraphData();

@@ -13,6 +13,7 @@
 
 import { Graph } from "./Graph";
 
+export type umap_type = "Parametric" | "Regular";
  
 const palettes = ["white", "yellow", "red", "#204BD8", "green",  /*"orange",*/ "brown", "purple", /*"pink"*/];
 export class UmapGraph {
@@ -39,6 +40,7 @@ export class UmapGraph {
     protected _minHighDGapDis: number; // the min gap distance in the original high dimension
     protected _randomSeed: number; // the random seed for the UMAP algo
     protected _showAllTraces: Boolean; // true if show all traces, otherwise hide them
+    protected _UMAPType: umap_type;
     /**
      * 
      * @param id
@@ -88,7 +90,17 @@ export class UmapGraph {
         this._displayFalseProximity = new Boolean(false);
         this._minHighDGapDis = 1;
         this._showAllTraces = new Boolean(true);
+        this._UMAPType = "Parametric";
+
         this._randomSeed = 20;
+    }
+
+    UMAPType(): umap_type{
+        return this._UMAPType;
+    }
+
+    setUMAPType(type: umap_type){
+        this._UMAPType = type;
     }
 
     showAllTraces(): Boolean{
