@@ -211,6 +211,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
 
+        if (prevProps.minHighDGapDis !== this.props.minHighDGapDis) {
+            if(this.props.displayFalseProximity.valueOf()){
+                this.displayFalseProximity(0.1, this.props.minHighDGapDis);
+            }
+        }
+
         if (prevProps.showLines !== this.props.showLines) {
             let plot_data = [];
             let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
