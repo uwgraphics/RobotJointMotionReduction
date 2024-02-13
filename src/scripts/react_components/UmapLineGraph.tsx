@@ -298,25 +298,6 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         // console.log(vals);
         return [zoomedTimes, zoomedUmapData]
     }
-    /**
-     * record current mouse position
-     * @param event 
-     */
-    currMouse(event:any){
-        this.setState({
-            originalMouseXCoord: event.x
-        })
-    }
-    /**
-     * record end mouse position
-     * @param event 
-     */
-    endMouse(event:any){
-        this.setState({
-            mouseXCoord: -1,
-            originalMouseXCoord: -1
-        })
-    }
 
 
     /**
