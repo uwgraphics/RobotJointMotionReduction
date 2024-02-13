@@ -2,13 +2,13 @@ import { Component, createRef } from "react";
 import * as d3 from 'd3'; 
 import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterEqual, euclideanDistance, findLargestSmallerElement, genSafeLogger, newID } from "../helpers";
 import _ from 'lodash';
-import { umap_data_entry } from "./panels/UmapGraphPanel";
 import Plot from 'react-plotly.js';
 import { RobotSceneManager } from "../RobotSceneManager";
 import { UmapGraph } from "../objects3D/UmapGraph";
 import { Datum, LegendClickEvent, PlotDatum, PlotHoverEvent, PlotMouseEvent, PlotSelectionEvent } from "plotly.js";
 import { Cluster, Clusterer } from "k-medoids";
 import { StaticRobotScene } from "../scene/StaticRobotScene";
+import { UmapPoint } from "../objects3D/UmapPoint";
 
 
 /**
@@ -22,7 +22,7 @@ interface line_graph_props {
     // xVals: number[][],
     // yVals: number[][],
     jointData: number[][][],
-    umapData: umap_data_entry[][],
+    umapData: UmapPoint[][],
     startTime: number,
     endTime: number,
     currTime: number,
@@ -54,7 +54,7 @@ interface line_graph_state {
     // w: number,
     // h: number,
     zoomedTimes: number[][], // the time array that corresponds to the time range selected by the users
-    zoomedUMAPData: Map<string, umap_data_entry[]>, // key is the line id, value is the corresponding umap data presented in the graph
+    zoomedUMAPData: Map<string, UmapPoint[]>, // key is the line id, value is the corresponding umap data presented in the graph
     prev_x: any,
     prev_y: any,
     margin: margin_obj,
@@ -190,7 +190,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         if (prevProps.displayGap !== this.props.displayGap) {
             if(this.props.displayGap.valueOf()){
-                this.displayGaps(this.props.min2DGapDis);
+                this.displayGaps(0.1, this.props.min2DGapDis);
             } else{
                 this.removeGaps();
             }
@@ -198,7 +198,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         if (prevProps.min2DGapDis !== this.props.min2DGapDis) {
             if(this.props.displayGap.valueOf()){
-                this.displayGaps(this.props.min2DGapDis);
+                this.displayGaps(0.1, this.props.min2DGapDis);
             }
                 
         }
@@ -268,12 +268,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param endTime 
      * @returns 
      */
-    filterData(startTime: number, endTime: number): [number[][], umap_data_entry[][]]
+    filterData(startTime: number, endTime: number): [number[][], UmapPoint[][]]
     {
-        let zoomedTimes: number[][] = [], zoomedUmapData: umap_data_entry[][] = [];
+        let zoomedTimes: number[][] = [], zoomedUmapData: UmapPoint[][] = [];
         const {times, umapData} = this.props;
         if(times.length === 0){
-            return [[[0]], [[{x:0, y:0, nneighbors:[], nneighbors_2d:[], point: []}]]];
+            return [[[]], [[]]];
         }
         
         for (let i = 0; i < times.length; i++) {
@@ -329,12 +329,13 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         onGraphUpdate(true);
         let plot_data = [];
         let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
-        let UmapData: Map<string, umap_data_entry[]> = new Map();
+        let UmapData: Map<string, UmapPoint[]> = new Map();
         for(let i=0; i<data.length; i++){
             let x = [], y = [];
             for(const point of data[i]){
-                x.push(point.x);
-                y.push(point.y);
+                const pointIn2D = point.pointIn2D();
+                x.push(pointIn2D[0]);
+                y.push(pointIn2D[1]);
             }
             plot_data.push({
                 x: x,
@@ -696,25 +697,27 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
 
-        let nneighbors = this.props.umapData[line_idx][point_idx].nneighbors;
+        let nneighbors = this.props.umapData[line_idx][point_idx].nneighborsInHD().keys();
         let nneighbors_id = "nneighbors-before reduction" + newID(), nneighbors_name = "nneighbors"+ "<br>" + "before reduction";
         if(!this.props.graph.nneighborMode().valueOf()){
             // show nneighbors after reduction
-            nneighbors = this.props.umapData[line_idx][point_idx].nneighbors_2d;
+            nneighbors = this.props.umapData[line_idx][point_idx].nneighborsIn2D().keys();
             nneighbors_id = "nneighbors-after reduction" + newID();
             nneighbors_name = "nneighbors"+ "<br>" + "after reduction";
         }
-
+        let nneighbors_points: number[][] = [];
+        for(const nneighbor of nneighbors)
+            nneighbors_points.push(nneighbor.pointIn2D())
         let selectedPoints: PointInfo[] = [];
         selectedPoints.push({x: point_x, y: point_y, pointIndex: point_idx, curveNumber: line_idx});
-        if (nneighbors.length > 8) {  
+        if (nneighbors_points.length > 8) {  
             // find 9 clusters and use the first point in every cluster to represent the cluster
-            const clusterer = Clusterer.getInstance(nneighbors, 8);
+            const clusterer = Clusterer.getInstance(nneighbors_points, 8);
             for (const data of clusterer.Medoids) {
                 selectedPoints.push(this.findPoints(data, points));
             }
         } else{
-            for(const data of nneighbors){
+            for(const data of nneighbors_points){
                 selectedPoints.push(this.findPoints(data, points));
             }
         }
@@ -727,7 +730,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         this.showRobotScenes(selectedPoints);
         
         let x = [], y = [];
-        for (const point of nneighbors) {
+        for (const point of nneighbors_points) {
             x.push(point[0]);
             y.push(point[1]);
         }
@@ -919,7 +922,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * but their distance in 2D is greater than min_dis
      * @param min_dis 
      */
-    displayGaps(min_dis: number){
+    displayGaps(max_dis_HD: number, min_dis_2D: number){
         const { plotly_data } = this.state;
 
         let plot_data = [];
@@ -936,32 +939,78 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             });
         }
 
-        for(const [curveNumber, data] of plotly_data.entries()){
-            let xs = data.x, ys = data.y;
-            for(let i=1; i<xs.length; i++){
-                if(euclideanDistance([xs[i-1], ys[i-1]], [xs[i], ys[i]]) > min_dis){
-                    // console.log("gap")
-                    // console.log(xs[i-1] + " " + ys[i-1])
-                    // console.log(xs[i] + " " + ys[i])
-                    plot_data.push({
-                        x: [xs[i-1], xs[i]],
-                        y: [ys[i-1], ys[i]],
-                        id: "gap",
-                        showlegend: false,
-                        mode: "lines",
-                        line: {
-                            color: 'rgb(219, 64, 82)',
-                            width: 3,
-                        }
-                    });
+        let zoomedUMAPData = [];
+        for(const [i, data] of plotly_data.entries()){
+            let line_id = data.id;
+            let umapData = this.state.zoomedUMAPData.get(line_id);
+            if(umapData !== undefined) zoomedUMAPData.push(umapData);
+        }
 
-                    let gap_points: PointInfo[] = [];
-                    gap_points.push({x: xs[i-1], y: ys[i-1], curveNumber: curveNumber, pointIndex: i-1});
-                    gap_points.push({x: xs[i], y: ys[i], curveNumber: curveNumber, pointIndex: i});
-                    this.showRobotScenes(gap_points);
+        let gaps: number = 0;
+        for(const trace of zoomedUMAPData){
+            for(const data of trace){
+                for(const [neighbor, distance] of data.nneighborsInHD()){
+                    if(distance.distanceIn2D() > min_dis_2D && distance.distanceInHD()<= max_dis_HD){
+                        plot_data.push({
+                            x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
+                            y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
+                            id: "gap-" + gaps,
+                            name: "gap-" + gaps,
+                            mode: "lines",
+                            line: {
+                                color: 'rgb(219, 64, 82)',
+                                width: 3,
+                            }
+                        });
+                        gaps++;
+                    }
+                }
+
+                for(const [prevPoint, distance] of data.prevPoint()){
+                    if(distance.distanceIn2D() > min_dis_2D){
+                        plot_data.push({
+                            x: [data.pointIn2D()[0], prevPoint.pointIn2D()[0]],
+                            y: [data.pointIn2D()[1], prevPoint.pointIn2D()[1]],
+                            id: "gap-" + gaps,
+                            name: "gap-" + gaps,
+                            mode: "lines",
+                            line: {
+                                color: 'rgb(219, 64, 82)',
+                                width: 3,
+                            }
+                        });
+                        gaps++;
+                    }
                 }
             }
         }
+
+        // for(const [curveNumber, data] of plotly_data.entries()){
+        //     let xs = data.x, ys = data.y;
+        //     for(let i=1; i<xs.length; i++){
+        //         if(euclideanDistance([xs[i-1], ys[i-1]], [xs[i], ys[i]]) > min_dis){
+        //             // console.log("gap")
+        //             // console.log(xs[i-1] + " " + ys[i-1])
+        //             // console.log(xs[i] + " " + ys[i])
+        //             plot_data.push({
+        //                 x: [xs[i-1], xs[i]],
+        //                 y: [ys[i-1], ys[i]],
+        //                 id: "gap",
+        //                 showlegend: false,
+        //                 mode: "lines",
+        //                 line: {
+        //                     color: 'rgb(219, 64, 82)',
+        //                     width: 3,
+        //                 }
+        //             });
+
+        //             let gap_points: PointInfo[] = [];
+        //             gap_points.push({x: xs[i-1], y: ys[i-1], curveNumber: curveNumber, pointIndex: i-1});
+        //             gap_points.push({x: xs[i], y: ys[i], curveNumber: curveNumber, pointIndex: i});
+        //             this.showRobotScenes(gap_points);
+        //         }
+        //     }
+        // }
 
         this.setState({
             plotly_data: plot_data,
@@ -1021,64 +1070,85 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let umapData = this.state.zoomedUMAPData.get(line_id);
             if(umapData !== undefined) zoomedUMAPData.push(umapData);
         }
-            
-        // compare every pair of points in the 2D allDisplayedData array
-        for(let i=0; i<zoomedUMAPData.length; i++){
-            for(let k=0; k<zoomedUMAPData[i].length-1; k++){
-                for(let l=k+1; l<zoomedUMAPData[i].length; l++){
-                    let x1 = zoomedUMAPData[i][k].x, y1 = zoomedUMAPData[i][k].y;
-                    let x2 = zoomedUMAPData[i][l].x, y2 = zoomedUMAPData[i][l].y;
-                    let point1 = zoomedUMAPData[i][k].point, point2 = zoomedUMAPData[i][l].point;
-                    if(euclideanDistance([x1, y1], [x2, y2]) < max_dis_2D && 
-                        euclideanDistance(point1, point2) > min_dis_HD){
-                        console.log("false proximity")
+
+        let false_proximities: number = 0;
+        for(const trace of zoomedUMAPData){
+            for(const data of trace){
+                for(const [neighbor, distance] of data.nneighborsIn2D()){
+                    if(distance.distanceInHD() > min_dis_HD && distance.distanceIn2D() <= max_dis_2D){
                         plot_data.push({
-                            x: [x1, x2],
-                            y: [y1, y2],
-                            id: "false proximity",
-                            showlegend: false,
+                            x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
+                            y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
+                            id: "false proximity-" + false_proximities,
+                            name: "false proximity-" + false_proximities,
                             mode: "markers",
-                            marker:{
+                            marker: {
                                 color: 'rgb(195, 178, 153)',
                             }
                         });
-
-                        let gap_points: PointInfo[] = [];
-                        gap_points.push({x: x1, y: y1, curveNumber: i, pointIndex: k});
-                        gap_points.push({x: x2, y: y2, curveNumber: i, pointIndex: l});
-                        this.showRobotScenes(gap_points);
-                    }
-                }
-            }
-                
-            for(let j=i+1; j<zoomedUMAPData.length; j++){
-                for(let k=0; k<zoomedUMAPData[i].length; k++){
-                    for(let l=0; l<zoomedUMAPData[j].length; l++){
-                        let x1 = zoomedUMAPData[i][k].x, y1 = zoomedUMAPData[i][k].y;
-                        let x2 = zoomedUMAPData[j][l].x, y2 = zoomedUMAPData[j][l].y;
-                        let point1 = zoomedUMAPData[i][k].point, point2 = zoomedUMAPData[j][l].point;
-                        if(euclideanDistance([x1, y1], [x2, y2]) < max_dis_2D && 
-                            euclideanDistance(point1, point2) > min_dis_HD){
-                            console.log("false proximity")
-                            plot_data.push({
-                                x: [x1, x2],
-                                y: [y1, y2],
-                                id: "false proximity",
-                                showlegend: false,
-                                mode: "markers",
-                                marker:{
-                                    color: 'rgb(195, 178, 153)',
-                                }
-                            });
-                            let gap_points: PointInfo[] = [];
-                            gap_points.push({x: x1, y: y1, curveNumber: i, pointIndex: k});
-                            gap_points.push({x: x2, y: y2, curveNumber: j, pointIndex: l});
-                            this.showRobotScenes(gap_points);
-                        }
+                        false_proximities++;
                     }
                 }
             }
         }
+            
+        // compare every pair of points in the 2D allDisplayedData array
+        // for(let i=0; i<zoomedUMAPData.length; i++){
+        //     for(let k=0; k<zoomedUMAPData[i].length-1; k++){
+        //         for(let l=k+1; l<zoomedUMAPData[i].length; l++){
+        //             let x1 = zoomedUMAPData[i][k].x, y1 = zoomedUMAPData[i][k].y;
+        //             let x2 = zoomedUMAPData[i][l].x, y2 = zoomedUMAPData[i][l].y;
+        //             let point1 = zoomedUMAPData[i][k].point, point2 = zoomedUMAPData[i][l].point;
+        //             if(euclideanDistance([x1, y1], [x2, y2]) < max_dis_2D && 
+        //                 euclideanDistance(point1, point2) > min_dis_HD){
+        //                 console.log("false proximity")
+        //                 plot_data.push({
+        //                     x: [x1, x2],
+        //                     y: [y1, y2],
+        //                     id: "false proximity",
+        //                     showlegend: false,
+        //                     mode: "markers",
+        //                     marker:{
+        //                         color: 'rgb(195, 178, 153)',
+        //                     }
+        //                 });
+
+        //                 let gap_points: PointInfo[] = [];
+        //                 gap_points.push({x: x1, y: y1, curveNumber: i, pointIndex: k});
+        //                 gap_points.push({x: x2, y: y2, curveNumber: i, pointIndex: l});
+        //                 this.showRobotScenes(gap_points);
+        //             }
+        //         }
+        //     }
+                
+        //     for(let j=i+1; j<zoomedUMAPData.length; j++){
+        //         for(let k=0; k<zoomedUMAPData[i].length; k++){
+        //             for(let l=0; l<zoomedUMAPData[j].length; l++){
+        //                 let x1 = zoomedUMAPData[i][k].x, y1 = zoomedUMAPData[i][k].y;
+        //                 let x2 = zoomedUMAPData[j][l].x, y2 = zoomedUMAPData[j][l].y;
+        //                 let point1 = zoomedUMAPData[i][k].point, point2 = zoomedUMAPData[j][l].point;
+        //                 if(euclideanDistance([x1, y1], [x2, y2]) < max_dis_2D && 
+        //                     euclideanDistance(point1, point2) > min_dis_HD){
+        //                     console.log("false proximity")
+        //                     plot_data.push({
+        //                         x: [x1, x2],
+        //                         y: [y1, y2],
+        //                         id: "false proximity",
+        //                         showlegend: false,
+        //                         mode: "markers",
+        //                         marker:{
+        //                             color: 'rgb(195, 178, 153)',
+        //                         }
+        //                     });
+        //                     let gap_points: PointInfo[] = [];
+        //                     gap_points.push({x: x1, y: y1, curveNumber: i, pointIndex: k});
+        //                     gap_points.push({x: x2, y: y2, curveNumber: j, pointIndex: l});
+        //                     this.showRobotScenes(gap_points);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
         this.setState({
             plotly_data: plot_data,

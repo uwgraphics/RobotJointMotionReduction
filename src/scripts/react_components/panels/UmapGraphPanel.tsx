@@ -2,7 +2,7 @@ import React, { Component, createRef } from "react";
 import { Robot } from "../../objects3D/Robot";
 import { RobotSceneManager } from "../../RobotSceneManager";
 import { RobotScene } from "../../scene/RobotScene";
-import { newID } from "../../helpers";
+import { euclideanDistance, newID } from "../../helpers";
 import _ from 'lodash';
 import DockLayout from "rc-dock";
 import { DragButton } from "../DragButton";
@@ -17,6 +17,8 @@ import { PopupHelpPage } from "../popup_help_page";
 import { nearestNeighbors } from "../../nneighbors/umap";
 import MersenneTwister from 'mersennetwister';
 import axios from 'axios';
+import { UmapPoint } from "../../objects3D/UmapPoint";
+import { Id } from "../../Id";
 // import { time } from "console";
 //TODO timewarped positions graph
 export interface graph_panel_props {
@@ -53,13 +55,6 @@ export interface time_obj{
     start: number,
     end: number,
     curr: number
-}
-export interface umap_data_entry {
-    x: number,
-    y: number,
-    nneighbors: number[][],
-    nneighbors_2d: number[][],
-    point: number[], // the point in the original dimension
 }
 export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_state> {
     protected _panel_resize_observer?: ResizeObserver;
@@ -176,7 +171,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
 
   
 
-    async sendDataToPython(jointData: number[][]): Promise<umap_data_entry[]> {
+    async sendDataToPython(jointData: number[][]): Promise<UmapPoint[]> {
         // APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "umap" });
         const dataToSend = {
             type: this.props.graph.UMAPType(),
@@ -186,21 +181,40 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             random_seed: this.props.graph.randomSeed(),
             data: jointData,
         };
-        let umapData: umap_data_entry[] = [];
+        let umapData: UmapPoint[] = [];
         try {
             const response = await axios.post('http://localhost:5000/api/data', dataToSend);
-            console.log(response.data.UMAPData);
+            // console.log(response.data);
             for(let i=0; i<jointData.length; i++){
-                let twoDPlot = response.data.UMAPData[i];
+                let umapPoint: UmapPoint = new UmapPoint(new Id().value(), jointData[i], response.data.UMAPData[i]);
+                umapData.push(umapPoint);
+                if(i > 0){
+                    // store previous point information
+                    let prevPoint = umapData[i-1];
+                    let distance_HD = euclideanDistance(umapPoint.pointInHD(), prevPoint.pointInHD());
+                    let distance_2D = euclideanDistance(umapPoint.pointIn2D(), prevPoint.pointIn2D());
+                    umapPoint.setPrePoint(prevPoint, distance_HD, distance_2D);
+                }
+            }
+
+            // store neighbors information
+            for(let i=0; i<jointData.length; i++){
+                let umapPoint = umapData[i];
                 let nneighbors_HD_indices = response.data.nneighbors_HD[i];
                 let nneighbors_2D_indices = response.data.nneighbors_2D[i];
-                let nneighbors_HD: number[][] = [], nneighbors_2D: number[][] = [];
-                for(const index of nneighbors_HD_indices)
-                    nneighbors_HD.push(response.data.UMAPData[index]);
-                for(const index of nneighbors_2D_indices)
-                    nneighbors_2D.push(response.data.UMAPData[index]);
-                umapData.push({x: twoDPlot[0], y: twoDPlot[1], nneighbors: nneighbors_HD, 
-                    nneighbors_2d: nneighbors_2D, point: jointData[i]});
+                let nneighbors_HD_dis = response.data.nneighbors_HD_dis[i];
+                let nneighbors_2D_dis = response.data.nneighbors_2D_dis[i];
+                for(const [j, index] of nneighbors_HD_indices.entries()){
+                    let neighbor = umapData[index];
+                    let distance_2D = euclideanDistance(umapPoint.pointIn2D(), neighbor.pointIn2D());
+                    umapPoint.addneighborInHD(neighbor, nneighbors_HD_dis[j], distance_2D);
+                }
+                    
+                for(const [j, index] of nneighbors_2D_indices.entries()){
+                    let neighbor = umapData[index];
+                    let distance_HD = euclideanDistance(umapPoint.pointInHD(), neighbor.pointInHD());
+                    umapPoint.addneighborIn2D(neighbor, distance_HD, nneighbors_2D_dis[j]);
+                }
             }
         } catch (error) {
             console.error('Error sending data to Python:', error);
@@ -208,52 +222,52 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         return umapData;
     };
 
-    async convertJointDataToUmap(jointData: number[][]): Promise<umap_data_entry[]>
-    {
-        APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "UMAP" });
-        //await Promise.all([]);
-        const {graph} = this.props;
-        let mt = new MersenneTwister(this.props.graph.randomSeed());
-        const umap = new UMAP({nNeighbors: graph.nNeighbors(), minDist: graph.minDis(), spread: graph.spread(), random: mt.random.bind(mt)});
+    // async convertJointDataToUmap(jointData: number[][]): Promise<umap_data_entry[]>
+    // {
+    //     APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "UMAP" });
+    //     //await Promise.all([]);
+    //     const {graph} = this.props;
+    //     let mt = new MersenneTwister(this.props.graph.randomSeed());
+    //     const umap = new UMAP({nNeighbors: graph.nNeighbors(), minDist: graph.minDis(), spread: graph.spread(), random: mt.random.bind(mt)});
 
-        // for (let i = 0; i < 1000; i++) {
-        //     let a = Array(jointData[0].length).fill(Math.random() * Math.PI * 2 - Math.PI);
-        //     jointData.push(a);
-        // }
+    //     // for (let i = 0; i < 1000; i++) {
+    //     //     let a = Array(jointData[0].length).fill(Math.random() * Math.PI * 2 - Math.PI);
+    //     //     jointData.push(a);
+    //     // }
         
-        //const embedding = umap.fit(jointData);
-        let umapData: umap_data_entry[] = [];
-        const embedding = await umap.fitAsync(jointData, epochNumber => {
-            // check progress and give user feedback, or return `false` to stop
-          });
+    //     //const embedding = umap.fit(jointData);
+    //     let umapData: umap_data_entry[] = [];
+    //     const embedding = await umap.fitAsync(jointData, epochNumber => {
+    //         // check progress and give user feedback, or return `false` to stop
+    //       });
 
-        const {knnIndices, knnDistances} = nearestNeighbors(jointData, graph.nNeighbors());
-        let nneighbors: number[][][] = [];
-        for(let i=0; i<knnIndices.length; i++){
-            nneighbors[i] = [];
-            for(let j=0; j<knnIndices[i].length; j++){
-                let index: number = knnIndices[i][j];
-                nneighbors[i].push(embedding[index])
-            }
-        }
+    //     const {knnIndices, knnDistances} = nearestNeighbors(jointData, graph.nNeighbors());
+    //     let nneighbors: number[][][] = [];
+    //     for(let i=0; i<knnIndices.length; i++){
+    //         nneighbors[i] = [];
+    //         for(let j=0; j<knnIndices[i].length; j++){
+    //             let index: number = knnIndices[i][j];
+    //             nneighbors[i].push(embedding[index])
+    //         }
+    //     }
 
-        const {knnIndices:knnIndices_2d, knnDistances: knnDistances_2d} = nearestNeighbors(embedding, graph.nNeighbors());
-        let nneighbors_2d: number[][][] = [];
-        for(let i=0; i<knnIndices_2d.length; i++){
-            nneighbors_2d[i] = [];
-            for(let j=0; j<knnIndices_2d[i].length; j++){
-                let index: number = knnIndices_2d[i][j];
-                nneighbors_2d[i].push(embedding[index])
-            }
-        }
+    //     const {knnIndices:knnIndices_2d, knnDistances: knnDistances_2d} = nearestNeighbors(embedding, graph.nNeighbors());
+    //     let nneighbors_2d: number[][][] = [];
+    //     for(let i=0; i<knnIndices_2d.length; i++){
+    //         nneighbors_2d[i] = [];
+    //         for(let j=0; j<knnIndices_2d[i].length; j++){
+    //             let index: number = knnIndices_2d[i][j];
+    //             nneighbors_2d[i].push(embedding[index])
+    //         }
+    //     }
 
-        for(let i=0; i<embedding.length; i++){
-            umapData.push({x: embedding[i][0], y: embedding[i][1], nneighbors: nneighbors[i], nneighbors_2d: nneighbors_2d[i], point: jointData[i]});
-        }
-        // console.log(nneighbors);
-        APP.setPopupHelpPage({ page: PopupHelpPage.LoadingSuccess, type: "UMAP"});
-        return umapData;
-    }
+    //     for(let i=0; i<embedding.length; i++){
+    //         umapData.push({x: embedding[i][0], y: embedding[i][1], nneighbors: nneighbors[i], nneighbors_2d: nneighbors_2d[i], point: jointData[i]});
+    //     }
+    //     // console.log(nneighbors);
+    //     APP.setPopupHelpPage({ page: PopupHelpPage.LoadingSuccess, type: "UMAP"});
+    //     return umapData;
+    // }
    
 
     /**
@@ -380,7 +394,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 let x: number[] = []; 
                 let y: number[] = [];
                 let t: number[] = [];
-                let filterdUmapData: umap_data_entry[] = [];
+                let filterdUmapData: UmapPoint[] = [];
                 for (let i = 0; i < times.length; i++) {
                     if (j+1 < filteredTimes[robotIndex].length && times[i] >= filteredTimes[robotIndex][j+1]) {
                         j++;
