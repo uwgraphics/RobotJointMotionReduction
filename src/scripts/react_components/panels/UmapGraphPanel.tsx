@@ -65,7 +65,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     protected times: number[][]; // times[i] is the array of times for line i
     protected xVals: number[][]; // values[i] is the array of values for line i
     protected yVals: number[][]; // values[i] is the array of values for line i
-    protected umapData: umap_data_entry[][]; // values[i] is the array of values for line i
+    protected umapData: UmapPoint[][]; // values[i] is the array of values for line i
     protected jointData: number[][][]; // jointData[i] is a 2D array of the joint data for robot i
 
     constructor(props: graph_panel_props) {
@@ -401,6 +401,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                     }
                     // x.push(filteredX[j]);
                     // y.push(filteredY[j]);
+                    currUmap[j].setTime(times[i]);
+                    currUmap[j].setrobotInfo(eventName);
                     filterdUmapData.push(currUmap[j]);
                     t.push(times[i]);
                 }
@@ -414,6 +416,14 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 robotIndex++;
             }
         }
+
+        let UmapPointsMap: Map<string, UmapPoint> = new Map();
+        for(const trace of umapData){
+            for(const point of trace){
+                UmapPointsMap.set(point.id(), point);
+            }
+        }
+        this.props.graph.setUmapPoints(UmapPointsMap);
         // console.log(filteredJointData)
         // console.log(xVals)
         // console.log(yVals)

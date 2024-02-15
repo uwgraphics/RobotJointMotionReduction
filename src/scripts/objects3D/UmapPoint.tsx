@@ -42,6 +42,8 @@ export class Distances{
 
 export class UmapPoint {
     protected _id: string;
+    protected _time: number; // the time frame of the corresponding robot pose
+    protected _robotInfo: string; // the info of the corresponding robot pose in a format of sceneId#robotId
     
     protected _pointInHD: number[]; // the point in the original high dimension
     protected _pointIn2D: number[]; // the point in UMAP 2D plot
@@ -55,6 +57,25 @@ export class UmapPoint {
         this._nneighborsInHD = new Map();
         this._nneighborsIn2D = new Map();
         this._prevPoint = new Map();
+
+        this._time = 0;
+        this._robotInfo = "";
+    }
+
+    time(): number{
+        return this._time;
+    }
+
+    setTime(time: number){
+        this._time = time;
+    }
+
+    robotInfo(): string{
+        return this._robotInfo;
+    }
+
+    setrobotInfo(id: string){
+        this._robotInfo = id;
     }
 
     id(): string {

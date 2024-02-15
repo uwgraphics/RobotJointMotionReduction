@@ -12,6 +12,7 @@
  */
 
 import { Graph } from "./Graph";
+import { UmapPoint } from "./UmapPoint";
 
 export type umap_type = "Parametric" | "Regular";
  
@@ -41,6 +42,7 @@ export class UmapGraph {
     protected _randomSeed: number; // the random seed for the UMAP algo
     protected _showAllTraces: Boolean; // true if show all traces, otherwise hide them
     protected _UMAPType: umap_type;
+    protected _UMAPPoints: Map<string, UmapPoint>; // map that stores all the umap points
     /**
      * 
      * @param id
@@ -91,8 +93,17 @@ export class UmapGraph {
         this._minHighDGapDis = 1;
         this._showAllTraces = new Boolean(true);
         this._UMAPType = "Parametric";
+        this._UMAPPoints = new Map();
 
         this._randomSeed = 20;
+    }
+
+    setUmapPoints(points: Map<string, UmapPoint>){
+        this._UMAPPoints = points;
+    }
+
+    getUmapPoint(id: string): UmapPoint | undefined{
+        return this._UMAPPoints.get(id);
     }
 
     UMAPType(): umap_type{
