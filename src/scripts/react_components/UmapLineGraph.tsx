@@ -495,26 +495,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let point1 = graph.getUmapPoint(point1_id);
             let point2 = graph.getUmapPoint(point2_id);
             if (point1 !== undefined && point2 !== undefined) {
-                let points = [point1, point2];
-                let sceneIds: string[] = [];
-                let sceneId = newID();
-                let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
-                sceneIds.push(sceneId);
-                for (const point of points) {
-                    let time = point.time();
-                    const [sceneId, robotName] = this.decomposeId(point.robotInfo());
-                    let scene = robotSceneManager.robotSceneById(sceneId);
-                    if (scene === undefined) return true;
-                    if (!robotSceneManager.isActiveRobotScene(scene))
-                        robotSceneManager.activateRobotScene(scene);
-                    let robot = scene.getRobotByName(robotName);
-                    if (robot !== undefined) {
-                        staticRobotScene.addChildRobot(robot, time);
-                        robot.setOpacity(0.5);
-                    }
-                }
-                this.props.addNewStaticRobotCanvasPanel(sceneIds, false);
-                this.props.robotSceneManager.setShouldSyncViews(true);
+                this.showRobotScenes([point1, point2], false);
             }
         }
         return true;
