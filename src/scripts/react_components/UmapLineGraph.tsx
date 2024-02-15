@@ -752,6 +752,46 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     }
 
     /**
+     * legend click handler
+     * whenever users click the legend, if the corresponding trace is gap, then display the window
+     * @param event 
+     * @returns 
+     */
+    onPlotlyLegendClick(event: Readonly<LegendClickEvent>) {
+        const { graph, robotSceneManager } = this.props;
+        const { plotly_data } = this.state;
+        let line_id: string = plotly_data[event.curveNumber].id;
+        if(line_id.startsWith("gap") && plotly_data[event.curveNumber].visible !== true){
+            const [, point1_id, point2_id] = line_id.split("#");
+            let point1 = graph.getUmapPoint(point1_id);
+            let point2 = graph.getUmapPoint(point2_id);
+            if (point1 !== undefined && point2 !== undefined) {
+                let points = [point1, point2];
+                let sceneIds: string[] = [];
+                let sceneId = newID();
+                let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
+                sceneIds.push(sceneId);
+                for (const point of points) {
+                    let time = point.time();
+                    const [sceneId, robotName] = this.decomposeId(point.robotInfo());
+                    let scene = robotSceneManager.robotSceneById(sceneId);
+                    if (scene === undefined) return true;
+                    if (!robotSceneManager.isActiveRobotScene(scene))
+                        robotSceneManager.activateRobotScene(scene);
+                    let robot = scene.getRobotByName(robotName);
+                    if (robot !== undefined) {
+                        staticRobotScene.addChildRobot(robot, time);
+                        robot.setOpacity(0.5);
+                    }
+                }
+                this.props.addNewStaticRobotCanvasPanel(sceneIds, false);
+                this.props.robotSceneManager.setShouldSyncViews(true);
+            }
+        }
+        return true;
+    }
+
+    /**
      * legend double click handler
      * whenever users double click the legend, the corresponding line will be deleted
      * @param event 
@@ -947,7 +987,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         plot_data.push({
                             x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                             y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
-                            id: "gap-" + gaps,
+                            id: "gap#" + data.id() + "#" + neighbor.id(),
                             name: "gap-" + gaps,
                             mode: "lines",
                             visible: "legendonly",
@@ -965,7 +1005,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         plot_data.push({
                             x: [data.pointIn2D()[0], prevPoint.pointIn2D()[0]],
                             y: [data.pointIn2D()[1], prevPoint.pointIn2D()[1]],
-                            id: "gap-" + gaps,
+                            id: "gap#" + data.id() + "#" + prevPoint.id(),
                             name: "gap-" + gaps,
                             mode: "lines",
                             visible: "legendonly",
@@ -1239,6 +1279,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     config={plotly_config}
                     onHover={(event) => this.onPlotlyHover(event)}
                     onClick={(event) => this.onPlotlyClick(event)}
+                    onLegendClick={(event) => this.onPlotlyLegendClick(event)}
                     onLegendDoubleClick={(event) => this.onPlotlyLegendDoubleClick(event)}
                     onInitialized={(figure) => this.setState({
                         plotly_data: figure.data,
