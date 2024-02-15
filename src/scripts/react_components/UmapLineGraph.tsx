@@ -761,65 +761,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 }
             }
         }
-            
-        // compare every pair of points in the 2D allDisplayedData array
-        // for(let i=0; i<zoomedUMAPData.length; i++){
-        //     for(let k=0; k<zoomedUMAPData[i].length-1; k++){
-        //         for(let l=k+1; l<zoomedUMAPData[i].length; l++){
-        //             let x1 = zoomedUMAPData[i][k].x, y1 = zoomedUMAPData[i][k].y;
-        //             let x2 = zoomedUMAPData[i][l].x, y2 = zoomedUMAPData[i][l].y;
-        //             let point1 = zoomedUMAPData[i][k].point, point2 = zoomedUMAPData[i][l].point;
-        //             if(euclideanDistance([x1, y1], [x2, y2]) < max_dis_2D && 
-        //                 euclideanDistance(point1, point2) > min_dis_HD){
-        //                 console.log("false proximity")
-        //                 plot_data.push({
-        //                     x: [x1, x2],
-        //                     y: [y1, y2],
-        //                     id: "false proximity",
-        //                     showlegend: false,
-        //                     mode: "markers",
-        //                     marker:{
-        //                         color: 'rgb(195, 178, 153)',
-        //                     }
-        //                 });
-
-        //                 let gap_points: PointInfo[] = [];
-        //                 gap_points.push({x: x1, y: y1, curveNumber: i, pointIndex: k});
-        //                 gap_points.push({x: x2, y: y2, curveNumber: i, pointIndex: l});
-        //                 this.showRobotScenes(gap_points);
-        //             }
-        //         }
-        //     }
-                
-        //     for(let j=i+1; j<zoomedUMAPData.length; j++){
-        //         for(let k=0; k<zoomedUMAPData[i].length; k++){
-        //             for(let l=0; l<zoomedUMAPData[j].length; l++){
-        //                 let x1 = zoomedUMAPData[i][k].x, y1 = zoomedUMAPData[i][k].y;
-        //                 let x2 = zoomedUMAPData[j][l].x, y2 = zoomedUMAPData[j][l].y;
-        //                 let point1 = zoomedUMAPData[i][k].point, point2 = zoomedUMAPData[j][l].point;
-        //                 if(euclideanDistance([x1, y1], [x2, y2]) < max_dis_2D && 
-        //                     euclideanDistance(point1, point2) > min_dis_HD){
-        //                     console.log("false proximity")
-        //                     plot_data.push({
-        //                         x: [x1, x2],
-        //                         y: [y1, y2],
-        //                         id: "false proximity",
-        //                         showlegend: false,
-        //                         mode: "markers",
-        //                         marker:{
-        //                             color: 'rgb(195, 178, 153)',
-        //                         }
-        //                     });
-        //                     let gap_points: PointInfo[] = [];
-        //                     gap_points.push({x: x1, y: y1, curveNumber: i, pointIndex: k});
-        //                     gap_points.push({x: x2, y: y2, curveNumber: j, pointIndex: l});
-        //                     this.showRobotScenes(gap_points);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
+        
         this.setState({
             plotly_data: plot_data,
         });
