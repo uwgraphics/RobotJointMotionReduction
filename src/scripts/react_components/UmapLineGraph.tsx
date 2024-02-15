@@ -487,7 +487,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const { graph, robotSceneManager } = this.props;
         const { plotly_data } = this.state;
         let line_id: string = plotly_data[event.curveNumber].id;
-        if(line_id.startsWith("gap") && plotly_data[event.curveNumber].visible !== true){
+        if((line_id.startsWith("gap") || line_id.startsWith("false proximity"))&& plotly_data[event.curveNumber].visible !== true){
             const [, point1_id, point2_id] = line_id.split("#");
             let point1 = graph.getUmapPoint(point1_id);
             let point2 = graph.getUmapPoint(point2_id);
@@ -749,9 +749,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         plot_data.push({
                             x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                             y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
-                            id: "false proximity-" + false_proximities,
+                            id: "false proximity#" + data.id() + "#" + neighbor.id(),
                             name: "false proximity-" + false_proximities,
                             mode: "markers",
+                            visible: "legendonly",
                             marker: {
                                 color: 'rgb(195, 178, 153)',
                             }
