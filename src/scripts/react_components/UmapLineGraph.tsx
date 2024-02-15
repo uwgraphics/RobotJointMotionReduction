@@ -411,15 +411,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let plot_data = [], points: PointInfo[] = [];
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
-            plot_data.push({
-                x: data.x,
-                y: data.y,
-                name: data.name,
-                id: data.id,
-                showlegend: data.showlegend,
-                mode: data.mode,
-                marker: data.marker
-            });
+            plot_data.push(data);
             for(let j=0; j<data.x.length; j++){
                 points.push({x: data.x[j], y: data.y[j], curveNumber: i, pointIndex: j, });
             }
