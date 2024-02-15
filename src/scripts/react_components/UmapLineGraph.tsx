@@ -727,7 +727,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             selectedPoints[0] = temp;
         }
         // console.log(selectedPoints);
-        this.showRobotScenes(selectedPoints);
+        this.showRobotScenes(selectedPoints, true);
         
         let x = [], y = [];
         for (const point of nneighbors_points) {
@@ -832,7 +832,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 selectedPoints.push({x: point.x, y: point.y, curveNumber: point.curveNumber, pointIndex: point.pointIndex});
             }
         }
-        this.showRobotScenes(selectedPoints);
+        this.showRobotScenes(selectedPoints, true);
     }
 
     /**
@@ -841,12 +841,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param selectedPoints 
      * @returns 
      */
-    showRobotScenes(selectedPoints: PointInfo[]){
+    showRobotScenes(selectedPoints: PointInfo[], showNineScenes: boolean){
         const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
         const { plotly_data, zoomedTimes } = this.state;
         let sceneIds = [];
-        let showNineScenes = graph.showNineScenes().valueOf();
-        //if(showNineScenes){ // create nine scenes to show the robots
+        // let showNineScenes = graph.showNineScenes().valueOf();
+        if(showNineScenes){ // create nine scenes to show the robots
             for (let i = 0; i < selectedPoints.length; i++) {
                 let curveNumber = selectedPoints[i].curveNumber, pointIndex = selectedPoints[i].pointIndex;
                 let sceneId = newID();
@@ -874,6 +874,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     if (robot !== undefined) staticRobotScene.addChildRobot(robot, time);
                 }
             }
+        }
         //} else{ // create one scene to show the robots
             let sceneId = newID();
             let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
