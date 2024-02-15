@@ -310,7 +310,7 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 />
                 <label>before reduction</label>
               </div>
-              <div>
+              {/* <div>
                 <label>Show Robots in </label>
                 <label>one scene</label>
                 <Switch
@@ -318,7 +318,7 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                   onChange={this.toggleShowNineScenes.bind(this)}
                 />
                 <label>nine scenes</label>
-              </div>
+              </div> */}
               <div>
                 <label>display gap</label>
                 <Switch
