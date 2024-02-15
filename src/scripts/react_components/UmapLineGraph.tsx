@@ -698,33 +698,6 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
 
-        // for(const [curveNumber, data] of plotly_data.entries()){
-        //     let xs = data.x, ys = data.y;
-        //     for(let i=1; i<xs.length; i++){
-        //         if(euclideanDistance([xs[i-1], ys[i-1]], [xs[i], ys[i]]) > min_dis){
-        //             // console.log("gap")
-        //             // console.log(xs[i-1] + " " + ys[i-1])
-        //             // console.log(xs[i] + " " + ys[i])
-        //             plot_data.push({
-        //                 x: [xs[i-1], xs[i]],
-        //                 y: [ys[i-1], ys[i]],
-        //                 id: "gap",
-        //                 showlegend: false,
-        //                 mode: "lines",
-        //                 line: {
-        //                     color: 'rgb(219, 64, 82)',
-        //                     width: 3,
-        //                 }
-        //             });
-
-        //             let gap_points: PointInfo[] = [];
-        //             gap_points.push({x: xs[i-1], y: ys[i-1], curveNumber: curveNumber, pointIndex: i-1});
-        //             gap_points.push({x: xs[i], y: ys[i], curveNumber: curveNumber, pointIndex: i});
-        //             this.showRobotScenes(gap_points);
-        //         }
-        //     }
-        // }
-
         this.setState({
             plotly_data: plot_data,
         });
