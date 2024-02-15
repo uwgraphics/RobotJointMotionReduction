@@ -647,15 +647,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let plot_data = [];
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
-            plot_data.push({
-                x: data.x,
-                y: data.y,
-                name: data.name,
-                id: data.id,
-                showlegend: data.showlegend,
-                mode: data.mode,
-                marker: data.marker
-            });
+            plot_data.push(data);
         }
 
         let zoomedUMAPData = [];
@@ -748,15 +740,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let data = plotly_data[i];
             let id = data.id as string;
             if(id.startsWith("gap")) continue;
-            plot_data.push({
-                x: data.x,
-                y: data.y,
-                name: data.name,
-                id: data.id,
-                showlegend: data.showlegend,
-                mode: data.mode,
-                marker: data.marker
-            });
+            plot_data.push(data);
         }
 
         this.setState({
@@ -775,15 +759,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let plot_data = [];
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
-            plot_data.push({
-                x: data.x,
-                y: data.y,
-                name: data.name,
-                id: data.id,
-                showlegend: data.showlegend,
-                mode: data.mode,
-                marker: data.marker
-            });
+            plot_data.push(data);
         }
         let zoomedUMAPData = [];
         for(const [i, data] of plotly_data.entries()){
@@ -886,15 +862,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let data = plotly_data[i];
             let id = data.id as string;
             if(id.startsWith("false proximity")) continue;
-            plot_data.push({
-                x: data.x,
-                y: data.y,
-                name: data.name,
-                id: data.id,
-                showlegend: data.showlegend,
-                mode: data.mode,
-                marker: data.marker
-            });
+            plot_data.push(data);
         }
 
         this.setState({
