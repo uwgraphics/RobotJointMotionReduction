@@ -771,25 +771,17 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if (index > -1) {
             graph.setDeleteLine(line_ids[index], line_colors[index]);
         } else{
-            if (line_id.startsWith("nneighbor")) {
+            // if (line_id.startsWith("nneighbor")) {
                 let plot_data = [];
                 for (let i = 0; i < plotly_data.length; i++) {
                     if(i === event.curveNumber) continue;
                     let data = plotly_data[i];
-                    plot_data.push({
-                        x: data.x,
-                        y: data.y,
-                        name: data.name,
-                        id: data.id,
-                        showlegend: data.showlegend,
-                        mode: data.mode,
-                        marker: data.marker
-                    });
+                    plot_data.push(data);
                 }
                 this.setState({
                     plotly_data: plot_data,
                 });
-            }
+            // }
         }
         console.log(event.data[event.curveNumber]);
         return false;
@@ -957,6 +949,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                             id: "gap-" + gaps,
                             name: "gap-" + gaps,
                             mode: "lines",
+                            visible: "legendonly",
                             line: {
                                 color: 'rgb(219, 64, 82)',
                                 width: 3,
@@ -974,6 +967,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                             id: "gap-" + gaps,
                             name: "gap-" + gaps,
                             mode: "lines",
+                            visible: "legendonly",
                             line: {
                                 color: 'rgb(219, 64, 82)',
                                 width: 3,
