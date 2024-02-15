@@ -179,19 +179,27 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
         });
     }
 
-    addNewStaticRobotCanvasPanel(targetSceneIds: string[], showNineScenes:boolean) {
-        let newTabId_9 = "StaticRobotScene-Nine";
+    addNewStaticRobotCanvasPanel(targetSceneIds: string[], showNineScenes: boolean) {
+
+        let tabs: TabBase[] = [];
         let newTabId_1 = "StaticRobotScene-One";
-        newTabId_1 += "&" + targetSceneIds[targetSceneIds.length-1];
-        // if(!showNineScenes) newTabId = "StaticRobotScene-One";
-        for(let i=0; i<targetSceneIds.length-1; i++)
-            newTabId_9 += "&" + targetSceneIds[i];
-        
+        newTabId_1 += "&" + targetSceneIds[targetSceneIds.length - 1];
+        if (showNineScenes) {
+            let newTabId_9 = "StaticRobotScene-Nine";
+            // if(!showNineScenes) newTabId = "StaticRobotScene-One";
+            for (let i = 0; i < targetSceneIds.length - 1; i++)
+                newTabId_9 += "&" + targetSceneIds[i];
+
+            tabs = [{ id: newTabId_9 }, { id: newTabId_1 }];
+        } else {
+            tabs = [{ id: newTabId_1 }];
+        }
+
         const updatedLayoutBase = { ...this.state.layoutBase };
-        
-        if(updatedLayoutBase.floatbox !== undefined){
+
+        if (updatedLayoutBase.floatbox !== undefined) {
             const panel: PanelBase = {
-                tabs:[{id: newTabId_9}, {id: newTabId_1}],
+                tabs: tabs,
                 activeId: newTabId_1,
                 x: 200,
                 y: 50,
