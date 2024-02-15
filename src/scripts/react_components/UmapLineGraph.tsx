@@ -669,7 +669,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     onPlotlyClick(event: Readonly<PlotMouseEvent>) {
         this.click_on_point = true;
         event.event.stopPropagation();
-        const {plotly_data} = this.state;
+        const {plotly_data, zoomedUMAPData} = this.state;
         let line_idx: number = 0, point_idx: number = 0, point_x = 0, point_y = 0;
         for (let i = 0; i < event.points.length; i++) {
             line_idx = event.points[i].curveNumber;
@@ -697,28 +697,34 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
 
-        let nneighbors = this.props.umapData[line_idx][point_idx].nneighborsInHD().keys();
+        let trace = zoomedUMAPData.get(line_id);
+        if(trace === undefined) return;
+        let point_selected: UmapPoint = trace[point_idx]; // the Umap point that is clicked on by the user
+
+        let nneighbors = point_selected.nneighborsInHD().keys();
         let nneighbors_id = "nneighbors-before reduction" + newID(), nneighbors_name = "nneighbors"+ "<br>" + "before reduction";
         if(!this.props.graph.nneighborMode().valueOf()){
             // show nneighbors after reduction
-            nneighbors = this.props.umapData[line_idx][point_idx].nneighborsIn2D().keys();
+            nneighbors = point_selected.nneighborsIn2D().keys();
             nneighbors_id = "nneighbors-after reduction" + newID();
             nneighbors_name = "nneighbors"+ "<br>" + "after reduction";
         }
         let nneighbors_points: number[][] = [];
         for(const nneighbor of nneighbors)
             nneighbors_points.push(nneighbor.pointIn2D())
-        let selectedPoints: PointInfo[] = [];
-        selectedPoints.push({x: point_x, y: point_y, pointIndex: point_idx, curveNumber: line_idx});
+        let selectedPoints: UmapPoint[] = [];
+        selectedPoints.push(point_selected)
         if (nneighbors_points.length > 8) {  
             // find 9 clusters and use the first point in every cluster to represent the cluster
             const clusterer = Clusterer.getInstance(nneighbors_points, 8);
             for (const data of clusterer.Medoids) {
-                selectedPoints.push(this.findPoints(data, points));
+                let point = this.findPoints(data, points);
+                if(point !== undefined) selectedPoints.push(point);
             }
         } else{
             for(const data of nneighbors_points){
-                selectedPoints.push(this.findPoints(data, points));
+                let point = this.findPoints(data, points);
+                if(point !== undefined) selectedPoints.push(point);
             }
         }
         if(selectedPoints.length > 4){  // make sure that the robot pose corresponding to the selected point is in the middle
@@ -833,13 +839,16 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param points 
      * @returns 
      */
-    findPoints(clusteredData: Datum[], points: PlotDatum[] | PointInfo[]): PointInfo{
+    findPoints(clusteredData: Datum[], points: PlotDatum[] | PointInfo[]): UmapPoint | undefined{
+        const {plotly_data, zoomedUMAPData} = this.state;
         for(const point of points){
             if(clusteredData[0] === point.x && clusteredData[1] === point.y 
-                && typeof point.x === "number" && typeof point.y === "number")
-                return {x: point.x, y: point.y, curveNumber: point.curveNumber, pointIndex: point.pointIndex};
+                && typeof point.x === "number" && typeof point.y === "number"){
+                    let line_id = plotly_data[point.curveNumber].id;
+                    let trace = zoomedUMAPData.get(line_id);
+                    if(trace !== undefined) return trace[point.pointIndex];
+            }
         }
-        return {x: 0, y:0, curveNumber: -1, pointIndex: -1};
     }
 
     /**
@@ -854,8 +863,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let points = event.points;
         if(points.length === 0) return;
 
-        
-        let selectedPoints: PointInfo[] = [];
+        const {zoomedUMAPData, plotly_data} = this.state;
+        let selectedPoints: UmapPoint[] = [];
         if(points.length > 9){
             let data = [];
             for(const point of points)
@@ -864,12 +873,15 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             const clusterer = Clusterer.getInstance(data, 9);
             //const clusteredData = clusterer.getClusteredData();  
             for(const data of clusterer.Medoids){
-                selectedPoints.push(this.findPoints(data, points));
+                let point = this.findPoints(data, points);
+                if(point !== undefined) selectedPoints.push(point);
             }
         } else{
             for(const point of points){
-                if(typeof point.x === "number" && typeof point.y === "number")
-                selectedPoints.push({x: point.x, y: point.y, curveNumber: point.curveNumber, pointIndex: point.pointIndex});
+                let line_id = plotly_data[point.curveNumber].id;
+                let trace = zoomedUMAPData.get(line_id);
+                if(trace !== undefined)
+                    selectedPoints.push(trace[point.pointIndex]);
             }
         }
         this.showRobotScenes(selectedPoints, true);
@@ -881,67 +893,40 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param selectedPoints 
      * @returns 
      */
-    showRobotScenes(selectedPoints: PointInfo[], showNineScenes: boolean){
+    showRobotScenes(selectedPoints: UmapPoint[], showNineScenes: boolean){
         const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
         const { plotly_data, zoomedTimes } = this.state;
         let sceneIds = [];
         // let showNineScenes = graph.showNineScenes().valueOf();
         if(showNineScenes){ // create nine scenes to show the robots
-            for (let i = 0; i < selectedPoints.length; i++) {
-                let curveNumber = selectedPoints[i].curveNumber, pointIndex = selectedPoints[i].pointIndex;
-                let sceneId = newID();
-                let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
-                sceneIds.push(sceneId);
-                
-    
-                let line_id: string = plotly_data[curveNumber].id;
-    
-                let index = -1;
-                for (let i = 0; i < line_ids.length; i++)
-                    if (line_ids[i] === line_id) {
-                        index = i;
-                        break;
-                    }
-                if (index > -1) {
-                    let time = zoomedTimes[index][pointIndex];
-                    let line_id = line_ids[index];
-                    const [sceneId, robotName] = this.decomposeId(line_id);
-                    let scene = robotSceneManager.robotSceneById(sceneId);
-                    if (scene === undefined) return;
-                    if (!robotSceneManager.isActiveRobotScene(scene))
-                        robotSceneManager.activateRobotScene(scene);
-                    let robot = scene.getRobotByName(robotName);
-                    if (robot !== undefined) staticRobotScene.addChildRobot(robot, time);
-                }
+            for (const point of selectedPoints) {
+                let newSceneId = newID();
+                let staticRobotScene = new StaticRobotScene(robotSceneManager, newSceneId);
+                sceneIds.push(newSceneId);
+
+                const [sceneId, robotName] = this.decomposeId(point.robotInfo());
+                let scene = robotSceneManager.robotSceneById(sceneId);
+                if (scene === undefined) return;
+                if (!robotSceneManager.isActiveRobotScene(scene))
+                    robotSceneManager.activateRobotScene(scene);
+                let robot = scene.getRobotByName(robotName);
+                if (robot !== undefined) staticRobotScene.addChildRobot(robot, point.time());
             }
         }
         //} else{ // create one scene to show the robots
             let sceneId = newID();
             let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
             sceneIds.push(sceneId);
-            for (let i = 0; i < selectedPoints.length; i++) {
-                let curveNumber = selectedPoints[i].curveNumber, pointIndex = selectedPoints[i].pointIndex;
-                let line_id: string = plotly_data[curveNumber].id;
-    
-                let index = -1;
-                for (let i = 0; i < line_ids.length; i++)
-                    if (line_ids[i] === line_id) {
-                        index = i;
-                        break;
-                    }
-                if (index > -1) {
-                    let time = zoomedTimes[index][pointIndex];
-                    let line_id = line_ids[index];
-                    const [sceneId, robotName] = this.decomposeId(line_id);
-                    let scene = robotSceneManager.robotSceneById(sceneId);
-                    if (scene === undefined) return;
-                    if (!robotSceneManager.isActiveRobotScene(scene))
-                        robotSceneManager.activateRobotScene(scene);
-                    let robot = scene.getRobotByName(robotName);
-                    if (robot !== undefined) {
-                        staticRobotScene.addChildRobot(robot, time);
-                        robot.setOpacity(0.5);
-                    }
+            for (const point of selectedPoints) {
+                const [sceneId, robotName] = this.decomposeId(point.robotInfo());
+                let scene = robotSceneManager.robotSceneById(sceneId);
+                if (scene === undefined) return;
+                if (!robotSceneManager.isActiveRobotScene(scene))
+                    robotSceneManager.activateRobotScene(scene);
+                let robot = scene.getRobotByName(robotName);
+                if (robot !== undefined) {
+                    staticRobotScene.addChildRobot(robot, point.time());
+                    robot.setOpacity(0.5);
                 }
             }
         //}
