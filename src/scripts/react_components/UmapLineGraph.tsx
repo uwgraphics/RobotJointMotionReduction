@@ -406,7 +406,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             point_y = event.points[i].y as number;
         }
         let line_id: string = plotly_data[line_idx].id;
-        if(line_id.startsWith("nneighbor")) return;
+        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") || line_id.startsWith("false proximity")) return;
 
         let plot_data = [], points: PointInfo[] = [];
         for(let i=0; i<plotly_data.length; i++){
@@ -762,7 +762,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 }
             }
         }
-        
+
         this.setState({
             plotly_data: plot_data,
         });
