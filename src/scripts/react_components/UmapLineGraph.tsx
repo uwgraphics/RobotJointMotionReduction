@@ -661,7 +661,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(const trace of zoomedUMAPData){
             for(const data of trace){
                 for(const [neighbor, distance] of data.nneighborsInHD()){
-                    if(distance.distanceIn2D() > min_dis_2D && distance.distanceInHD()<= max_dis_HD){
+                    if(distance.distanceIn2D() > min_dis_2D && distance.distanceInHD() <= max_dis_HD){
                         plot_data.push({
                             x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                             y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
