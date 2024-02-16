@@ -188,13 +188,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             for(let i=0; i<jointData.length; i++){
                 let umapPoint: UmapPoint = new UmapPoint(new Id().value(), jointData[i], response.data.UMAPData[i]);
                 umapData.push(umapPoint);
-                if(i > 0){
-                    // store previous point information
-                    let prevPoint = umapData[i-1];
-                    let distance_HD = euclideanDistance(umapPoint.pointInHD(), prevPoint.pointInHD());
-                    let distance_2D = euclideanDistance(umapPoint.pointIn2D(), prevPoint.pointIn2D());
-                    umapPoint.setPrePoint(prevPoint, distance_HD, distance_2D);
-                }
             }
 
             // store neighbors information
@@ -405,6 +398,13 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                     currUmap[j].setrobotInfo(eventName);
                     filterdUmapData.push(currUmap[j]);
                     t.push(times[i]);
+                    if(i > 0){
+                        // store previous point information
+                        let prevPoint = filterdUmapData[i-1];
+                        let distance_HD = euclideanDistance(filterdUmapData[i].pointInHD(), prevPoint.pointInHD());
+                        let distance_2D = euclideanDistance(filterdUmapData[i].pointIn2D(), prevPoint.pointIn2D());
+                        filterdUmapData[i].setPrePoint(prevPoint, distance_HD, distance_2D);
+                    }
                 }
 
                 xVals.push(x);
