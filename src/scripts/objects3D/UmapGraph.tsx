@@ -98,6 +98,10 @@ export class UmapGraph {
         this._randomSeed = 20;
     }
 
+    allUmapPoints():Map<string, UmapPoint>{
+        return this._UMAPPoints;
+    }
+
     setUmapPoints(points: Map<string, UmapPoint>){
         this._UMAPPoints = points;
     }
