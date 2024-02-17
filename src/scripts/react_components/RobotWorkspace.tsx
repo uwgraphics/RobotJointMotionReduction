@@ -213,6 +213,64 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
         }
     }
 
+    /**
+     * remove a tab given its tabId
+     * @param tabId 
+     */
+    removeTab(tabId: string) {
+
+        const updatedLayoutBase = { ...this.state.layoutBase };
+
+        let removeSceneFromTabs = (boxChildren: (BoxBase | PanelBase)[], tabId: string): void =>{
+            for (let i = 0; i < boxChildren.length; i++) {
+                let panel = boxChildren[i] as PanelBase;
+                let panelId = panel.activeId;
+                
+                if (panelId !== undefined) {
+                    if (panelId === tabId) {
+                        if(panel.tabs !== undefined){
+                            if(panel.tabs.length > 1){ // set the tab active id to be the first panel id that is not tabId
+                                for(const tab of panel.tabs){
+                                    if(tab.id !== undefined && tab.id !== tabId){
+                                        panel.activeId = tab.id;
+                                        break;
+                                    }
+                                }
+                            } 
+                        }
+                    }
+                }
+
+                if (panel.tabs !== undefined) {
+                    panel.tabs = panel.tabs.filter(tab => tab.id !== tabId);
+                }
+                
+
+                let box = boxChildren[i] as BoxBase;
+                if(box.children !== undefined && box.children.length > 0)
+                removeSceneFromTabs(box.children, tabId);
+            }
+        }
+
+        removeSceneFromTabs(updatedLayoutBase.dockbox.children, tabId);
+
+        if (updatedLayoutBase.floatbox?.children !== undefined) {
+            removeSceneFromTabs(updatedLayoutBase.floatbox.children, tabId);
+        }
+
+        if (updatedLayoutBase.maxbox?.children !== undefined) {
+            removeSceneFromTabs(updatedLayoutBase.maxbox.children, tabId);
+        }
+        
+        if (updatedLayoutBase.windowbox?.children !== undefined) {
+            removeSceneFromTabs(updatedLayoutBase.windowbox.children, tabId);
+        }
+
+        this.setState({
+            layoutBase: updatedLayoutBase,
+        });
+    }
+
     onSaveLayout(): LayoutBase | undefined
     {
         let layout = this.getLayout();
@@ -1063,6 +1121,7 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                     graph={graph}
                                     setUmapGraphOptionPanelActive={this.setUmapGraphOptionPanelActive.bind(this)}
                                     addNewStaticRobotCanvasPanel={this.addNewStaticRobotCanvasPanel.bind(this)}
+                                    removeTab={this.removeTab.bind(this)}
                             />;
                         }}
                     </WorkspaceContext.Consumer>

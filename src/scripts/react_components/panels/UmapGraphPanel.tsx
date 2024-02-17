@@ -29,6 +29,7 @@ export interface graph_panel_props {
     force_update: boolean,
     setUmapGraphOptionPanelActive: () => void,
     addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean) => void,
+    removeTab: (tabId: string) => void,
 }
 
 interface graph_panel_state {
@@ -758,6 +759,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               onStartChange={this.onStartTimeChange.bind(this)}
               onEndChange={this.onEndTimeChange.bind(this)}
               addNewStaticRobotCanvasPanel={this.props.addNewStaticRobotCanvasPanel}
+              removeTab={this.props.removeTab}
             />
           </div>
         );

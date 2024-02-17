@@ -47,6 +47,7 @@ interface line_graph_props {
     onStartChange: (newValue:number) => void,
     onEndChange: (newValue:number) => void,
     addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean) => void,
+    removeTab: (tabId: string) => void,
 }
 
 
@@ -487,12 +488,16 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const { graph, robotSceneManager } = this.props;
         const { plotly_data } = this.state;
         let line_id: string = plotly_data[event.curveNumber].id;
-        if((line_id.startsWith("gap") || line_id.startsWith("false proximity"))&& plotly_data[event.curveNumber].visible !== true){
+        if((line_id.startsWith("gap") || line_id.startsWith("false proximity"))){
             const [, point1_id, point2_id] = line_id.split("#");
             let point1 = graph.getUmapPoint(point1_id);
             let point2 = graph.getUmapPoint(point2_id);
             if (point1 !== undefined && point2 !== undefined) {
-                this.showRobotScenes([point1, point2], false);
+                if(plotly_data[event.curveNumber].visible !== true)
+                    this.showRobotScenes([point1, point2], false, line_id);
+                else{
+                    this.props.removeTab("StaticRobotScene-One&" + line_id);
+                }
             }
         }
         return true;
@@ -592,9 +597,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * display robots corresponding to the point from the {curveNumber[i]}th curve
      * at index {pointIndices[i]} in 3D scene(s)
      * @param selectedPoints 
+     * @param showNineScenes true if show ninescenes, otherwise false
+     * @param oneSceneId the sceneId of the gaps and the false proximity will be specified so that the scene can be deleted automatically
      * @returns 
      */
-    showRobotScenes(selectedPoints: UmapPoint[], showNineScenes: boolean){
+    showRobotScenes(selectedPoints: UmapPoint[], showNineScenes: boolean, oneSceneId?: string){
         const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
         const { plotly_data, zoomedTimes } = this.state;
         let sceneIds = [];
@@ -616,6 +623,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
         //} else{ // create one scene to show the robots
             let sceneId = newID();
+            if(oneSceneId !== undefined) sceneId = oneSceneId;
             let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
             sceneIds.push(sceneId);
             for (const point of selectedPoints) {
