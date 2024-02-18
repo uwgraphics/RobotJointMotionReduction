@@ -339,6 +339,15 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 resultTimes.push(times[i]);
             }
         }
+
+        function shuffleArray<T>(array: T[]): T[] {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        // resultJointData = shuffleArray(resultJointData);
         return [resultJointData, resultTimes];
     }
 
