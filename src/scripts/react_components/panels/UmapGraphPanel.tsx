@@ -353,8 +353,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "umap" });
         const { currRobots, color_map } = this.state;
         let line_names = [], line_ids = [], line_colors = [];
-        let xVals = [];
-        let yVals = [];
         let _times = [];
         let umapData = [];
         let filteredJointData: number[][] = [];
@@ -387,8 +385,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 // assert (filteredY.length === lengths[robotIndex]);
 
                 let j = 0;
-                let x: number[] = []; 
-                let y: number[] = [];
                 let t: number[] = [];
                 let filterdUmapData: UmapPoint[] = [];
                 for (let i = 0; i < times.length; i++) {
@@ -410,8 +406,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                     }
                 }
 
-                xVals.push(x);
-                yVals.push(y);
                 _times.push(times);
                 umapData.push(filterdUmapData);
 
