@@ -65,7 +65,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     // but the setState function cannot update the state immediately
     protected times: number[][]; // times[i] is the array of times for line i
     protected umapData: UmapPoint[][]; // values[i] is the array of values for line i
-    protected jointData: number[][][]; // jointData[i] is a 2D array of the joint data for robot i
 
     constructor(props: graph_panel_props) {
         
@@ -98,7 +97,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         this._graphDiv = createRef();
         this.times = [];
         this.umapData = [];
-        this.jointData = [];
     }
 
     /**
@@ -362,9 +360,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         let filteredJointData: number[][] = [];
         let filteredTimes: number[][] = [];
         let lengths: number[] = [];
-        let allJointData: number[][][] = [];
         for (const [eventName, [times, jointData]] of currRobots) {
-            allJointData.push(jointData);
+            console.log(jointData)
             let [filteredData, filteredTime] = this.filterJointData(jointData, times);
             filteredJointData = filteredJointData.concat(filteredData);
             filteredTimes.push(filteredTime);
@@ -432,7 +429,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         this.props.graph.setUmapPoints(UmapPointsMap);
         this.times = _times;
         this.umapData = umapData;
-        this.jointData = allJointData;
         this.props.graph.setLineNames(line_names);
         this.props.graph.setLineIds(line_ids);
         this.props.graph.setLineColors(line_colors);
@@ -732,9 +728,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               robotSceneManager={this.props.robotSceneManager}
               graph={this.props.graph}
               times={this.times}
-            //   xVals={this.xVals}
-            //   yVals={this.yVals}
-              jointData={this.jointData}
               umapData={this.umapData}
               startTime={prev_times.start}
               endTime={prev_times.end}
