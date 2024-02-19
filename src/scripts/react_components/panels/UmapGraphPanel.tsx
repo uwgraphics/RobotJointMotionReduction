@@ -64,8 +64,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     // times and values are states at first
     // but the setState function cannot update the state immediately
     protected times: number[][]; // times[i] is the array of times for line i
-    protected xVals: number[][]; // values[i] is the array of values for line i
-    protected yVals: number[][]; // values[i] is the array of values for line i
     protected umapData: UmapPoint[][]; // values[i] is the array of values for line i
     protected jointData: number[][][]; // jointData[i] is a 2D array of the joint data for robot i
 
@@ -99,8 +97,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         };
         this._graphDiv = createRef();
         this.times = [];
-        this.xVals = [];
-        this.yVals = [];
         this.umapData = [];
         this.jointData = [];
     }
@@ -434,11 +430,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             }
         }
         this.props.graph.setUmapPoints(UmapPointsMap);
-        // console.log(filteredJointData)
-        // console.log(xVals)
-        // console.log(yVals)
-        this.xVals = xVals;
-        this.yVals = yVals;
         this.times = _times;
         this.umapData = umapData;
         this.jointData = allJointData;
