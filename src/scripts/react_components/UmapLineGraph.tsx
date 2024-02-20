@@ -372,6 +372,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for (var i = 0; i < event.points.length; i++) {
             line_idx = event.points[i].curveNumber;
             let line_id: string = plotly_data[line_idx].id;
+            if(line_id.startsWith("gap") || line_id.startsWith("false proximity")) continue;
             if(line_id.startsWith("nneighbor")) continue;
             point_idx = event.points[i].pointIndex;
         }
