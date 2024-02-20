@@ -19,9 +19,6 @@ interface line_graph_props {
     robotSceneManager: RobotSceneManager,
     graph: UmapGraph,
     times: number[][], // the global time array that ignores the time range selected by the users
-    // xVals: number[][],
-    // yVals: number[][],
-    jointData: number[][][],
     umapData: UmapPoint[][],
     startTime: number,
     endTime: number,
