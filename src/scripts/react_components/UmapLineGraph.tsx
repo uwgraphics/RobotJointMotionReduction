@@ -360,6 +360,22 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         });
     }
 
+    /**
+     * find the hovered_point in the neighbors of the point
+     * @param point 
+     * @param hovered_point 
+     * @param before_reduction 
+     * @returns 
+     */
+    findNeighborPoints(point: UmapPoint, hovered_point: Datum[], before_reduction: boolean): UmapPoint | undefined{
+        let nneighbors = point.nneighborsIn2D();
+        if(before_reduction) nneighbors = point.nneighborsInHD();
+        for(const [neighbor, distance] of nneighbors){
+            if(neighbor.pointIn2D()[0] === hovered_point[0] && 
+                neighbor.pointIn2D()[1] === hovered_point[1])
+                return neighbor;
+        }
+    }
 
     /**
      * hover event handler
@@ -373,7 +389,16 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             line_idx = event.points[i].curveNumber;
             let line_id: string = plotly_data[line_idx].id;
             if(line_id.startsWith("gap") || line_id.startsWith("false proximity")) continue;
-            if(line_id.startsWith("nneighbor")) continue;
+            if(line_id.startsWith("nneighbor")) {
+                let [, point_id] = line_id.split("#");
+                let point = this.props.graph.getUmapPoint(point_id);
+                if(point === undefined) continue;
+                let neighbor = this.findNeighborPoints(point, [event.points[i].x, event.points[i].y], line_id.startsWith("nneighbors-before reduction"));
+                if(neighbor !== undefined) {
+                    this.props.robotSceneManager.setCurrTime(neighbor.time());
+                    return;
+                }
+            }
             point_idx = event.points[i].pointIndex;
         }
         if(point_idx !== -1){
@@ -421,11 +446,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let point_selected: UmapPoint = trace[point_idx]; // the Umap point that is clicked on by the user
 
         let nneighbors = point_selected.nneighborsInHD().keys();
-        let nneighbors_id = "nneighbors-before reduction" + newID(), nneighbors_name = "nneighbors"+ "<br>" + "before reduction";
+        let nneighbors_id = "nneighbors-before reduction#" + point_selected.id(), nneighbors_name = "nneighbors"+ "<br>" + "before reduction";
         if(!this.props.graph.nneighborMode().valueOf()){
             // show nneighbors after reduction
             nneighbors = point_selected.nneighborsIn2D().keys();
-            nneighbors_id = "nneighbors-after reduction" + newID();
+            nneighbors_id = "nneighbors-after reduction#" + point_selected.id();
             nneighbors_name = "nneighbors"+ "<br>" + "after reduction";
         }
         let nneighbors_points: number[][] = [];
