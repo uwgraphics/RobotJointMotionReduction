@@ -360,12 +360,12 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         let lengths: number[] = [];
         for (const [eventName, [times, jointData]] of currRobots) {
             // console.log(jointData)
-            // let [filteredData, filteredTime] = this.filterJointData(jointData, times);
-            // filteredJointData = filteredJointData.concat(filteredData);
-            filteredJointData = filteredJointData.concat(jointData);
-            // filteredTimes.push(filteredTime);
+            let [filteredData, filteredTime] = this.filterJointData(jointData, times);
+            filteredJointData = filteredJointData.concat(filteredData);
+            // filteredJointData = filteredJointData.concat(jointData);
+            filteredTimes.push(filteredTime);
             // assert (filteredData.length === filteredTime.length);
-            lengths.push(jointData.length);
+            lengths.push(filteredJointData.length);
         }
         if (filteredJointData.length !== 0) {
             
@@ -385,20 +385,20 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 // assert (filteredX.length === lengths[robotIndex]);
                 // assert (filteredY.length === lengths[robotIndex]);
 
-                // let j = 0;
+                let j = 0;
                 let filterdUmapData: UmapPoint[] = [];
                 for (let i = 0; i < times.length; i++) {
-                    // if (j+1 < filteredTimes[robotIndex].length && times[i] >= filteredTimes[robotIndex][j+1]) {
-                    //     j++;
-                    // }
+                    if (j+1 < filteredTimes[robotIndex].length && times[i] >= filteredTimes[robotIndex][j+1]) {
+                        j++;
+                    }
                     // x.push(filteredX[j]);
                     // y.push(filteredY[j]);
-                    // currUmap[j].setTime(times[i]);
-                    // currUmap[j].setrobotInfo(eventName);
-                    // filterdUmapData.push(currUmap[j]);
-                    currUmap[i].setTime(times[i]);
-                    currUmap[i].setrobotInfo(eventName);
-                    filterdUmapData.push(currUmap[i]);
+                    currUmap[j].setTime(times[i]);
+                    currUmap[j].setrobotInfo(eventName);
+                    filterdUmapData.push(currUmap[j]);
+                    // currUmap[i].setTime(times[i]);
+                    // currUmap[i].setrobotInfo(eventName);
+                    // filterdUmapData.push(currUmap[i]);
                     if(i > 0){
                         // store previous point information
                         let prevPoint = filterdUmapData[i-1];
