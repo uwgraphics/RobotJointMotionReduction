@@ -463,9 +463,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         {
             const [sceneId, robotName] = this.decomposeId(line_id);
             let eventName = sceneId + "#" + robotName;
-            this.changeLines(eventName, true);
             eventNames.push(eventName);
         }
+        this.changeLines(eventNames, true);
     }
     componentDidUpdate(prevProps:graph_panel_props) {
         let line = this.props.graph.deleteLine();
@@ -474,7 +474,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             if(this.state.currRobots.has(line))
             {
                 this.state.currRobots.delete(line); // remove the object from the graph tab
-                this.changeLines(line, false);
+                this.changeLines([line], false);
                 this.props.graph.setDeleteLine(undefined, undefined);
             }
         }
@@ -584,27 +584,28 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
      * @param add true if add a line, false if delete a line
      * @returns 
      */
-    changeLines(eventName: string, add: boolean)
+    changeLines(eventNames: string[], add: boolean)
     {
-        if(this.state.currRobots.has(eventName)) return;
-        const[sceneId, robotName] = this.decomposeId(eventName);
-        const {robotSceneManager} = this.props;
-        let scene = robotSceneManager.robotSceneById(sceneId);
-        if(scene === undefined) return;
-        if(!robotSceneManager.isActiveRobotScene(scene))
-            robotSceneManager.activateRobotScene(scene);
-        let robot = scene.getRobotByName(robotName);
-        if(robot === undefined) return;
-        if (add) {
-            let [times, jointData] = this.getAllArticulatedJointsPositions(scene, robot);
-            this.state.currRobots.set(eventName, [times, jointData]);
-            this.state.color_map.set(eventName, this.props.graph.getColor());
-        }
-        else
-        {
-            this.state.currRobots.delete(eventName);
-            this.state.color_map.delete(eventName);
-        }
+        for (const eventName of eventNames) {
+            if (this.state.currRobots.has(eventName)) continue;
+            const [sceneId, robotName] = this.decomposeId(eventName);
+            const { robotSceneManager } = this.props;
+            let scene = robotSceneManager.robotSceneById(sceneId);
+            if (scene === undefined) continue;
+            if (!robotSceneManager.isActiveRobotScene(scene))
+                robotSceneManager.activateRobotScene(scene);
+            let robot = scene.getRobotByName(robotName);
+            if (robot === undefined) continue;
+            if (add) {
+                let [times, jointData] = this.getAllArticulatedJointsPositions(scene, robot);
+                this.state.currRobots.set(eventName, [times, jointData]);
+                this.state.color_map.set(eventName, this.props.graph.getColor());
+            }
+            else {
+                this.state.currRobots.delete(eventName);
+                this.state.color_map.delete(eventName);
+            }
+        }  
 
         // set the default nneighbor to be 10% of the data
         // but users are still able to change the nneighbor
