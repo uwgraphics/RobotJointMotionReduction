@@ -357,7 +357,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         let umapData = [];
         let filteredJointData: number[][] = [];
         let filteredTimes: number[][] = [];
-        let lengths: number[] = [];
+        let lengths: number[] = []; // the length of data array for each robot after filtering
         for (const [eventName, [times, jointData]] of currRobots) {
             // console.log(jointData)
             let [filteredData, filteredTime] = this.filterJointData(jointData, times);
@@ -381,9 +381,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 line_ids.push(eventName);
                 line_colors.push(color_map.get(eventName)!);
                 let currUmap = embedding.slice(index, index + lengths[robotIndex]);
-                // let [filteredX, filteredY] = this.decomposeUmapData(currUmap);
-                // assert (filteredX.length === lengths[robotIndex]);
-                // assert (filteredY.length === lengths[robotIndex]);
 
                 let j = 0;
                 let filterdUmapData: UmapPoint[] = [];
@@ -391,8 +388,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                     if (j+1 < filteredTimes[robotIndex].length && times[i] >= filteredTimes[robotIndex][j+1]) {
                         j++;
                     }
-                    // x.push(filteredX[j]);
-                    // y.push(filteredY[j]);
                     currUmap[j].setTime(times[i]);
                     currUmap[j].setrobotInfo(eventName);
                     filterdUmapData.push(currUmap[j]);
