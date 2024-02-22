@@ -365,7 +365,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             // filteredJointData = filteredJointData.concat(jointData);
             filteredTimes.push(filteredTime);
             // assert (filteredData.length === filteredTime.length);
-            lengths.push(filteredJointData.length);
+            lengths.push(filteredData.length);
         }
         if (filteredJointData.length !== 0) {
             
