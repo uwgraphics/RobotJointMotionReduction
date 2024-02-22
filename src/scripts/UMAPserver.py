@@ -11,7 +11,7 @@ CORS(app)  # Enable CORS for all routes
 def receive_data():
     data = request.get_json()
     print("Received data", " type is ", data["type"])
-    embedding = embedding_UMAP(data["type"], data["nneighbors"], data["min_dis"], data["spread"], data["random_seed"], data["data"])
+    embedding = embedding_UMAP(data["type"], data["nneighbors"], data["min_dis"], data["spread"], data["random_seed"], data["data"], data["loss_weight"])
     
     (nneighbors_HD, nneighbors_HD_dis) = calc_nneighbor(data["nneighbors"], data["random_seed"], np.array(data["data"]))
     (nneighbors_2D, nneighbors_2D_dis) = calc_nneighbor(data["nneighbors"], data["random_seed"], embedding)
@@ -26,9 +26,9 @@ def receive_data():
                     "nneighbors_2D": nneighbors_2D, "nneighbors_2D_dis": nneighbors_2D_dis})
 
 
-def embedding_UMAP(type_UMAP, nneighbors, min_dis, spread, random_seed, data):
+def embedding_UMAP(type_UMAP, nneighbors, min_dis, spread, random_seed, data, loss_weight):
     if type_UMAP == "Parametric":
-        embedder = ParametricUMAP()
+        embedder = ParametricUMAP(global_correlation_loss_weight=loss_weight)
     else:
         embedder = umap.UMAP(n_neighbors=nneighbors, min_dist=min_dis, spread=spread, random_state=random_seed)
     # embedding = reducer.fit_transform(data)

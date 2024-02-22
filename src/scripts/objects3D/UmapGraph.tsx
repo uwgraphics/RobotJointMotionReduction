@@ -43,6 +43,7 @@ export class UmapGraph {
     protected _showAllTraces: Boolean; // true if show all traces, otherwise hide them
     protected _UMAPType: umap_type;
     protected _UMAPPoints: Map<string, UmapPoint>; // map that stores all the umap points
+    protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
     /**
      * 
      * @param id
@@ -94,8 +95,16 @@ export class UmapGraph {
         this._showAllTraces = new Boolean(true);
         this._UMAPType = "Parametric";
         this._UMAPPoints = new Map();
-
+        this._lossWeight = 0;
         this._randomSeed = 20;
+    }
+
+    lossWeight(): number{
+        return this._lossWeight;
+    }
+
+    setLossWeight(weight: number) {
+        this._lossWeight = weight;
     }
 
     allUmapPoints():Map<string, UmapPoint>{

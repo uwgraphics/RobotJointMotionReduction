@@ -50,6 +50,7 @@ interface graph_panel_state {
     spread: number; // the spread when calculating umap
     randomSeed: number; // the random seed for the UMAP algo
     UMAPType: umap_type;
+    lossWeight: number;
 }
 
 export interface time_obj{
@@ -93,6 +94,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             spread: this.props.graph.spread(),
             randomSeed: this.props.graph.randomSeed(),
             UMAPType: this.props.graph.UMAPType(),
+            lossWeight: this.props.graph.lossWeight(),
         };
         this._graphDiv = createRef();
         this.times = [];
@@ -483,13 +485,15 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         || this.props.graph.minDis() !== this.state.minDis 
         || this.props.graph.spread() !== this.state.spread
         || this.props.graph.randomSeed() !== this.state.randomSeed
-        || this.props.graph.UMAPType() !== this.state.UMAPType){
+        || this.props.graph.UMAPType() !== this.state.UMAPType
+        || this.props.graph.lossWeight() !== this.state.lossWeight){
             this.setState({
                 nNeighbors: this.props.graph.nNeighbors(),
                 minDis: this.props.graph.minDis(),
                 spread: this.props.graph.spread(),
                 randomSeed: this.props.graph.randomSeed(),
                 UMAPType: this.props.graph.UMAPType(),
+                lossWeight: this.props.graph.lossWeight(),
             });
             this.props.graph.resetColor();
             this.fillGraphData();

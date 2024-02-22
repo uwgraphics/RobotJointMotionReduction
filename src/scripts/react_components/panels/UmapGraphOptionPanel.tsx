@@ -283,6 +283,14 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 value={currSelectedGraph?.randomSeed()}
                 onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setRamdomSeed.bind(this.props.robotSceneManager.getCurrUmapGraph())}
               />
+              <LabeledSlider
+                label={"loss weight: "}
+                min={0}
+                max={1}
+                step={0.01}
+                value={currSelectedGraph?.lossWeight()}
+                onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setLossWeight.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+              />
               <div>
                 <label>Display: </label>
                 <label>Dots</label>
