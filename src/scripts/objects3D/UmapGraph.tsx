@@ -45,6 +45,8 @@ export class UmapGraph {
     protected _UMAPPoints: Map<string, UmapPoint>; // map that stores all the umap points
     protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
     protected _backgroundPointsCount: number; // number of the background points
+    protected _backgroundPointsMax: number; // the max of the background points
+    protected _backgroundPointsMin: number; // the min of the background points
     /**
      * 
      * @param id
@@ -99,6 +101,24 @@ export class UmapGraph {
         this._lossWeight = 0;
         this._randomSeed = 20;
         this._backgroundPointsCount = 0;
+        this._backgroundPointsMax = 10;
+        this._backgroundPointsMin = -10;
+    }
+
+    backgroundPointsMin(): number{
+        return this._backgroundPointsMin;
+    }
+
+    setBackgroundPointMin(min: number){
+        this._backgroundPointsMin = min;
+    }
+
+    backgroundPointsMax(): number{
+        return this._backgroundPointsMax;
+    }
+
+    setBackgroundPointMax(max: number){
+        this._backgroundPointsMax = max;
     }
 
     backgroundPointsCount(): number{

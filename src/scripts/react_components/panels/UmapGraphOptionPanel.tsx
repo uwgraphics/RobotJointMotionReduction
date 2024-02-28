@@ -291,14 +291,44 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 value={currSelectedGraph?.lossWeight()}
                 onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setLossWeight.bind(this.props.robotSceneManager.getCurrUmapGraph())}
               />
-              <LabeledSlider
-                label={"number of background points: "}
-                min={0}
-                max={1000}
-                step={1}
-                value={currSelectedGraph?.backgroundPointsCount()}
-                onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setBackgroundPointsCount.bind(this.props.robotSceneManager.getCurrUmapGraph())}
-              />
+              <Accordion allowZeroExpanded allowMultipleExpanded>
+                <AccordionItem>
+                  <AccordionItemHeading>
+                    <AccordionItemButton style={{ fontWeight: "bold" }}>
+                      Background Points:
+                    </AccordionItemButton>
+                  </AccordionItemHeading>
+                  <AccordionItemPanel>
+                    <div>
+                      <LabeledSlider
+                        label={"number of background points: "}
+                        min={0}
+                        max={1000}
+                        step={1}
+                        value={currSelectedGraph?.backgroundPointsCount()}
+                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setBackgroundPointsCount.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+                      />
+                      <LabeledSlider
+                        label={"max: "}
+                        min={0}
+                        max={100}
+                        step={0.1}
+                        value={currSelectedGraph?.backgroundPointsMax()}
+                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setBackgroundPointMax.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+                      />
+                      <LabeledSlider
+                        label={"min: "}
+                        min={-100}
+                        max={0}
+                        step={0.1}
+                        value={currSelectedGraph?.backgroundPointsMin()}
+                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setBackgroundPointMin.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+                      />
+                    </div>
+                  </AccordionItemPanel>
+                </AccordionItem>
+              </Accordion>
+             
               <div>
                 <label>Display: </label>
                 <label>Dots</label>
