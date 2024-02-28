@@ -98,7 +98,7 @@ export class UmapGraph {
         this._UMAPPoints = new Map();
         this._lossWeight = 0;
         this._randomSeed = 20;
-        this._backgroundPointsCount = 100;
+        this._backgroundPointsCount = 0;
     }
 
     backgroundPointsCount(): number{
