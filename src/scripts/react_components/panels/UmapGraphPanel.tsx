@@ -177,6 +177,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             spread: this.props.graph.spread(),
             random_seed: this.props.graph.randomSeed(),
             data: jointData,
+            loss_weight: this.props.graph.lossWeight(),
         };
         let umapData: UmapPoint[] = [];
         try {
