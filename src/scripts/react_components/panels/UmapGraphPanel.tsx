@@ -2,7 +2,7 @@ import React, { Component, createRef } from "react";
 import { Robot } from "../../objects3D/Robot";
 import { RobotSceneManager } from "../../RobotSceneManager";
 import { RobotScene } from "../../scene/RobotScene";
-import { euclideanDistance, newID } from "../../helpers";
+import { euclideanDistance, generateRandomPoints, newID } from "../../helpers";
 import _ from 'lodash';
 import DockLayout from "rc-dock";
 import { DragButton } from "../DragButton";
@@ -51,6 +51,7 @@ interface graph_panel_state {
     randomSeed: number; // the random seed for the UMAP algo
     UMAPType: umap_type;
     lossWeight: number;
+    backgroundPointsCount: number;
 }
 
 export interface time_obj{
@@ -95,6 +96,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             randomSeed: this.props.graph.randomSeed(),
             UMAPType: this.props.graph.UMAPType(),
             lossWeight: this.props.graph.lossWeight(),
+            backgroundPointsCount: this.props.graph.backgroundPointsCount(),
         };
         this._graphDiv = createRef();
         this.times = [];
@@ -371,7 +373,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             lengths.push(filteredData.length);
         }
         if (filteredJointData.length !== 0) {
-            
+            let backgroundPoints = generateRandomPoints(this.props.graph.backgroundPointsCount(), filteredJointData[0].length, 10, -10);
+            filteredJointData = filteredJointData.concat(backgroundPoints);
+            // console.log(backgroundPoints)
             let embedding = await this.sendDataToPython(filteredJointData);
             // let embedding = await this.convertJointDataToUmap(filteredJointData);
 
@@ -487,7 +491,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         || this.props.graph.spread() !== this.state.spread
         || this.props.graph.randomSeed() !== this.state.randomSeed
         || this.props.graph.UMAPType() !== this.state.UMAPType
-        || this.props.graph.lossWeight() !== this.state.lossWeight){
+        || this.props.graph.lossWeight() !== this.state.lossWeight
+        || this.props.graph.backgroundPointsCount() !== this.state.backgroundPointsCount){
             this.setState({
                 nNeighbors: this.props.graph.nNeighbors(),
                 minDis: this.props.graph.minDis(),
@@ -495,6 +500,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 randomSeed: this.props.graph.randomSeed(),
                 UMAPType: this.props.graph.UMAPType(),
                 lossWeight: this.props.graph.lossWeight(),
+                backgroundPointsCount: this.props.graph.backgroundPointsCount(),
             });
             this.props.graph.resetColor();
             this.fillGraphData();

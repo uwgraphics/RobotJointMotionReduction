@@ -129,6 +129,25 @@ export function findLargestSmallerElement(array: number[], target: number): numb
 
     return result;
 }
+/**
+ * generate n points in k dimension
+ * @param n 
+ * @param k 
+ * @returns 
+ */
+export function generateRandomPoints(n: number, k: number, max: number, min: number): number[][] {
+    const points: number[][] = [];
+
+    for (let i = 0; i < n; i++) {
+        const point: number[] = [];
+        for (let j = 0; j < k; j++) {
+            point.push(Math.random() * (max - min) + min);
+        }
+        points.push(point);
+    }
+
+    return points;
+}
 
 /**
 * process the option name according to its prefix

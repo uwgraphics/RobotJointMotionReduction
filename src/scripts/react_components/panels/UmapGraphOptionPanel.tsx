@@ -291,6 +291,14 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 value={currSelectedGraph?.lossWeight()}
                 onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setLossWeight.bind(this.props.robotSceneManager.getCurrUmapGraph())}
               />
+              <LabeledSlider
+                label={"number of background points: "}
+                min={0}
+                max={1000}
+                step={1}
+                value={currSelectedGraph?.backgroundPointsCount()}
+                onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setBackgroundPointsCount.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+              />
               <div>
                 <label>Display: </label>
                 <label>Dots</label>
