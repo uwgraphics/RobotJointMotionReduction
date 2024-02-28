@@ -642,7 +642,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         const windowElement = event.target;
         let eventName = event.dataTransfer.getData("text/plain");
     
-        this.changeLines(eventName, true);
+        this.changeLines([eventName], true);
     }
 
     /**
