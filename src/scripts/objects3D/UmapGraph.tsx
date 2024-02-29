@@ -101,8 +101,8 @@ export class UmapGraph {
         this._lossWeight = 0;
         this._randomSeed = 20;
         this._backgroundPointsRatio = 0;
-        this._backgroundPointsMax = 10;
-        this._backgroundPointsMin = -10;
+        this._backgroundPointsMax = 2 * Math.PI;
+        this._backgroundPointsMin = -2 * Math.PI;
     }
 
     backgroundPointsMin(): number{
