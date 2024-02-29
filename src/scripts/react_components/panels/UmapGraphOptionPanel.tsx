@@ -301,12 +301,12 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                   <AccordionItemPanel>
                     <div>
                       <LabeledSlider
-                        label={"number of background points: "}
+                        label={"background points ratio: "}
                         min={0}
-                        max={1000}
-                        step={1}
-                        value={currSelectedGraph?.backgroundPointsCount()}
-                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setBackgroundPointsCount.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+                        max={5}
+                        step={0.01}
+                        value={currSelectedGraph?.backgroundPointsRatio()}
+                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setBackgroundPointsRatio.bind(this.props.robotSceneManager.getCurrUmapGraph())}
                       />
                       <LabeledSlider
                         label={"max: "}

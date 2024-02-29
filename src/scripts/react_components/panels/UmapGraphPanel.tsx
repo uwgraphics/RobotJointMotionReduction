@@ -51,7 +51,7 @@ interface graph_panel_state {
     randomSeed: number; // the random seed for the UMAP algo
     UMAPType: umap_type;
     lossWeight: number;
-    backgroundPointsCount: number;
+    backgroundPointsRatio: number;
     backgroundPointsMax: number;
     backgroundPointsMin: number;
 }
@@ -98,7 +98,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             randomSeed: this.props.graph.randomSeed(),
             UMAPType: this.props.graph.UMAPType(),
             lossWeight: this.props.graph.lossWeight(),
-            backgroundPointsCount: this.props.graph.backgroundPointsCount(),
+            backgroundPointsRatio: this.props.graph.backgroundPointsRatio(),
             backgroundPointsMax: this.props.graph.backgroundPointsMax(),
             backgroundPointsMin: this.props.graph.backgroundPointsMin(),
         };
@@ -377,7 +377,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             lengths.push(filteredData.length);
         }
         if (filteredJointData.length !== 0) {
-            let backgroundPoints = generateRandomPoints(this.props.graph.backgroundPointsCount(), filteredJointData[0].length, 
+            let backgroundPointsCount = Math.floor(filteredJointData.length * this.props.graph.backgroundPointsRatio());
+            let backgroundPoints = generateRandomPoints(backgroundPointsCount, filteredJointData[0].length, 
             this.props.graph.backgroundPointsMax(), this.props.graph.backgroundPointsMin());
             filteredJointData = filteredJointData.concat(backgroundPoints);
             // console.log(backgroundPoints)
@@ -497,7 +498,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         || this.props.graph.randomSeed() !== this.state.randomSeed
         || this.props.graph.UMAPType() !== this.state.UMAPType
         || this.props.graph.lossWeight() !== this.state.lossWeight
-        || this.props.graph.backgroundPointsCount() !== this.state.backgroundPointsCount
+        || this.props.graph.backgroundPointsRatio() !== this.state.backgroundPointsRatio
         || this.props.graph.backgroundPointsMax() !== this.state.backgroundPointsMax
         || this.props.graph.backgroundPointsMin() !== this.state.backgroundPointsMin){
             this.setState({
@@ -507,7 +508,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 randomSeed: this.props.graph.randomSeed(),
                 UMAPType: this.props.graph.UMAPType(),
                 lossWeight: this.props.graph.lossWeight(),
-                backgroundPointsCount: this.props.graph.backgroundPointsCount(),
+                backgroundPointsRatio: this.props.graph.backgroundPointsRatio(),
                 backgroundPointsMax: this.props.graph.backgroundPointsMax(),
                 backgroundPointsMin: this.props.graph.backgroundPointsMin(),
             });

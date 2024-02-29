@@ -44,7 +44,7 @@ export class UmapGraph {
     protected _UMAPType: umap_type;
     protected _UMAPPoints: Map<string, UmapPoint>; // map that stores all the umap points
     protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
-    protected _backgroundPointsCount: number; // number of the background points
+    protected _backgroundPointsRatio: number; // the ratio of the background points to the total robot joint points
     protected _backgroundPointsMax: number; // the max of the background points
     protected _backgroundPointsMin: number; // the min of the background points
     /**
@@ -100,7 +100,7 @@ export class UmapGraph {
         this._UMAPPoints = new Map();
         this._lossWeight = 0;
         this._randomSeed = 20;
-        this._backgroundPointsCount = 0;
+        this._backgroundPointsRatio = 0;
         this._backgroundPointsMax = 10;
         this._backgroundPointsMin = -10;
     }
@@ -121,12 +121,12 @@ export class UmapGraph {
         this._backgroundPointsMax = max;
     }
 
-    backgroundPointsCount(): number{
-        return this._backgroundPointsCount;
+    backgroundPointsRatio(): number{
+        return this._backgroundPointsRatio;
     }
 
-    setBackgroundPointsCount(count: number){
-        this._backgroundPointsCount = count;
+    setBackgroundPointsRatio(ratio: number){
+        this._backgroundPointsRatio = ratio;
     }
 
     lossWeight(): number{
