@@ -221,7 +221,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
             for (const data of this.state.plotly_data) {
                 if(data.id.startsWith("nneighbor") || data.id.startsWith("gap") 
-                || data.id.startsWith("false proximity")){
+                || data.id.startsWith("false proximity") || data.id.startsWith("backgroundPoints") ){
                     plot_data.push(data);
                 } else{
                     plot_data.push({
