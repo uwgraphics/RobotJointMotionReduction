@@ -201,10 +201,10 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
             const panel: PanelBase = {
                 tabs: tabs,
                 activeId: newTabId_1,
-                x: 100,
-                y: 50,
-                w: 400,
-                h: 400,
+                x: 170,
+                y: 0,
+                w: 600,
+                h: 600,
             };
             updatedLayoutBase.floatbox.children.push(panel);
             this.setState({
