@@ -715,7 +715,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
           onDragOver={this.dragOverHandler.bind(this)}
           onClick={this.clickHandler.bind(this)}
           style={{backgroundColor: this.props.graph.backgroundColor()}}>
-                <div className="LegendMessage">
+                {/* <div className="LegendMessage">
                     <DragButton
                         buttonValue={"Legend"}
                         className={"Legend"}
@@ -736,7 +736,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                     <button id="open-popup" className="OpenPop" onClick={() => APP.setPopupHelpPage(PopupHelpPage.UmapGraphPanel)}>
                         <FontAwesomeIcon className="Icon" icon={faQuestion} />
                     </button>
-                </div>
+                </div> */}
             <UmapLineGraph
               robotSceneManager={this.props.robotSceneManager}
               graph={this.props.graph}
