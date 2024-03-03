@@ -4,6 +4,7 @@ import umap
 import numpy as np
 from umap.umap_ import nearest_neighbors
 from umap.parametric_umap import ParametricUMAP
+import tensorflow as tf
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
@@ -28,6 +29,23 @@ def receive_data():
 
 def embedding_UMAP(type_UMAP, nneighbors, min_dis, spread, random_seed, data, loss_weight, autoencoder):
     if type_UMAP == "Parametric":
+        # data = np.array(data)
+        # data = np.reshape(data, (-1, len(data), 9, 1))
+        # dims = (len(data), 9, 1)
+        # n_components = 2
+        # encoder = tf.keras.Sequential([
+        #     tf.keras.layers.InputLayer(input_shape=dims),
+        #     tf.keras.layers.Conv2D(
+        #         filters=32, kernel_size=3, strides=(2, 2), activation="relu", padding="same"
+        #     ),
+        #     tf.keras.layers.Conv2D(
+        #         filters=64, kernel_size=3, strides=(2, 2), activation="relu", padding="same"
+        #     ),
+        #     tf.keras.layers.Flatten(),
+        #     tf.keras.layers.Dense(units=256, activation="relu"),
+        #     tf.keras.layers.Dense(units=256, activation="relu"),
+        #     tf.keras.layers.Dense(units=n_components),
+        # ])
         embedder = ParametricUMAP(global_correlation_loss_weight=loss_weight, autoencoder_loss = autoencoder)
     else:
         embedder = umap.UMAP(n_neighbors=nneighbors, min_dist=min_dis, spread=spread, random_state=random_seed)
