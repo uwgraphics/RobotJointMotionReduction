@@ -70,6 +70,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     // but the setState function cannot update the state immediately
     protected times: number[][]; // times[i] is the array of times for line i
     protected umapData: UmapPoint[][]; // values[i] is the array of values for line i
+    protected backgroundPoints: number[][]; // the background points after reduction
 
     constructor(props: graph_panel_props) {
         
@@ -107,6 +108,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         this._graphDiv = createRef();
         this.times = [];
         this.umapData = [];
+        this.backgroundPoints = [];
     }
 
     /**
@@ -383,6 +385,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             let backgroundPointsCount = Math.floor(filteredJointData.length * this.props.graph.backgroundPointsRatio());
             let backgroundPoints = generateRandomPoints(backgroundPointsCount, filteredJointData[0].length, 
             this.props.graph.backgroundPointsMax(), this.props.graph.backgroundPointsMin());
+            console.log(backgroundPoints)
             filteredJointData = filteredJointData.concat(backgroundPoints);
             // console.log(backgroundPoints)
             let embedding = await this.sendDataToPython(filteredJointData);
@@ -424,6 +427,10 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
 
                 index = index + lengths[robotIndex];
                 robotIndex++;
+            }
+            
+            for(let i=index; i<embedding.length; i++){
+                this.backgroundPoints.push(embedding[i].pointIn2D());
             }
         }
 
@@ -765,6 +772,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               displayFalseProximity={this.props.graph.displayFalseProximity()}
               minHighDGapDis={this.props.graph.minHighDGapDis()}
               showAllTraces={this.props.graph.showAllTraces()}
+              backgroundPoints={this.backgroundPoints}
               onGraphUpdate={this.onGraphUpdate.bind(this)}
               onCurrChange={this.onCurrTimeChange.bind(this)}
               onStartChange={this.onStartTimeChange.bind(this)}

@@ -39,6 +39,7 @@ interface line_graph_props {
     displayFalseProximity: Boolean,
     minHighDGapDis: number,
     showAllTraces: Boolean,
+    backgroundPoints: number[][],
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -316,7 +317,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             startTime, endTime, currTime, 
             isTimeWarp, lineWidth, axisColor,
             line_names, line_colors, line_ids,
-            onGraphUpdate} = this.props;
+            onGraphUpdate, umapData, backgroundPoints} = this.props;
         const w = this.props.width;
         const h = this.props.height;
         const isDataChanged = true;
@@ -353,6 +354,25 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             });
             UmapData.set(line_ids[i], data[i]);
         }
+
+        let x = [], y = [];
+        for (const point of backgroundPoints) {
+            x.push(point[0]);
+            y.push(point[1]);
+        }
+        plot_data.push({
+            x: x,
+            y: y,
+            name: "backgroundPoints",
+            id: "backgroundPoints",
+            visible: "legendonly",
+            mode: "markers",
+            marker: {
+                size: 2,
+                color: "grey",
+            }
+        });
+
         this.setState({
             plotly_data: plot_data,
             zoomedTimes: zoomedTimes,
@@ -388,7 +408,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for (var i = 0; i < event.points.length; i++) {
             line_idx = event.points[i].curveNumber;
             let line_id: string = plotly_data[line_idx].id;
-            if(line_id.startsWith("gap") || line_id.startsWith("false proximity")) continue;
+            if(line_id.startsWith("gap") || line_id.startsWith("false proximity") || line_id.startsWith("backgroundPoints")) continue;
             if(line_id.startsWith("nneighbor")) {
                 let [, point_id] = line_id.split("#");
                 let point = this.props.graph.getUmapPoint(point_id);
@@ -430,7 +450,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             point_y = event.points[i].y as number;
         }
         let line_id: string = plotly_data[line_idx].id;
-        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") || line_id.startsWith("false proximity")) return;
+        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") || line_id.startsWith("false proximity") || line_id.startsWith("backgroundPoints")) return;
 
         let plot_data = [], points: PointInfo[] = [];
         for(let i=0; i<plotly_data.length; i++){
