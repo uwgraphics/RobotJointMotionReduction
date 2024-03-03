@@ -54,6 +54,7 @@ interface graph_panel_state {
     backgroundPointsRatio: number;
     backgroundPointsMax: number;
     backgroundPointsMin: number;
+    autoencoder: boolean;
 }
 
 export interface time_obj{
@@ -101,6 +102,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             backgroundPointsRatio: this.props.graph.backgroundPointsRatio(),
             backgroundPointsMax: this.props.graph.backgroundPointsMax(),
             backgroundPointsMin: this.props.graph.backgroundPointsMin(),
+            autoencoder: this.props.graph.autoencoder().valueOf(),
         };
         this._graphDiv = createRef();
         this.times = [];
@@ -184,6 +186,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             random_seed: this.props.graph.randomSeed(),
             data: jointData,
             loss_weight: this.props.graph.lossWeight(),
+            autoencoder: this.props.graph.autoencoder().valueOf(),
         };
         let umapData: UmapPoint[] = [];
         try {
@@ -500,7 +503,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         || this.props.graph.lossWeight() !== this.state.lossWeight
         || this.props.graph.backgroundPointsRatio() !== this.state.backgroundPointsRatio
         || this.props.graph.backgroundPointsMax() !== this.state.backgroundPointsMax
-        || this.props.graph.backgroundPointsMin() !== this.state.backgroundPointsMin){
+        || this.props.graph.backgroundPointsMin() !== this.state.backgroundPointsMin
+        || this.props.graph.autoencoder().valueOf() !== this.state.autoencoder){
             this.setState({
                 nNeighbors: this.props.graph.nNeighbors(),
                 minDis: this.props.graph.minDis(),
@@ -511,6 +515,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 backgroundPointsRatio: this.props.graph.backgroundPointsRatio(),
                 backgroundPointsMax: this.props.graph.backgroundPointsMax(),
                 backgroundPointsMin: this.props.graph.backgroundPointsMin(),
+                autoencoder: this.props.graph.autoencoder().valueOf(),
             });
             this.props.graph.resetColor();
             this.fillGraphData();

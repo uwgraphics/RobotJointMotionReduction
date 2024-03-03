@@ -106,6 +106,14 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
+    toggleAutoencoder() {
+      this.props.robotSceneManager.getCurrUmapGraph()?.toggleAutoencoder();
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
+    }
+
     togglenneighborMode() {
       this.props.robotSceneManager.getCurrUmapGraph()?.togglenneighborMode();
       console.log("toggle nneighbor mode");
@@ -328,6 +336,16 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                   </AccordionItemPanel>
                 </AccordionItem>
               </Accordion>
+
+              <div>
+                <label>Autoencoder: </label>
+                <label>False</label>
+                <Switch
+                  checked={currSelectedGraph?.autoencoder().valueOf()}
+                  onChange={this.toggleAutoencoder.bind(this)}
+                />
+                <label>True</label>
+              </div>
              
               <div>
                 <label>Display: </label>
