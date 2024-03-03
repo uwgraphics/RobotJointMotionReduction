@@ -39,7 +39,7 @@ interface line_graph_props {
     displayFalseProximity: Boolean,
     minHighDGapDis: number,
     showAllTraces: Boolean,
-    backgroundPoints: number[][],
+    backgroundPoints: UmapPoint[],
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -357,8 +357,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         let x = [], y = [];
         for (const point of backgroundPoints) {
-            x.push(point[0]);
-            y.push(point[1]);
+            const pointIn2D = point.pointIn2D();
+            x.push(pointIn2D[0]);
+            y.push(pointIn2D[1]);
         }
         plot_data.push({
             x: x,
@@ -450,7 +451,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             point_y = event.points[i].y as number;
         }
         let line_id: string = plotly_data[line_idx].id;
-        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") || line_id.startsWith("false proximity") || line_id.startsWith("backgroundPoints")) return;
+        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") || line_id.startsWith("false proximity")) return;
 
         let plot_data = [], points: PointInfo[] = [];
         for(let i=0; i<plotly_data.length; i++){
@@ -462,7 +463,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
 
         let trace = zoomedUMAPData.get(line_id);
-        if(trace === undefined) return;
+        if(trace === undefined) {
+            if(line_id.startsWith("backgroundPoints")){
+                trace = this.props.backgroundPoints;
+            } else return;
+        };
         let point_selected: UmapPoint = trace[point_idx]; // the Umap point that is clicked on by the user
 
         let nneighbors = point_selected.nneighborsInHD().keys();

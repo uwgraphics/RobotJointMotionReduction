@@ -70,7 +70,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     // but the setState function cannot update the state immediately
     protected times: number[][]; // times[i] is the array of times for line i
     protected umapData: UmapPoint[][]; // values[i] is the array of values for line i
-    protected backgroundPoints: number[][]; // the background points after reduction
+    protected backgroundPoints: UmapPoint[]; // the background points
 
     constructor(props: graph_panel_props) {
         
@@ -430,7 +430,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             }
             
             for(let i=index; i<embedding.length; i++){
-                this.backgroundPoints.push(embedding[i].pointIn2D());
+                this.backgroundPoints.push(embedding[i]);
             }
         }
 
