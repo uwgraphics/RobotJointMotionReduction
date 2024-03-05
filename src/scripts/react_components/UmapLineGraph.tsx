@@ -411,7 +411,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for (var i = 0; i < event.points.length; i++) {
             line_idx = event.points[i].curveNumber;
             let line_id: string = plotly_data[line_idx].id;
-            if(line_id.startsWith("gap") || line_id.startsWith("false proximity") || line_id.startsWith("backgroundPoints")) continue;
+            if(line_id.startsWith("gap") || line_id.startsWith("false proximity") 
+            || line_id.startsWith("backgroundPoints") || line_id.startsWith("points in region")) continue;
             if(line_id.startsWith("nneighbor")) {
                 let [, point_id] = line_id.split("#");
                 let point = this.props.graph.getUmapPoint(point_id);
@@ -453,7 +454,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             point_y = event.points[i].y as number;
         }
         let line_id: string = plotly_data[line_idx].id;
-        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") || line_id.startsWith("false proximity") || line_id.startsWith("selected points")) return;
+        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") 
+        || line_id.startsWith("false proximity") || line_id.startsWith("selected points")
+        || line_id.startsWith("points in region")) return;
 
         let plot_data = [], points: PointInfo[] = [];
         for(let i=0; i<plotly_data.length; i++){
@@ -677,6 +680,23 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let data = plotly_data[i];
             plot_data.push(data);
         }
+        let x = [], y = [];
+        for (const point of points) {
+            x.push(point.x);
+            y.push(point.y);
+        }
+        plot_data.push({
+            x: x,
+            y: y,
+            name: "points in region",
+            id: "points in region",
+            showlegend: true,
+            mode: "markers",
+            marker: {
+                size: 8,
+                opacity: 0.5,
+            }
+        });
         let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints);
         this.showRobotScenes(selectedPoints, selectedPointsNames, true);
         this.setState({
