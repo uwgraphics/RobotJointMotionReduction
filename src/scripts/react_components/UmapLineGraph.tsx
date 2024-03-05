@@ -44,7 +44,7 @@ interface line_graph_props {
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
     onEndChange: (newValue:number) => void,
-    addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean) => void,
+    addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean, selectedPointsNames: string[]) => void,
     removeTab: (tabId: string) => void,
 }
 
@@ -89,10 +89,12 @@ interface PointInfo {
 export class UmapLineGraph extends Component<line_graph_props, line_graph_state> {
     protected _graphDiv: React.RefObject<HTMLDivElement>;
     protected click_on_point: boolean; // true if the onplotlyclick function is called, stop event from propogating
+    protected selectedPointsCount: number; // the count of the total selected points shown in the scene
     constructor(props:line_graph_props){
         super(props);
         this._graphDiv = createRef();
         this.click_on_point = false;
+        this.selectedPointsCount = 0;
         // this.drawGraph.bind(this);
         const {width, height} = this.props;
         this.state = {
@@ -451,7 +453,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             point_y = event.points[i].y as number;
         }
         let line_id: string = plotly_data[line_idx].id;
-        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") || line_id.startsWith("false proximity")) return;
+        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") || line_id.startsWith("false proximity") || line_id.startsWith("selected points")) return;
 
         let plot_data = [], points: PointInfo[] = [];
         for(let i=0; i<plotly_data.length; i++){
@@ -502,7 +504,6 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             selectedPoints[0] = temp;
         }
         // console.log(selectedPoints);
-        this.showRobotScenes(selectedPoints, true);
         
         let x = [], y = [];
         for (const point of nneighbors_points) {
@@ -521,9 +522,41 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 opacity: 0.5,
             }
         });
+
+        let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints);
+        this.showRobotScenes(selectedPoints, selectedPointsNames, true);
+
         this.setState({
             plotly_data: plot_data,
         });
+    }
+
+    /**
+     * add selected points to the plotly data
+     * @param plot_data 
+     * @param selectedPoints 
+     * @returns a string array that stores all their name
+     */
+    addSelectedPoints(plot_data: any[], selectedPoints: UmapPoint[]): string[] {
+        let selectedPointsNames: string[] = [];
+        for(const point of selectedPoints){
+            let pointName = "selected points " + this.selectedPointsCount;
+            this.selectedPointsCount++;
+            selectedPointsNames.push(pointName)
+            plot_data.push({
+                x: [point.pointIn2D()[0]],
+                y: [point.pointIn2D()[1]],
+                name: pointName,
+                id: pointName,
+                showlegend: true,
+                mode: "markers",
+                marker: {
+                    size: 16,
+                    opacity: 0.3,
+                }
+            });
+        }
+        return selectedPointsNames;
     }
 
     /**
@@ -542,7 +575,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let point2 = graph.getUmapPoint(point2_id);
             if (point1 !== undefined && point2 !== undefined) {
                 if(plotly_data[event.curveNumber].visible !== true)
-                    this.showRobotScenes([point1, point2], false, line_id);
+                    this.showRobotScenes([point1, point2], [], false, line_id);
                 else{
                     this.props.removeTab("StaticRobotScene-One&" + line_id);
                 }
@@ -571,6 +604,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if (index > -1) {
             graph.setDeleteLine(line_ids[index], line_colors[index]);
         } else{
+            if(line_id.startsWith("selected points")) this.selectedPointsCount--;
             // if (line_id.startsWith("nneighbor")) {
                 let plot_data = [];
                 for (let i = 0; i < plotly_data.length; i++) {
@@ -638,18 +672,28 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     selectedPoints.push(trace[point.pointIndex]);
             }
         }
-        this.showRobotScenes(selectedPoints, true);
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            plot_data.push(data);
+        }
+        let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints);
+        this.showRobotScenes(selectedPoints, selectedPointsNames, true);
+        this.setState({
+            plotly_data: plot_data
+        });
     }
 
     /**
      * display robots corresponding to the point from the {curveNumber[i]}th curve
      * at index {pointIndices[i]} in 3D scene(s)
      * @param selectedPoints 
+     * @param selectedPointsNames the name of each point; since I do not want to use the id of the points as its name, this string array is needed
      * @param showNineScenes true if show ninescenes, otherwise false
      * @param oneSceneId the sceneId of the gaps and the false proximity will be specified so that the scene can be deleted automatically
      * @returns 
      */
-    showRobotScenes(selectedPoints: UmapPoint[], showNineScenes: boolean, oneSceneId?: string){
+    showRobotScenes(selectedPoints: UmapPoint[], selectedPointsNames: string[],  showNineScenes: boolean, oneSceneId?: string){
         const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
         const { plotly_data, zoomedTimes } = this.state;
         let sceneIds = [];
@@ -687,7 +731,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 }
             }
         //}
-        this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes);
+        this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes, selectedPointsNames);
         this.props.robotSceneManager.setShouldSyncViews(true);
     }
 
@@ -912,11 +956,13 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         plotly_layout: figure.layout,
                         plotly_frames: figure.frames
                     })}
-                    onUpdate={(figure) => this.setState({
-                        plotly_data: figure.data,
-                        plotly_layout: figure.layout,
-                        plotly_frames: figure.frames
-                    })}
+                    // onUpdate={(figure) => {
+                    //     this.setState({
+                    //         plotly_data: figure.data,
+                    //         plotly_layout: figure.layout,
+                    //         plotly_frames: figure.frames
+                    //     }); 
+                    // }}
                     onSelected={(event) => this.onPlotlySelected(event)}
                 />
                 </div>

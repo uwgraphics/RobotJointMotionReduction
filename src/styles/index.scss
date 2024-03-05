@@ -1176,6 +1176,12 @@ html, body {
                         .Rows{
                             display: flex;
                             height: 33%;
+                            margin-bottom: 20px;
+                            .Scene{
+                                display: block;
+                                text-align: center;
+                                flex: 1;
+                            }
                         }
                     }
                 }

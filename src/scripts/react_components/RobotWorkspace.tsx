@@ -179,7 +179,7 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
         });
     }
 
-    addNewStaticRobotCanvasPanel(targetSceneIds: string[], showNineScenes: boolean) {
+    addNewStaticRobotCanvasPanel(targetSceneIds: string[], showNineScenes: boolean, selectedPointsNames: string[]) {
 
         let tabs: TabBase[] = [];
         let newTabId_1 = "StaticRobotScene-One";
@@ -188,7 +188,7 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
             let newTabId_9 = "StaticRobotScene-Nine";
             // if(!showNineScenes) newTabId = "StaticRobotScene-One";
             for (let i = 0; i < targetSceneIds.length - 1; i++)
-                newTabId_9 += "&" + targetSceneIds[i];
+                newTabId_9 += "&" + targetSceneIds[i] + "&" + selectedPointsNames[i];
 
             tabs = [{ id: newTabId_9 }, { id: newTabId_1 }];
         } else {
@@ -1318,15 +1318,19 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
             let staticRobotScenes: StaticRobotScene[][] = []
             for(let i=0; i<3; i++)
                 staticRobotScenes[i] = [];
-            for(let i=0; i<sceneIds.length; i++){
+            let nameIdMap: Map<string, string> = new Map(); // maps id to name, this is needed because we cannot use array to add html elements (we use array.map instead)
+            // the array will be in a format like [id1, name1, id2, name2....]
+            for(let i=0; i<sceneIds.length; i+=2){
                 let sceneId = sceneIds[i];
+                let pointName = sceneIds[i+1];
+                nameIdMap.set(sceneId, pointName);
                 let staticRobotScene: StaticRobotScene | undefined = sceneManager.getStaticRobotSceneById(sceneId);
                 if(staticRobotScene === undefined)
                 {
                     staticRobotScene = new StaticRobotScene(sceneManager, sceneId);
                     //sceneManager.setCurrStaticRobotScene(sceneId);
                 }
-                staticRobotScenes[Math.floor(i/3)].push(staticRobotScene);
+                staticRobotScenes[Math.floor(i/6)].push(staticRobotScene);
             }
             
 
@@ -1340,18 +1344,21 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                         {() => {
                             return <div className="NineScenes">
                                 {staticRobotScenes.map(rows => (
-                                <div className="Rows">
-                                {rows.map(staticRobotScene => (
-                                    <StaticRobotCanvas
-                                  key={staticRobotScene.id().value()}
-                                  allowSelecting={true}
-                                  staticRobotScene={staticRobotScene}
-                                  robotSceneManager={sceneManager} 
-                                  setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
-                                />
+                                    <div className="Rows">
+                                        {rows.map(staticRobotScene => (
+                                            <div className="Scene">
+                                                <label>{nameIdMap.get(staticRobotScene.id().value())}</label>
+                                                <StaticRobotCanvas
+                                                    key={staticRobotScene.id().value()}
+                                                    allowSelecting={true}
+                                                    staticRobotScene={staticRobotScene}
+                                                    robotSceneManager={sceneManager}
+                                                    setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 ))}
-                                </div>
-                              ))}
                             </div>;
                         }}
                     </WorkspaceContext.Consumer>
