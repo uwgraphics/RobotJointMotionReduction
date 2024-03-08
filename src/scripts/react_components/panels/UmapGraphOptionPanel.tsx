@@ -141,6 +141,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
+    toggleDisplayStetch() {
+      this.props.robotSceneManager.getCurrUmapGraph()?.toggleDisplayStretch();
+      console.log("toggle display stetch");
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
+    }
+
     toggleDisplayFalseProximity() {
       this.props.robotSceneManager.getCurrUmapGraph()?.toggleDisplayFalseProximity();
       console.log("toggle display false proximity");
@@ -397,6 +406,21 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 step={0.01}
                 value={currSelectedGraph?.min2DGapDis()}
                 onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMin2DGapDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+              />
+              <div>
+                <label>display stretch</label>
+                <Switch
+                  checked={currSelectedGraph?.displayStretch().valueOf()}
+                  onChange={this.toggleDisplayStetch.bind(this)}
+                />
+              </div>
+              <LabeledSlider
+                label={"min 2D stretch distance: "}
+                min={0.1}
+                max={10}
+                step={0.01}
+                value={currSelectedGraph?.min2DStretchDis()}
+                onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMin2DStretchDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
               />
               <div>
                 <label>display false proximity</label>

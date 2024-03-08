@@ -769,6 +769,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               showLines={this.props.graph.showLines()}
               displayGap={this.props.graph.displayGap()}
               min2DGapDis={this.props.graph.min2DGapDis()}
+              displayStretch={this.props.graph.displayStretch()}
+              min2DStretchDis={this.props.graph.min2DStretchDis()}
               displayFalseProximity={this.props.graph.displayFalseProximity()}
               minHighDGapDis={this.props.graph.minHighDGapDis()}
               showAllTraces={this.props.graph.showAllTraces()}

@@ -36,6 +36,8 @@ interface line_graph_props {
     showLines: Boolean,
     displayGap: Boolean,
     min2DGapDis: number,
+    displayStretch: Boolean,
+    min2DStretchDis: number,
     displayFalseProximity: Boolean,
     minHighDGapDis: number,
     showAllTraces: Boolean,
@@ -202,6 +204,20 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 this.displayGaps(0.1, this.props.min2DGapDis);
             }
                 
+        }
+
+        if (prevProps.displayStretch !== this.props.displayStretch) {
+            if(this.props.displayStretch.valueOf()){
+                this.displayStretches(0.1, this.props.min2DStretchDis);
+            } else{
+                this.removeStretches();
+            }
+        }
+
+        if (prevProps.min2DStretchDis !== this.props.min2DStretchDis) {
+            if(this.props.displayStretch.valueOf()){
+                this.displayStretches(0.1, this.props.min2DStretchDis);
+            }
         }
 
         if (prevProps.displayFalseProximity !== this.props.displayFalseProximity) {
@@ -572,7 +588,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const { graph, robotSceneManager } = this.props;
         const { plotly_data } = this.state;
         let line_id: string = plotly_data[event.curveNumber].id;
-        if((line_id.startsWith("gap") || line_id.startsWith("false proximity"))){
+        if((line_id.startsWith("gap") || line_id.startsWith("false proximity")) || line_id.startsWith("stretch")){
             const [, point1_id, point2_id] = line_id.split("#");
             let point1 = graph.getUmapPoint(point1_id);
             let point2 = graph.getUmapPoint(point2_id);
@@ -780,24 +796,6 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let gaps: number = 0;
         for(const trace of zoomedUMAPData){
             for(const data of trace){
-                for(const [neighbor, distance] of data.nneighborsInHD()){
-                    if(distance.distanceIn2D() > min_dis_2D && distance.distanceInHD() <= max_dis_HD){
-                        plot_data.push({
-                            x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
-                            y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
-                            id: "gap#" + data.id() + "#" + neighbor.id(),
-                            name: "gap-" + gaps,
-                            mode: "lines",
-                            visible: "legendonly",
-                            line: {
-                                color: 'rgb(219, 64, 82)',
-                                width: 3,
-                            }
-                        });
-                        gaps++;
-                    }
-                }
-
                 for(const [prevPoint, distance] of data.prevPoint()){
                     if(distance.distanceIn2D() > min_dis_2D){
                         plot_data.push({
@@ -833,6 +831,73 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let data = plotly_data[i];
             let id = data.id as string;
             if(id.startsWith("gap")) continue;
+            plot_data.push(data);
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * connect two points that are close in their original high dimension
+     * but their distance in 2D is greater than min_dis
+     * @param min_dis 
+     */
+    displayStretches(max_dis_HD: number, min_dis_2D: number){
+        const { plotly_data } = this.state;
+
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            plot_data.push(data);
+        }
+
+        let zoomedUMAPData = [];
+        for(const [i, data] of plotly_data.entries()){
+            let line_id = data.id;
+            let umapData = this.state.zoomedUMAPData.get(line_id);
+            if(umapData !== undefined) zoomedUMAPData.push(umapData);
+        }
+
+        let stretches: number = 0;
+        for(const trace of zoomedUMAPData){
+            for(const data of trace){
+                for(const [neighbor, distance] of data.nneighborsInHD()){
+                    if(distance.distanceIn2D() > min_dis_2D && distance.distanceInHD() <= max_dis_HD){
+                        plot_data.push({
+                            x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
+                            y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
+                            id: "stretch#" + data.id() + "#" + neighbor.id(),
+                            name: "stretch-" + stretches,
+                            mode: "lines",
+                            visible: "legendonly",
+                            line: {
+                                color: 'rgb(219, 64, 82)',
+                                width: 3,
+                            }
+                        });
+                        stretches++;
+                    }
+                }
+            }
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * remove all the lines that connect the stetches
+     */
+    removeStretches(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let id = data.id as string;
+            if(id.startsWith("stretch")) continue;
             plot_data.push(data);
         }
 

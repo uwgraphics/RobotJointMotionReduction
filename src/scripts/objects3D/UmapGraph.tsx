@@ -35,8 +35,10 @@ export class UmapGraph {
     protected _showLines: Boolean; // true if show lines, otherwise only show dots
     protected _nneighborMode: Boolean; // true if show nneighbors before the reduction, otherwise show nneighbors after reduction
     protected _showNineScenes: Boolean; // true if show nine scenes in one window
-    protected _displayGap: Boolean; // true if display the gaps
+    protected _displayGap: Boolean; // true if display the gaps (adjacent points mapped to different places)
     protected _min2DGapDis: number; // the min gap distance in the 2D map
+    protected _displayStretch: Boolean; // true if display the stetches (similar motion mapped to different places)
+    protected _min2DStretchDis: number; // the min stetch distance in the 2D map
     protected _displayFalseProximity: Boolean; // true if display the false proximity
     protected _minHighDGapDis: number; // the min gap distance in the original high dimension
     protected _randomSeed: number; // the random seed for the UMAP algo
@@ -98,6 +100,8 @@ export class UmapGraph {
         this._min2DGapDis = 1;
         this._displayFalseProximity = new Boolean(false);
         this._minHighDGapDis = 1;
+        this._displayStretch = new Boolean(false);
+        this._min2DStretchDis = 1;
         this._showAllTraces = new Boolean(true);
         this._UMAPType = "Parametric";
         this._UMAPPoints = new Map();
@@ -216,6 +220,22 @@ export class UmapGraph {
 
     toggleDisplayGap(){
         this._displayGap = new Boolean(!this._displayGap.valueOf());
+    }
+
+    min2DStretchDis(): number{
+        return this._min2DStretchDis;
+    }
+
+    setMin2DStretchDis(dis: number) {
+        this._min2DStretchDis = dis;
+    }
+
+    displayStretch(): Boolean{
+        return this._displayStretch;
+    }
+
+    toggleDisplayStretch(){
+        this._displayStretch = new Boolean(!this._displayStretch.valueOf());
     }
 
     showNineScenes(): Boolean{
