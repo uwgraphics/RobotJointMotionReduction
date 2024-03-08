@@ -367,7 +367,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 showlegend: true,
                 mode: mode,
                 marker: {
-                    size: 2
+                    size: 4
                 }
             });
             UmapData.set(line_ids[i], data[i]);
@@ -387,7 +387,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             visible: "legendonly",
             mode: "markers",
             marker: {
-                size: 2,
+                size: 4,
                 color: "grey",
             }
         });
