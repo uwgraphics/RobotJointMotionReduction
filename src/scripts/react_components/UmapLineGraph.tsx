@@ -794,6 +794,18 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
 
         let gaps: number = 0;
+        let gap_x: any[] = [], gap_y: any[] = [];
+        plot_data.push({
+            x: gap_x,
+            y: gap_y,
+            id: "gapAll",
+            name: "gapAll",
+            mode: "lines",
+            line: {
+                color: 'rgb(242, 243, 174)',
+                width: 3,
+            }
+        });
         for(const trace of zoomedUMAPData){
             for(const data of trace){
                 for(const [prevPoint, distance] of data.prevPoint()){
@@ -811,6 +823,13 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                             }
                         });
                         gaps++;
+
+                        gap_x.push(data.pointIn2D()[0]);
+                        gap_x.push(prevPoint.pointIn2D()[0]);
+                        gap_x.push(null);
+                        gap_y.push(data.pointIn2D()[1]);
+                        gap_y.push(prevPoint.pointIn2D()[1]);
+                        gap_y.push(null);
                     }
                 }
             }
@@ -861,6 +880,18 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
 
         let stretches: number = 0;
+        let stretch_x: any[] = [], stretch_y: any[] = [];
+        plot_data.push({
+            x: stretch_x,
+            y: stretch_y,
+            id: "stretchAll",
+            name: "stretchAll",
+            mode: "lines",
+            line: {
+                color: 'rgb(8, 126, 139)',
+                width: 3,
+            }
+        });
         for(const trace of zoomedUMAPData){
             for(const data of trace){
                 for(const [neighbor, distance] of data.nneighborsInHD()){
@@ -873,11 +904,18 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                             mode: "lines",
                             visible: "legendonly",
                             line: {
-                                color: 'rgb(219, 64, 82)',
+                                color: 'rgb(255, 82, 27)',
                                 width: 3,
                             }
                         });
                         stretches++;
+
+                        stretch_x.push(data.pointIn2D()[0]);
+                        stretch_x.push(neighbor.pointIn2D()[0]);
+                        stretch_x.push(null);
+                        stretch_y.push(data.pointIn2D()[1]);
+                        stretch_y.push(neighbor.pointIn2D()[1]);
+                        stretch_y.push(null);
                     }
                 }
             }
@@ -927,6 +965,18 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
 
         let false_proximities: number = 0;
+        let fp_x: any[] = [], fp_y: any[] = [];
+        plot_data.push({
+            x: fp_x,
+            y: fp_y,
+            id: "false proximityAll",
+            name: "false proximityAll",
+            mode: "markers",
+            line: {
+                color: 'rgb(193, 131, 159)',
+                width: 3,
+            }
+        });
         for(const trace of zoomedUMAPData){
             for(const data of trace){
                 for(const [neighbor, distance] of data.nneighborsIn2D()){
@@ -943,6 +993,13 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                             }
                         });
                         false_proximities++;
+
+                        fp_x.push(data.pointIn2D()[0]);
+                        fp_x.push(neighbor.pointIn2D()[0]);
+                        fp_x.push(null);
+                        fp_y.push(data.pointIn2D()[1]);
+                        fp_y.push(neighbor.pointIn2D()[1]);
+                        fp_y.push(null);
                     }
                 }
             }
