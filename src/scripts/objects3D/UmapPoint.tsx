@@ -95,6 +95,7 @@ export class UmapPoint {
     }
 
     addneighborInHD(neighbor: UmapPoint, distanceHD: number, distance2D: number){
+        if(neighbor.id() === this.id()) return;
         let distance: Distances = new Distances(new Id().value(), this, neighbor, distanceHD, distance2D);
         this._nneighborsInHD.set(neighbor, distance);
     }
@@ -104,6 +105,7 @@ export class UmapPoint {
     }
 
     addneighborIn2D(neighbor: UmapPoint, distanceHD: number, distance2D: number){
+        if(neighbor.id() === this.id()) return;
         let distance: Distances = new Distances(new Id().value(), this, neighbor, distanceHD, distance2D);
         this._nneighborsIn2D.set(neighbor, distance);
     }
