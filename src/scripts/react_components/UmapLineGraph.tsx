@@ -503,7 +503,6 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(const nneighbor of nneighbors)
             nneighbors_points.push(nneighbor.pointIn2D())
         let selectedPoints: UmapPoint[] = [];
-        selectedPoints.push(point_selected)
         if (nneighbors_points.length > 8) {  
             // find 9 clusters and use the first point in every cluster to represent the cluster
             const clusterer = Clusterer.getInstance(nneighbors_points, 8);
@@ -517,11 +516,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 if(point !== undefined) selectedPoints.push(point);
             }
         }
-        if(selectedPoints.length > 4){  // make sure that the robot pose corresponding to the selected point is in the middle
-            let temp = selectedPoints[4];
-            selectedPoints[4] = selectedPoints[0];
-            selectedPoints[0] = temp;
-        }
+        
         // console.log(selectedPoints);
         
         let x = [], y = [];
@@ -542,7 +537,30 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         });
 
+        plot_data.push({
+            x: [point_selected.pointIn2D()[0]],
+            y: [point_selected.pointIn2D()[1]],
+            name: "selected points - clicked",
+            id: "selected points - clicked",
+            showlegend: true,
+            mode: "markers",
+            marker: {
+                size: 16,
+                opacity: 0.3,
+            }
+        });
         let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints);
+        selectedPoints.push(point_selected)
+        selectedPointsNames.push("selected points - clicked");
+        
+        if(selectedPoints.length > 4){  // make sure that the robot pose corresponding to the selected point is in the middle
+            let temp = selectedPoints[4];
+            selectedPoints[4] = selectedPoints[selectedPoints.length-1];
+            selectedPoints[selectedPoints.length-1] = temp;
+            let temp2 = selectedPointsNames[4];
+            selectedPointsNames[4] = selectedPointsNames[selectedPointsNames.length-1];
+            selectedPointsNames[selectedPointsNames.length-1] = temp2;
+        }
         this.showRobotScenes(selectedPoints, selectedPointsNames, true);
 
         this.setState({
