@@ -374,15 +374,28 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 />
                 <label>Show</label>
               </div>
-              <div>
-                <label>Neighbors:</label>
-                <label>after reduction</label>
-                <Switch
-                  checked={currSelectedGraph?.nneighborMode().valueOf()}
-                  onChange={this.togglenneighborMode.bind(this)}
-                />
-                <label>before reduction</label>
-              </div>
+
+              <Accordion allowZeroExpanded allowMultipleExpanded>
+                <AccordionItem>
+                  <AccordionItemHeading>
+                    <AccordionItemButton style={{ fontWeight: "bold" }}>
+                      Neighbors Settings
+                    </AccordionItemButton>
+                  </AccordionItemHeading>
+                  <AccordionItemPanel>
+                    <div>
+                      <label>Show Neighbors: </label>
+                      <label>after reduction</label>
+                      <Switch
+                        checked={currSelectedGraph?.nneighborMode().valueOf()}
+                        onChange={this.togglenneighborMode.bind(this)}
+                      />
+                      <label>before reduction</label>
+                    </div>
+                  </AccordionItemPanel>
+                </AccordionItem>
+              </Accordion>
+              
               {/* <div>
                 <label>Show Robots in </label>
                 <label>one scene</label>
@@ -392,51 +405,65 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 />
                 <label>nine scenes</label>
               </div> */}
-              <div>
-                <label>display gap</label>
-                <Switch
-                  checked={currSelectedGraph?.displayGap().valueOf()}
-                  onChange={this.toggleDisplayGap.bind(this)}
-                />
-              </div>
-              <LabeledSlider
-                label={"min 2D gap distance: "}
-                min={0.1}
-                max={10}
-                step={0.01}
-                value={currSelectedGraph?.min2DGapDis()}
-                onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMin2DGapDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
-              />
-              <div>
-                <label>display stretch</label>
-                <Switch
-                  checked={currSelectedGraph?.displayStretch().valueOf()}
-                  onChange={this.toggleDisplayStetch.bind(this)}
-                />
-              </div>
-              <LabeledSlider
-                label={"min 2D stretch distance: "}
-                min={0.1}
-                max={10}
-                step={0.01}
-                value={currSelectedGraph?.min2DStretchDis()}
-                onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMin2DStretchDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
-              />
-              <div>
-                <label>display false proximity</label>
-                <Switch
-                  checked={currSelectedGraph?.displayFalseProximity().valueOf()}
-                  onChange={this.toggleDisplayFalseProximity.bind(this)}
-                />
-              </div>
-              <LabeledSlider
-                label={"min HD gap distance: "}
-                min={0.1}
-                max={10}
-                step={0.01}
-                value={currSelectedGraph?.minHighDGapDis()}
-                onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMinHighDGapDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
-              />
+
+              <Accordion allowZeroExpanded allowMultipleExpanded>
+                <AccordionItem>
+                  <AccordionItemHeading>
+                    <AccordionItemButton style={{ fontWeight: "bold" }}>
+                      UMAP Diagnose Tool
+                    </AccordionItemButton>
+                  </AccordionItemHeading>
+                  <AccordionItemPanel>
+                    <div>
+                      <div>
+                        <label>display gap</label>
+                        <Switch
+                          checked={currSelectedGraph?.displayGap().valueOf()}
+                          onChange={this.toggleDisplayGap.bind(this)}
+                        />
+                      </div>
+                      <LabeledSlider
+                        label={"min 2D gap distance: "}
+                        min={0.1}
+                        max={10}
+                        step={0.01}
+                        value={currSelectedGraph?.min2DGapDis()}
+                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMin2DGapDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+                      />
+                      <div>
+                        <label>display stretch</label>
+                        <Switch
+                          checked={currSelectedGraph?.displayStretch().valueOf()}
+                          onChange={this.toggleDisplayStetch.bind(this)}
+                        />
+                      </div>
+                      <LabeledSlider
+                        label={"min 2D stretch distance: "}
+                        min={0.1}
+                        max={10}
+                        step={0.01}
+                        value={currSelectedGraph?.min2DStretchDis()}
+                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMin2DStretchDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+                      />
+                      <div>
+                        <label>display false proximity</label>
+                        <Switch
+                          checked={currSelectedGraph?.displayFalseProximity().valueOf()}
+                          onChange={this.toggleDisplayFalseProximity.bind(this)}
+                        />
+                      </div>
+                      <LabeledSlider
+                        label={"min HD gap distance: "}
+                        min={0.1}
+                        max={10}
+                        step={0.01}
+                        value={currSelectedGraph?.minHighDGapDis()}
+                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMinHighDGapDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+                      />
+                    </div>
+                  </AccordionItemPanel>
+                </AccordionItem>
+              </Accordion>
               <Accordion allowZeroExpanded allowMultipleExpanded>
                 <AccordionItem>
                   <AccordionItemHeading>
