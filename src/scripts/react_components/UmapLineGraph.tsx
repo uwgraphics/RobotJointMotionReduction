@@ -42,6 +42,7 @@ interface line_graph_props {
     minHighDGapDis: number,
     showAllTraces: Boolean,
     backgroundPoints: UmapPoint[],
+    maxNeighborDistance: number,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -232,6 +233,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             if(this.props.displayFalseProximity.valueOf()){
                 this.displayFalseProximity(0.1, this.props.minHighDGapDis);
             }
+        }
+
+        if(prevProps.maxNeighborDistance !== this.props.maxNeighborDistance){
+            this.filterNeighbors();
         }
 
         if (prevProps.showLines !== this.props.showLines) {
@@ -491,17 +496,30 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         };
         let point_selected: UmapPoint = trace[point_idx]; // the Umap point that is clicked on by the user
 
-        let nneighbors = point_selected.nneighborsInHD().keys();
+        this.displayNeighbors(plot_data, point_selected, points);
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    displayNeighbors(plot_data: any[], point_selected: UmapPoint, points: PointInfo[]){
+        let nneighbors = point_selected.nneighborsInHD();
         let nneighbors_id = "nneighbors-before reduction#" + point_selected.id(), nneighbors_name = "nneighbors"+ "<br>" + "before reduction";
         if(!this.props.graph.nneighborMode().valueOf()){
             // show nneighbors after reduction
-            nneighbors = point_selected.nneighborsIn2D().keys();
+            nneighbors = point_selected.nneighborsIn2D();
             nneighbors_id = "nneighbors-after reduction#" + point_selected.id();
             nneighbors_name = "nneighbors"+ "<br>" + "after reduction";
         }
         let nneighbors_points: number[][] = [];
-        for(const nneighbor of nneighbors)
-            nneighbors_points.push(nneighbor.pointIn2D())
+        console.log(this.props.graph.maxNeighborDistance())
+        for(const [nneighbor, distance] of nneighbors){
+            if((this.props.graph.nneighborMode().valueOf() && distance.distanceInHD() <= this.props.graph.maxNeighborDistance())
+                || (!this.props.graph.nneighborMode().valueOf() && distance.distanceIn2D() <= this.props.graph.maxNeighborDistance())) 
+                nneighbors_points.push(nneighbor.pointIn2D())
+        }
+            
         let selectedPoints: UmapPoint[] = [];
         if (nneighbors_points.length > 8) {  
             // find 9 clusters and use the first point in every cluster to represent the cluster
@@ -562,7 +580,27 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             selectedPointsNames[selectedPointsNames.length-1] = temp2;
         }
         this.showRobotScenes(selectedPoints, selectedPointsNames, true);
+    }
 
+    filterNeighbors(){
+        const { graph } = this.props;
+        const { plotly_data } = this.state;
+        let plot_data = [], points: PointInfo[] = [];
+        let selectedPoints: Set<UmapPoint> = new Set(); 
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            for(let j=0; j<data.x.length; j++){
+                points.push({x: data.x[j], y: data.y[j], curveNumber: i, pointIndex: j, });
+            }
+            if(data.id.startsWith("nneighbors")){
+                let [, point_selected_id] = data.id.split("#");
+                let point_selected = graph.getUmapPoint(point_selected_id);
+                if(point_selected === undefined) continue;
+                selectedPoints.add(point_selected);
+            } else plot_data.push(data);
+        }
+        for(const selected_point of selectedPoints)
+            this.displayNeighbors(plot_data, selected_point, points);
         this.setState({
             plotly_data: plot_data,
         });

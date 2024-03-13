@@ -775,6 +775,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               minHighDGapDis={this.props.graph.minHighDGapDis()}
               showAllTraces={this.props.graph.showAllTraces()}
               backgroundPoints={this.backgroundPoints}
+              maxNeighborDistance={this.props.graph.maxNeighborDistance()}
               onGraphUpdate={this.onGraphUpdate.bind(this)}
               onCurrChange={this.onCurrTimeChange.bind(this)}
               onStartChange={this.onStartTimeChange.bind(this)}

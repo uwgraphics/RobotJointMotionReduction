@@ -48,6 +48,8 @@ export class UmapGraph {
     protected _backgroundPointsRatio: number; // the ratio of the background points to the total robot joint points
     protected _backgroundPointsMax: number; // the max of the background points
     protected _backgroundPointsMin: number; // the min of the background points
+    protected _currentClickedPoint: UmapPoint | undefined; // the point that is most recently clicked on 
+    protected _maxNeighborDistance: number;
 
     //unique to parametric UMAP
     protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
@@ -111,6 +113,24 @@ export class UmapGraph {
         this._backgroundPointsMax = 2 * Math.PI;
         this._backgroundPointsMin = -2 * Math.PI;
         this._autoencoder = new Boolean(false);
+
+        this._maxNeighborDistance = 10;
+    }
+
+    maxNeighborDistance(): number{
+        return this._maxNeighborDistance;
+    }
+
+    setMaxNeighborDistance(distance: number){
+        this._maxNeighborDistance = distance;
+    }
+
+    currentClickedPoint(): UmapPoint | undefined{
+        return this._currentClickedPoint;
+    }
+
+    setCurrentClickedPoint(point: UmapPoint){
+        this._currentClickedPoint = point;
     }
 
     autoencoder(): Boolean{
