@@ -93,11 +93,13 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     protected _graphDiv: React.RefObject<HTMLDivElement>;
     protected click_on_point: boolean; // true if the onplotlyclick function is called, stop event from propogating
     protected selectedPointsCount: number; // the count of the total selected points shown in the scene
+    protected selectedPointsMap: Map<string, string>;
     constructor(props:line_graph_props){
         super(props);
         this._graphDiv = createRef();
         this.click_on_point = false;
         this.selectedPointsCount = 0;
+        this.selectedPointsMap = new Map();
         // this.drawGraph.bind(this);
         const {width, height} = this.props;
         this.state = {
@@ -444,6 +446,15 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     return;
                 }
             }
+            if(line_id.startsWith("selected points")){
+                let [, point_id] = line_id.split("#");
+                let sceneId = this.selectedPointsMap.get(point_id);
+                if(sceneId === undefined) continue;
+                // let scene = this.props.robotSceneManager.getStaticRobotSceneById(sceneId);
+                // if(scene === undefined) continue;
+                this.props.robotSceneManager.setCurrStaticRobotScene(sceneId);
+                return;
+            }
             point_idx = event.points[i].pointIndex;
         }
         if(point_idx !== -1){
@@ -559,7 +570,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             x: [point_selected.pointIn2D()[0]],
             y: [point_selected.pointIn2D()[1]],
             name: "selected points - clicked",
-            id: "selected points - clicked",
+            id: "selected points#" + point_selected.id(),
             showlegend: true,
             mode: "markers",
             marker: {
@@ -616,13 +627,14 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let selectedPointsNames: string[] = [];
         for(const point of selectedPoints){
             let pointName = "selected points " + this.selectedPointsCount;
+            let pointId = "selected points#" + point.id();
             this.selectedPointsCount++;
             selectedPointsNames.push(pointName)
             plot_data.push({
                 x: [point.pointIn2D()[0]],
                 y: [point.pointIn2D()[1]],
                 name: pointName,
-                id: pointName,
+                id: pointId,
                 showlegend: true,
                 mode: "markers",
                 marker: {
@@ -795,6 +807,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 let newSceneId = newID();
                 let staticRobotScene = new StaticRobotScene(robotSceneManager, newSceneId);
                 sceneIds.push(newSceneId);
+                this.selectedPointsMap.set(point.id(), newSceneId);
 
                 const [sceneId, robotName] = this.decomposeId(point.robotInfo());
                 let scene = robotSceneManager.robotSceneById(sceneId);
