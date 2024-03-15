@@ -93,7 +93,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     protected _graphDiv: React.RefObject<HTMLDivElement>;
     protected click_on_point: boolean; // true if the onplotlyclick function is called, stop event from propogating
     protected selectedPointsCount: number; // the count of the total selected points shown in the scene
-    protected selectedPointsMap: Map<string, string>;
+    protected selectedPointsMap: Map<string, string>; // store the mapping of the id of selected points to the id of the corresponding static robot scene
     constructor(props:line_graph_props){
         super(props);
         this._graphDiv = createRef();
