@@ -611,7 +611,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 let point_selected = graph.getUmapPoint(point_selected_id);
                 if(point_selected === undefined) continue;
                 selectedPoints.add(point_selected);
-            } else plot_data.push(data);
+            } else if(data.id.startsWith("selected points")){
+                this.selectedPointsCount--;
+                continue;
+            } 
+            else plot_data.push(data);
         }
         for(const selected_point of selectedPoints)
             this.displayNeighbors(plot_data, selected_point, points);
