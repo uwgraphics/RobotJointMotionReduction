@@ -396,10 +396,10 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                       <LabeledSlider
                         label={"distance: "}
                         min={0}
-                        max={10}
+                        max={currSelectedGraph?.maxNeighborDistance()}
                         step={0.01}
-                        value={currSelectedGraph?.maxNeighborDistance()}
-                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMaxNeighborDistance.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+                        value={currSelectedGraph?.neighborDistance()}
+                        onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setNeighborDistance.bind(this.props.robotSceneManager.getCurrUmapGraph())}
                       />
                     </div>
                   </AccordionItemPanel>

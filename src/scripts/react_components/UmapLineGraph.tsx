@@ -42,7 +42,7 @@ interface line_graph_props {
     minHighDGapDis: number,
     showAllTraces: Boolean,
     backgroundPoints: UmapPoint[],
-    maxNeighborDistance: number,
+    neighborDistance: number,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -237,7 +237,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
 
-        if(prevProps.maxNeighborDistance !== this.props.maxNeighborDistance){
+        if(prevProps.neighborDistance !== this.props.neighborDistance){
             this.filterNeighbors();
         }
 
@@ -506,7 +506,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             } else return;
         };
         let point_selected: UmapPoint = trace[point_idx]; // the Umap point that is clicked on by the user
-
+        this.props.graph.setMaxNeighborDistance(point_selected.maxNeighborDistance());
+        // console.log(point_selected.maxNeighborDistance())
+        // console.log(this.props.graph.maxNeighborDistance())
+        // console.log(this.props.graph.neighborDistance())
         this.displayNeighbors(plot_data, point_selected, points);
 
         this.setState({
@@ -524,10 +527,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             nneighbors_name = "nneighbors"+ "<br>" + "after reduction";
         }
         let nneighbors_points: number[][] = [];
-        console.log(this.props.graph.maxNeighborDistance())
+        // console.log(this.props.graph.neighborDistance())
         for(const [nneighbor, distance] of nneighbors){
-            if((this.props.graph.nneighborMode().valueOf() && distance.distanceInHD() <= this.props.graph.maxNeighborDistance())
-                || (!this.props.graph.nneighborMode().valueOf() && distance.distanceIn2D() <= this.props.graph.maxNeighborDistance())) 
+            if((this.props.graph.nneighborMode().valueOf() && distance.distanceInHD() <= this.props.graph.neighborDistance())
+                || (!this.props.graph.nneighborMode().valueOf() && distance.distanceIn2D() <= this.props.graph.neighborDistance())) 
                 nneighbors_points.push(nneighbor.pointIn2D())
         }
             

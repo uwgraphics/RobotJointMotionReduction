@@ -50,6 +50,7 @@ export class UmapPoint {
     protected _nneighborsInHD: Map<UmapPoint, Distances>; // key: the id of n neighbors in the original high dimension, value: info about the distances
     protected _nneighborsIn2D: Map<UmapPoint, Distances>; // key: the id of n neighbors in UMAP 2D plot, value: info about the distances
     protected _prevPoint: Map<UmapPoint, Distances>; // key: the id of n neighbors in UMAP 2D plot, value: info about the distances
+    protected _maxNeighborDistance: number; // the max distance to its neighbors
     constructor(id: string, pointInHD: number[], pointIn2D: number[]) {
         this._id = id;
         this._pointInHD = pointInHD;
@@ -60,6 +61,15 @@ export class UmapPoint {
 
         this._time = 0;
         this._robotInfo = "";
+        this._maxNeighborDistance = 0;
+    }
+
+    maxNeighborDistance(): number{
+        return this._maxNeighborDistance;
+    }
+
+    setMaxNeighborDistance(distance: number){
+        this._maxNeighborDistance = Math.max(this._maxNeighborDistance, distance);
     }
 
     time(): number{
@@ -98,6 +108,8 @@ export class UmapPoint {
         if(neighbor.id() === this.id()) return;
         let distance: Distances = new Distances(new Id().value(), this, neighbor, distanceHD, distance2D);
         this._nneighborsInHD.set(neighbor, distance);
+        this.setMaxNeighborDistance(distance2D);
+        this.setMaxNeighborDistance(distanceHD);
     }
 
     nneighborsIn2D(): Map<UmapPoint, Distances>{
@@ -108,6 +120,8 @@ export class UmapPoint {
         if(neighbor.id() === this.id()) return;
         let distance: Distances = new Distances(new Id().value(), this, neighbor, distanceHD, distance2D);
         this._nneighborsIn2D.set(neighbor, distance);
+        this.setMaxNeighborDistance(distance2D);
+        this.setMaxNeighborDistance(distanceHD);
     }
 
     prevPoint(): Map<UmapPoint, Distances>{

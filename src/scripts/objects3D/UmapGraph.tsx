@@ -50,6 +50,7 @@ export class UmapGraph {
     protected _backgroundPointsMin: number; // the min of the background points
     protected _currentClickedPoint: UmapPoint | undefined; // the point that is most recently clicked on 
     protected _maxNeighborDistance: number;
+    protected _neighborDistance: number;
 
     //unique to parametric UMAP
     protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
@@ -115,6 +116,15 @@ export class UmapGraph {
         this._autoencoder = new Boolean(false);
 
         this._maxNeighborDistance = 10;
+        this._neighborDistance = 5;
+    }
+
+    neighborDistance(): number{
+        return this._neighborDistance;
+    }
+
+    setNeighborDistance(distance: number){
+        this._neighborDistance = distance;
     }
 
     maxNeighborDistance(): number{
@@ -123,6 +133,7 @@ export class UmapGraph {
 
     setMaxNeighborDistance(distance: number){
         this._maxNeighborDistance = distance;
+       // this._neighborDistance = Math.min(this._neighborDistance, this._maxNeighborDistance);
     }
 
     currentClickedPoint(): UmapPoint | undefined{
