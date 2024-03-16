@@ -43,6 +43,7 @@ interface line_graph_props {
     showAllTraces: Boolean,
     backgroundPoints: UmapPoint[],
     neighborDistance: number,
+    displayNeighbors: Boolean,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -239,6 +240,13 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         if(prevProps.neighborDistance !== this.props.neighborDistance){
             this.filterNeighbors();
+        }
+
+        if(prevProps.displayNeighbors !== this.props.displayNeighbors){
+            if(!this.props.displayNeighbors.valueOf()){
+                this.removeAllNeighbors();
+                this.props.graph.toggleDisplayNeighbors();
+            }
         }
 
         if (prevProps.showLines !== this.props.showLines) {
@@ -594,6 +602,19 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             selectedPointsNames[selectedPointsNames.length-1] = temp2;
         }
         this.showRobotScenes(selectedPoints, selectedPointsNames, true);
+    }
+
+    removeAllNeighbors(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            if(!data.id.startsWith("nneighbors") && !data.id.startsWith("selected points#neighbors"))
+                plot_data.push(data);
+        }
+        this.setState({
+            plotly_data: plot_data,
+        });
     }
 
     filterNeighbors(){

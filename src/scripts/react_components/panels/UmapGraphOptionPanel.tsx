@@ -171,6 +171,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
+    toggleDisplayNeighbors() {
+      this.props.robotSceneManager.getCurrUmapGraph()?.toggleDisplayNeighbors();
+      console.log("toggle display neighbors");
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
+    }
+
     render() {
         const {currSelectedGraph} = this.props
 
@@ -402,6 +411,7 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                         onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setNeighborDistance.bind(this.props.robotSceneManager.getCurrUmapGraph())}
                       />
                     </div>
+                    <input type="button" value="Clear All Neighbor Points" onClick={() => this.toggleDisplayNeighbors()} />
                   </AccordionItemPanel>
                 </AccordionItem>
               </Accordion>

@@ -51,6 +51,7 @@ export class UmapGraph {
     protected _currentClickedPoint: UmapPoint | undefined; // the point that is most recently clicked on 
     protected _maxNeighborDistance: number;
     protected _neighborDistance: number;
+    protected _displayNeighbors: Boolean; // false if clear all neighbors
 
     //unique to parametric UMAP
     protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
@@ -117,6 +118,15 @@ export class UmapGraph {
 
         this._maxNeighborDistance = 10;
         this._neighborDistance = 5;
+        this._displayNeighbors = true;
+    }
+
+    displayNeighbors(): Boolean {
+        return this._displayNeighbors;
+    }
+
+    toggleDisplayNeighbors(){
+        this._displayNeighbors = new Boolean(!this._displayNeighbors.valueOf());
     }
 
     neighborDistance(): number{
