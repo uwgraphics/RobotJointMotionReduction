@@ -447,7 +447,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 }
             }
             if(line_id.startsWith("selected points")){
-                let [, point_id] = line_id.split("#");
+                let [, , point_id] = line_id.split("#");
                 let sceneId = this.selectedPointsMap.get(point_id);
                 if(sceneId === undefined) continue;
                 // let scene = this.props.robotSceneManager.getStaticRobotSceneById(sceneId);
@@ -573,7 +573,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             x: [point_selected.pointIn2D()[0]],
             y: [point_selected.pointIn2D()[1]],
             name: "selected points - clicked",
-            id: "selected points#" + point_selected.id(),
+            id: "selected points#neighbors#" + point_selected.id(),
             showlegend: true,
             mode: "markers",
             marker: {
@@ -581,7 +581,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 opacity: 0.3,
             }
         });
-        let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints);
+        let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints, true);
         selectedPoints.push(point_selected)
         selectedPointsNames.push("selected points - clicked");
         
@@ -611,7 +611,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 let point_selected = graph.getUmapPoint(point_selected_id);
                 if(point_selected === undefined) continue;
                 selectedPoints.add(point_selected);
-            } else if(data.id.startsWith("selected points")){
+            } else if(data.id.startsWith("selected points#neighbors")){
                 this.selectedPointsCount--;
                 continue;
             } 
@@ -630,11 +630,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param selectedPoints 
      * @returns a string array that stores all their name
      */
-    addSelectedPoints(plot_data: any[], selectedPoints: UmapPoint[]): string[] {
+    addSelectedPoints(plot_data: any[], selectedPoints: UmapPoint[], neighbors: boolean): string[] {
         let selectedPointsNames: string[] = [];
         for(const point of selectedPoints){
             let pointName = "selected points " + this.selectedPointsCount;
-            let pointId = "selected points#" + point.id();
+            let pointId = "selected points#" + (neighbors?"neighbors":"region") + "#" + point.id();
             this.selectedPointsCount++;
             selectedPointsNames.push(pointName)
             plot_data.push({
@@ -788,7 +788,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 opacity: 0.5,
             }
         });
-        let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints);
+        let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints, false);
         this.showRobotScenes(selectedPoints, selectedPointsNames, true);
         this.setState({
             plotly_data: plot_data
