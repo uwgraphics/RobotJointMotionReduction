@@ -985,7 +985,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             name: "stretchAll",
             mode: "lines",
             line: {
-                color: 'rgb(8, 126, 139)',
+                color: 'rgb(152, 203, 104)',
                 width: 3,
             }
         });
