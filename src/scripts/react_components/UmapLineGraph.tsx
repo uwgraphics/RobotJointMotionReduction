@@ -847,24 +847,23 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 if (robot !== undefined) staticRobotScene.addChildRobot(robot, point.time());
             }
         }
-        //} else{ // create one scene to show the robots
-            let sceneId = newID();
-            if(oneSceneId !== undefined) sceneId = oneSceneId;
-            let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
-            sceneIds.push(sceneId);
-            for (const point of selectedPoints) {
-                const [sceneId, robotName] = this.decomposeId(point.robotInfo());
-                let scene = robotSceneManager.robotSceneById(sceneId);
-                if (scene === undefined) return;
-                if (!robotSceneManager.isActiveRobotScene(scene))
-                    robotSceneManager.activateRobotScene(scene);
-                let robot = scene.getRobotByName(robotName);
-                if (robot !== undefined) {
-                    staticRobotScene.addChildRobot(robot, point.time());
-                    robot.setOpacity(0.5);
-                }
+        // create one scene to show the robots
+        let sceneId = newID();
+        if (oneSceneId !== undefined) sceneId = oneSceneId;
+        let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
+        sceneIds.push(sceneId);
+        for (const point of selectedPoints) {
+            const [sceneId, robotName] = this.decomposeId(point.robotInfo());
+            let scene = robotSceneManager.robotSceneById(sceneId);
+            if (scene === undefined) return;
+            if (!robotSceneManager.isActiveRobotScene(scene))
+                robotSceneManager.activateRobotScene(scene);
+            let robot = scene.getRobotByName(robotName);
+            if (robot !== undefined) {
+                staticRobotScene.addChildRobot(robot, point.time());
+                robot.setOpacity(0.5);
             }
-        //}
+        }
         this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes, selectedPointsNames);
         this.props.robotSceneManager.setShouldSyncViews(true);
     }
