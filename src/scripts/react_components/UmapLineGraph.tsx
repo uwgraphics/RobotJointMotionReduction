@@ -8,7 +8,7 @@ import { UmapGraph } from "../objects3D/UmapGraph";
 import { Datum, LegendClickEvent, PlotDatum, PlotHoverEvent, PlotMouseEvent, PlotSelectionEvent } from "plotly.js";
 import { Cluster, Clusterer } from "k-medoids";
 import { StaticRobotScene } from "../scene/StaticRobotScene";
-import { UmapPoint } from "../objects3D/UmapPoint";
+import { Distances, UmapPoint } from "../objects3D/UmapPoint";
 
 
 /**
@@ -904,33 +904,41 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 width: 3,
             }
         });
+        let distances: Distances[] = [];
         for(const trace of zoomedUMAPData){
             for(const data of trace){
                 for(const [prevPoint, distance] of data.prevPoint()){
                     if(distance.distanceIn2D() > min_dis_2D){
-                        plot_data.push({
-                            x: [data.pointIn2D()[0], prevPoint.pointIn2D()[0]],
-                            y: [data.pointIn2D()[1], prevPoint.pointIn2D()[1]],
-                            id: "gap#" + data.id() + "#" + prevPoint.id(),
-                            name: "gap-" + gaps,
-                            mode: "lines",
-                            visible: "legendonly",
-                            line: {
-                                color: 'rgb(219, 64, 82)',
-                                width: 3,
-                            }
-                        });
-                        gaps++;
-
-                        gap_x.push(data.pointIn2D()[0]);
-                        gap_x.push(prevPoint.pointIn2D()[0]);
-                        gap_x.push(null);
-                        gap_y.push(data.pointIn2D()[1]);
-                        gap_y.push(prevPoint.pointIn2D()[1]);
-                        gap_y.push(null);
+                        distances.push(distance);
                     }
                 }
             }
+        }
+
+        distances.sort((a, b) => b.distanceIn2D() - a.distanceIn2D());
+
+        for(const distance of distances){
+            let data = distance.point1(), prevPoint = distance.point2();
+            plot_data.push({
+                x: [data.pointIn2D()[0], prevPoint.pointIn2D()[0]],
+                y: [data.pointIn2D()[1], prevPoint.pointIn2D()[1]],
+                id: "gap#" + data.id() + "#" + prevPoint.id(),
+                name: "gap-" + gaps,
+                mode: "lines",
+                visible: "legendonly",
+                line: {
+                    color: 'rgb(219, 64, 82)',
+                    width: 3,
+                }
+            });
+            gaps++;
+
+            gap_x.push(data.pointIn2D()[0]);
+            gap_x.push(prevPoint.pointIn2D()[0]);
+            gap_x.push(null);
+            gap_y.push(data.pointIn2D()[1]);
+            gap_y.push(prevPoint.pointIn2D()[1]);
+            gap_y.push(null);
         }
 
         this.setState({
@@ -990,35 +998,43 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 width: 3,
             }
         });
+
+        let distances: Distances[] = [];
         for(const trace of zoomedUMAPData){
             for(const data of trace){
                 for(const [neighbor, distance] of data.nneighborsInHD()){
                     if(distance.distanceIn2D() > min_dis_2D && distance.distanceInHD() <= max_dis_HD){
-                        plot_data.push({
-                            x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
-                            y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
-                            id: "stretch#" + data.id() + "#" + neighbor.id(),
-                            name: "stretch-" + stretches,
-                            mode: "lines",
-                            visible: "legendonly",
-                            line: {
-                                color: 'rgb(255, 82, 27)',
-                                width: 3,
-                            }
-                        });
-                        stretches++;
-
-                        stretch_x.push(data.pointIn2D()[0]);
-                        stretch_x.push(neighbor.pointIn2D()[0]);
-                        stretch_x.push(null);
-                        stretch_y.push(data.pointIn2D()[1]);
-                        stretch_y.push(neighbor.pointIn2D()[1]);
-                        stretch_y.push(null);
+                        distances.push(distance);
                     }
                 }
             }
         }
 
+        distances.sort((a, b) => b.distanceIn2D() - a.distanceIn2D());
+
+        for(const distance of distances){
+            let data = distance.point1(), neighbor = distance.point2();
+            plot_data.push({
+                x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
+                y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
+                id: "stretch#" + data.id() + "#" + neighbor.id(),
+                name: "stretch-" + stretches,
+                mode: "lines",
+                visible: "legendonly",
+                line: {
+                    color: 'rgb(255, 82, 27)',
+                    width: 3,
+                }
+            });
+            stretches++;
+
+            stretch_x.push(data.pointIn2D()[0]);
+            stretch_x.push(neighbor.pointIn2D()[0]);
+            stretch_x.push(null);
+            stretch_y.push(data.pointIn2D()[1]);
+            stretch_y.push(neighbor.pointIn2D()[1]);
+            stretch_y.push(null);   
+        }
         this.setState({
             plotly_data: plot_data,
         });
@@ -1075,32 +1091,41 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 width: 3,
             }
         });
+
+        let distances: Distances[] = [];
         for(const trace of zoomedUMAPData){
             for(const data of trace){
                 for(const [neighbor, distance] of data.nneighborsIn2D()){
                     if(distance.distanceInHD() > min_dis_HD && distance.distanceIn2D() <= max_dis_2D){
-                        plot_data.push({
-                            x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
-                            y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
-                            id: "false proximity#" + data.id() + "#" + neighbor.id(),
-                            name: "false proximity-" + false_proximities,
-                            mode: "markers",
-                            visible: "legendonly",
-                            marker: {
-                                color: 'rgb(195, 178, 153)',
-                            }
-                        });
-                        false_proximities++;
-
-                        fp_x.push(data.pointIn2D()[0]);
-                        fp_x.push(neighbor.pointIn2D()[0]);
-                        fp_x.push(null);
-                        fp_y.push(data.pointIn2D()[1]);
-                        fp_y.push(neighbor.pointIn2D()[1]);
-                        fp_y.push(null);
+                        distances.push(distance);
                     }
                 }
             }
+        }
+
+        distances.sort((a, b) => b.distanceInHD() - a.distanceInHD());
+
+        for(const distance of distances){
+            let data = distance.point1(), neighbor = distance.point2();
+            plot_data.push({
+                x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
+                y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
+                id: "false proximity#" + data.id() + "#" + neighbor.id(),
+                name: "false proximity-" + false_proximities,
+                mode: "markers",
+                visible: "legendonly",
+                marker: {
+                    color: 'rgb(195, 178, 153)',
+                }
+            });
+            false_proximities++;
+
+            fp_x.push(data.pointIn2D()[0]);
+            fp_x.push(neighbor.pointIn2D()[0]);
+            fp_x.push(null);
+            fp_y.push(data.pointIn2D()[1]);
+            fp_y.push(neighbor.pointIn2D()[1]);
+            fp_y.push(null);
         }
 
         this.setState({
