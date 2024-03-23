@@ -834,7 +834,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param oneSceneId the sceneId of the gaps and the false proximity will be specified so that the scene can be deleted automatically
      * @returns 
      */
-    showRobotScenes(selectedPoints: UmapPoint[], selectedPointsNames: string[],  showNineScenes: boolean, oneSceneId?: string){
+    showRobotScenes(selectedPoints: UmapPoint[], selectedPointsNames: string[],  showNineScenes: boolean, oneSceneId: string, allPoints: UmapPoint[]){
         const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
         const { plotly_data, zoomedTimes } = this.state;
         let sceneIds = [];
