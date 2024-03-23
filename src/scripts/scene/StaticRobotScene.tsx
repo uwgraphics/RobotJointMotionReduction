@@ -247,6 +247,22 @@ export class StaticRobotScene extends ThreeScene {
         this._robots.delete(robotId);
     }
 
+    setRobotOpacity(opacity: number){
+        console.log("set robot opacity")
+        for(const [, robot] of this._robots){
+            robot.setOpacity(opacity);
+        }
+        this.render();
+    }
+
+    robotOpacity(): number{
+        let opacity = 0;
+        for(const [, robot] of this._robots){
+            opacity = robot.opacity();
+        }
+        return opacity;
+    }
+
     // ----------
     // helper functions to control whether or not to show the world frame
     isWorldFrameObjectVisible(): boolean

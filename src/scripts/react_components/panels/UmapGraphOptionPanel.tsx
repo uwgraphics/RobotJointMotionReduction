@@ -182,7 +182,7 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
 
     render() {
         const {currSelectedGraph} = this.props
-
+        let currStaticRobotScene = this.props.robotSceneManager.getCurrStaticRobotScene();
         const selectStyles = {
             option: (provided: any) => ({
               ...provided,
@@ -480,6 +480,29 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                         value={currSelectedGraph?.minHighDGapDis()}
                         onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMinHighDGapDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
                       />
+                    </div>
+                  </AccordionItemPanel>
+                </AccordionItem>
+              </Accordion>
+              <Accordion allowZeroExpanded allowMultipleExpanded>
+                <AccordionItem>
+                  <AccordionItemHeading>
+                    <AccordionItemButton style={{ fontWeight: "bold" }}>
+                      Associated Robot Scenes:
+                    </AccordionItemButton>
+                  </AccordionItemHeading>
+                  <AccordionItemPanel>
+                    <div>
+                      <div>
+                        <LabeledSlider
+                          label={"Robots Opacity: "}
+                          min={0}
+                          max={1}
+                          step={0.01}
+                          value={currStaticRobotScene?.robotOpacity()}
+                          onMouseUp={currStaticRobotScene?.setRobotOpacity.bind(currStaticRobotScene)}
+                        />
+                      </div>
                     </div>
                   </AccordionItemPanel>
                 </AccordionItem>
