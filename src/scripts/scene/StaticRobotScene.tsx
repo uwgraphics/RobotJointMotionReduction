@@ -139,7 +139,11 @@ export class StaticRobotScene extends ThreeScene {
     protected _robots: Map<String, Robot>;    // Robot object (misnomer as any object loaded from a URDF can be put into a Robot object)
 
     // Traces that are owned by this scene.
-    protected _traces: QuaternionTrace[];
+    protected _traces: Trace[];
+    // the density and axis size of the traces that will be shown in this scene
+    protected _density: number;
+    protected _axisSize: number;
+    protected _traceSize: number;
 
     protected _color: string;
 
@@ -168,6 +172,9 @@ export class StaticRobotScene extends ThreeScene {
         this._update = false;
 
         this._traces = [];
+        this._density = 1/2;
+        this._axisSize = 0;
+        this._traceSize = 1;
 
         this._worldFrameObject = new T.Object3D();
         this.addWorldFrame();
@@ -179,6 +186,28 @@ export class StaticRobotScene extends ThreeScene {
             parentRobotSceneManager.addStaticRobotScene(this);
     }
 
+     /**
+     * Generates and returns new traces for the given parameters, returning
+     * the new Trace.
+     * @param robot The robot that exists in this scene and is being traced
+     * @param times The times of the traces.
+     * @param robotPart The part of the given robot being traced.
+     * @param color The color of the traces. If undefined, then pick one from the color palettes of the current scene
+     * @returns The computed traces
+     */
+     addTraces(robot:Robot, times: number[], robotPart: RobotJoint, color?: string, axisSize?: number, density?: number, traceSize?: number){
+        for (const trace of RobotScene.newTraces(robot, times, robotPart, color, axisSize, density, traceSize)) {
+            trace.setParentScene(this);
+            this._traces.push(trace);
+        }
+
+        this._update = true;
+    }
+
+    getNextColor(): string | undefined{
+        let color = this._colorPalettes.pop();
+        return color;
+    }
 
     /**
      * add a child robot that are posed at a given time frame

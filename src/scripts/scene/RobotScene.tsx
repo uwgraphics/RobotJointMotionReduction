@@ -1490,11 +1490,11 @@ export class RobotScene extends ThreeScene {
         for (const trace of RobotScene.newTraces(robot, times, robotPart)) {
 
             // update prevous trace if possible.
-            let prevTrace = this.getChildTrace(robot, trace.robotPart());
-            if (prevTrace !== undefined) {
-                prevTrace.update(trace.points().map((p) => { return p.clone(); }), robot, trace.robotPart(), times, trace.traceType() ,trace.rotations().map((p) => { return p.clone(); }));
-                continue;
-            }
+            // let prevTrace = this.getChildTrace(robot, trace.robotPart());
+            // if (prevTrace !== undefined) {
+            //     prevTrace.update(trace.points().map((p) => { return p.clone(); }), robot, trace.robotPart(), times, trace.traceType() ,trace.rotations().map((p) => { return p.clone(); }));
+            //     continue;
+            // }
 
             // No previous trace so add a new one instead (trace) to the scene and record its addition so that it can be removed later
             trace.setParentScene(this);
