@@ -136,7 +136,7 @@ export class StaticRobotCanvas extends Component<quaternion_canvas_props, quater
         // Add the 'selected' class to the clicked tab
         this._canvasRef.current?.classList.add('selected');
         this.props.robotSceneManager.setCurrStaticRobotScene(this.props.staticRobotScene.id().value());
-        this.props.setStaticRobotSceneOptionPanelActive();
+        // this.props.setStaticRobotSceneOptionPanelActive();
     }
 
     /**
