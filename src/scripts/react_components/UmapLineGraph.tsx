@@ -383,7 +383,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 showlegend: true,
                 mode: mode,
                 marker: {
-                    size: 4
+                    size: 4,
+                    color: line_colors[i],
+                },
+                line: {
+                    color: line_colors[i],
                 }
             });
             UmapData.set(line_ids[i], data[i]);
@@ -602,7 +606,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             selectedPointsNames[4] = selectedPointsNames[selectedPointsNames.length-1];
             selectedPointsNames[selectedPointsNames.length-1] = temp2;
         }
-        this.showRobotScenes(selectedPoints, selectedPointsNames, true, newID(), []);
+        this.showRobotScenes(selectedPoints, selectedPointsNames, true, newID(), [], []);
     }
 
     removeAllNeighbors(){
@@ -691,7 +695,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let point2 = graph.getUmapPoint(point2_id);
             if (point1 !== undefined && point2 !== undefined) {
                 if(plotly_data[event.curveNumber].visible !== true)
-                    this.showRobotScenes([point1, point2], [], false, line_id, []);
+                    this.showRobotScenes([point1, point2], [], false, line_id, [], []);
                 else{
                     this.props.removeTab("StaticRobotScene-One&" + line_id);
                 }
@@ -812,14 +816,16 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         });
 
         let allPoints: UmapPoint[] = [];
+        let colors: string[] = [];
         for(const point of points){
             let line_id = plotly_data[point.curveNumber].id;
             let trace = zoomedUMAPData.get(line_id);
+            colors.push(plotly_data[point.curveNumber].marker.color)
             if(trace !== undefined)
                 allPoints.push(trace[point.pointIndex]);
         }
         let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints, false);
-        this.showRobotScenes(selectedPoints, selectedPointsNames, true, newID(), allPoints);
+        this.showRobotScenes(selectedPoints, selectedPointsNames, true, newID(), allPoints, colors);
         this.setState({
             plotly_data: plot_data
         });
@@ -834,7 +840,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param oneSceneId the sceneId of the gaps and the false proximity will be specified so that the scene can be deleted automatically
      * @returns 
      */
-    showRobotScenes(selectedPoints: UmapPoint[], selectedPointsNames: string[],  showNineScenes: boolean, oneSceneId: string, allPoints: UmapPoint[]){
+    showRobotScenes(selectedPoints: UmapPoint[], selectedPointsNames: string[],  showNineScenes: boolean, oneSceneId: string, allPoints: UmapPoint[], allPointsColors: string[]){
         const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
         const { plotly_data, zoomedTimes } = this.state;
         let sceneIds = [];
@@ -876,16 +882,18 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         // add traces to the scene
         let traceMap: Map<UmapPoint, number[]> = new Map();
+        let colorMap: Map<UmapPoint, string> = new Map();
         let visited: Set<UmapPoint> = new Set();
         let pointsSet: Set<UmapPoint> = new Set();
         for (const point of allPoints) pointsSet.add(point);
-        for (const point of allPoints) { // find points that are adjacent so they can be shown in the same trace
+        for (const [i, point] of allPoints.entries()) { // find points that are adjacent so they can be shown in the same trace
             if (visited.has(point)) continue;
             visited.add(point);
             let trace = [];
             let currPoint = point;
             while (pointsSet.has(currPoint)) {
                 traceMap.delete(currPoint);
+                colorMap.delete(currPoint);
                 trace.unshift(currPoint.time());
                 visited.add(currPoint);
                 let prevPoint;
@@ -896,6 +904,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 currPoint = prevPoint;
             }
             traceMap.set(point, trace);
+            colorMap.set(point, allPointsColors[i]);
         }
         for (const [point, trace] of traceMap) {
             console.log(trace);
@@ -906,7 +915,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 robotSceneManager.activateRobotScene(scene);
             let robot = scene.getRobotByName(robotName);
             if (robot !== undefined) {
-                staticRobotScene.addTraces(robot, trace, robot.articuatedJoints()[3], "red");
+                let color = colorMap.get(point);
+                staticRobotScene.addTraces(robot, trace, robot.articuatedJoints()[3], (color === undefined) ? "red": color);
             }
         } 
 

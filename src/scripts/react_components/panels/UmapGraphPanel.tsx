@@ -524,7 +524,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 backgroundPointsMin: this.props.graph.backgroundPointsMin(),
                 autoencoder: this.props.graph.autoencoder().valueOf(),
             });
-            this.props.graph.resetColor();
+            // this.props.graph.resetColor();
             this.fillGraphData();
         }
 

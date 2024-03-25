@@ -16,7 +16,8 @@ import { UmapPoint } from "./UmapPoint";
 
 export type umap_type = "Parametric" | "Regular";
  
-const palettes = ["white", "yellow", "red", "#204BD8", "green",  /*"orange",*/ "brown", "purple", /*"pink"*/];
+// const palettes = ["white", "yellow", "red", "#204BD8", "green",  /*"orange",*/ "brown", "purple", /*"pink"*/];
+const palettes = ['#17becf', '#bcbd22', '#7f7f7f', '#e377c2', '#8c564b', '#9467bd', '#d62728', '#2ca02c', '#ff7f0e', '#1f77b4'];
 export class UmapGraph {
     static counter: number = 0;
     protected _id: string;
