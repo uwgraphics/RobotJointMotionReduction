@@ -181,6 +181,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
+    toggleDisplayPointsInRegion() {
+      this.props.robotSceneManager.getCurrUmapGraph()?.toggleDisplayPointsInRegion();
+      console.log("toggle display points in region");
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
+    }
+
     /**
      * Generate options for robot part dropdown
      * @returns 
@@ -541,6 +550,7 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                           isSearchable={true}
                           styles={selectStyles}
                         />
+                        <input type="button" value="Clear All Points in the Selected Region" onClick={() => this.toggleDisplayPointsInRegion()} />
                       </div>
                     </div>
                   </AccordionItemPanel>

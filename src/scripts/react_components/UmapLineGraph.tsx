@@ -44,6 +44,7 @@ interface line_graph_props {
     backgroundPoints: UmapPoint[],
     neighborDistance: number,
     displayNeighbors: Boolean,
+    displayPointsInRegion: Boolean,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
@@ -248,6 +249,14 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 this.props.graph.toggleDisplayNeighbors();
             }
         }
+
+        if(prevProps.displayPointsInRegion !== this.props.displayPointsInRegion){
+            if(!this.props.displayPointsInRegion.valueOf()){
+                this.removeAllPointsInRegion();
+                this.props.graph.toggleDisplayPointsInRegion();
+            }
+        }
+
 
         if (prevProps.showLines !== this.props.showLines) {
             let plot_data = [];
@@ -798,6 +807,19 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         this.showRobotScenes(selectedPoints, selectedPointsNames, true, newID(), allPoints, colors);
         this.setState({
             plotly_data: plot_data
+        });
+    }
+
+    removeAllPointsInRegion(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            if(!data.id.startsWith("points in region") && !data.id.startsWith("selected points#region"))
+                plot_data.push(data);
+        }
+        this.setState({
+            plotly_data: plot_data,
         });
     }
 

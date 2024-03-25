@@ -58,6 +58,7 @@ export class UmapGraph {
     protected _displayNeighbors: Boolean; // false if clear all neighbors
     protected _robotSceneManager: RobotSceneManager | undefined;
     protected _selectedRobotJointName: string;
+    protected _displayPointsInRegion: Boolean; // false if clear all points in selected region
 
     //unique to parametric UMAP
     protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
@@ -125,6 +126,7 @@ export class UmapGraph {
         this._maxNeighborDistance = 10;
         this._neighborDistance = 5;
         this._displayNeighbors = true;
+        this._displayPointsInRegion = true;
 
         this._selectedRobotJointName =  "";
     }
@@ -161,6 +163,14 @@ export class UmapGraph {
 
     toggleDisplayNeighbors(){
         this._displayNeighbors = new Boolean(!this._displayNeighbors.valueOf());
+    }
+
+    displayPointsInRegion(): Boolean {
+        return this._displayPointsInRegion;
+    }
+
+    toggleDisplayPointsInRegion(){
+        this._displayPointsInRegion = new Boolean(!this._displayPointsInRegion.valueOf());
     }
 
     neighborDistance(): number{

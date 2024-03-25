@@ -777,6 +777,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               backgroundPoints={this.backgroundPoints}
               neighborDistance={this.props.graph.neighborDistance()}
               displayNeighbors={this.props.graph.displayNeighbors()}
+              displayPointsInRegion={this.props.graph.displayPointsInRegion()}
               onGraphUpdate={this.onGraphUpdate.bind(this)}
               onCurrChange={this.onCurrTimeChange.bind(this)}
               onStartChange={this.onStartTimeChange.bind(this)}
