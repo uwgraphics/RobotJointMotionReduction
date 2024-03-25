@@ -323,7 +323,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     /**
      * draw the traces under the current time frames
      */
-    calculateData():any{
+    calculateData(){
         // return 1;
         const {times,
             startTime, endTime, currTime, 
