@@ -278,24 +278,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if (prevProps.times !== this.props.times || prevProps.umapData !== this.props.umapData ||
             colorChange || lineWidthChange || axisColorChange ||
             boundChangeInZoom) {
-            // if(this._graphDiv.current && this._graphDiv.current.children.length > 0){
-            //     this._graphDiv.current.removeChild(this._graphDiv.current.children[0]);
-            // }
-            // const {w, h} = this.state;
-            const {width, height} = this.props;
-            this.calculateData(boundChangeInZoom, colorChange, windowChanged);
-            // let svg = this.drawGraph(boundChangeInZoom, colorChange, windowChanged);
-            // // log(svg);
-            // // console.log("width " + w + " height " + h);
-            // if(svg){
-            //     d3.select(this._graphDiv.current)
-            //         .append("svg")
-            //         .attr("width", width)
-            //         .attr("height", height)
-            //         .node().appendChild(svg);
-            // }
-            
-            // this.drawGraph();
+            this.calculateData();
         }
         
     }
@@ -337,29 +320,16 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         return [zoomedTimes, zoomedUmapData]
     }
 
-
     /**
-     * draws everything in the graph using d3
-     * @param boundChangeInZoom 
-     * @param colorChange 
-     * @param windowChanged 
-     * @returns svg node component
+     * draw the traces under the current time frames
      */
-    calculateData(boundChangeInZoom?:boolean, colorChange?:boolean, windowChanged?:boolean):any{
+    calculateData():any{
         // return 1;
         const {times,
             startTime, endTime, currTime, 
             isTimeWarp, lineWidth, axisColor,
             line_names, line_colors, line_ids,
             onGraphUpdate, umapData, backgroundPoints} = this.props;
-        const w = this.props.width;
-        const h = this.props.height;
-        const isDataChanged = true;
-        
-        const {margin, prev_x, prev_y} = this.state;
-        //width = w - margin.left - margin.right,
-        const width = w - margin.left - margin.right,
-        height = h - margin.top - margin.bottom;
 
         let [zoomedTimes, data] = this.filterData(startTime, endTime);
       
