@@ -851,44 +851,49 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
 
         // add traces to the scene
-        let traceMap: Map<UmapPoint, number[]> = new Map();
-        let colorMap: Map<UmapPoint, string> = new Map();
-        let visited: Set<UmapPoint> = new Set();
-        let pointsSet: Set<UmapPoint> = new Set();
-        for (const point of allPoints) pointsSet.add(point);
-        for (const [i, point] of allPoints.entries()) { // find points that are adjacent so they can be shown in the same trace
-            if (visited.has(point)) continue;
-            visited.add(point);
-            let trace = [];
-            let currPoint = point;
-            while (pointsSet.has(currPoint)) {
-                traceMap.delete(currPoint);
-                colorMap.delete(currPoint);
-                trace.unshift(currPoint.time());
-                visited.add(currPoint);
-                let prevPoint;
-                for (const [prev_point, distance] of currPoint.prevPoint()) {
-                    prevPoint = prev_point;
+        let selectedRobotJointName = graph.selectedRobotJointName();
+        if ( selectedRobotJointName.length > 0) {
+            let traceMap: Map<UmapPoint, number[]> = new Map();
+            let colorMap: Map<UmapPoint, string> = new Map();
+            let visited: Set<UmapPoint> = new Set();
+            let pointsSet: Set<UmapPoint> = new Set();
+            for (const point of allPoints) pointsSet.add(point);
+            for (const [i, point] of allPoints.entries()) { // find points that are adjacent so they can be shown in the same trace
+                if (visited.has(point)) continue;
+                visited.add(point);
+                let trace = [];
+                let currPoint = point;
+                while (pointsSet.has(currPoint)) {
+                    traceMap.delete(currPoint);
+                    colorMap.delete(currPoint);
+                    trace.unshift(currPoint.time());
+                    visited.add(currPoint);
+                    let prevPoint;
+                    for (const [prev_point, distance] of currPoint.prevPoint()) {
+                        prevPoint = prev_point;
+                    }
+                    if (prevPoint === undefined || prevPoint === currPoint) break;
+                    currPoint = prevPoint;
                 }
-                if (prevPoint === undefined || prevPoint === currPoint) break;
-                currPoint = prevPoint;
+                traceMap.set(point, trace);
+                colorMap.set(point, allPointsColors[i]);
             }
-            traceMap.set(point, trace);
-            colorMap.set(point, allPointsColors[i]);
+            for (const [point, trace] of traceMap) {
+                console.log(trace);
+                const [sceneId, robotName] = this.decomposeId(point.robotInfo());
+                let scene = robotSceneManager.robotSceneById(sceneId);
+                if (scene === undefined) return;
+                if (!robotSceneManager.isActiveRobotScene(scene))
+                    robotSceneManager.activateRobotScene(scene);
+                let robot = scene.getRobotByName(robotName);
+                if (robot !== undefined) {
+                    let color = colorMap.get(point);
+                    let selectedRobotJoint = robot.getArticuatedJointMap().get(selectedRobotJointName);
+                    if(selectedRobotJoint !== undefined)
+                        staticRobotScene.addTraces(robot, trace, selectedRobotJoint, (color === undefined) ? "red" : color);
+                }
+            }
         }
-        for (const [point, trace] of traceMap) {
-            console.log(trace);
-            const [sceneId, robotName] = this.decomposeId(point.robotInfo());
-            let scene = robotSceneManager.robotSceneById(sceneId);
-            if (scene === undefined) return;
-            if (!robotSceneManager.isActiveRobotScene(scene))
-                robotSceneManager.activateRobotScene(scene);
-            let robot = scene.getRobotByName(robotName);
-            if (robot !== undefined) {
-                let color = colorMap.get(point);
-                staticRobotScene.addTraces(robot, trace, robot.articuatedJoints()[3], (color === undefined) ? "red": color);
-            }
-        } 
 
         this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes, selectedPointsNames);
         this.props.robotSceneManager.setShouldSyncViews(true);

@@ -242,6 +242,7 @@ export class RobotSceneManager {
     addUmapGraph(uGraph: UmapGraph)
     {
         this._umapGraphs.set(uGraph.id(), uGraph);
+        uGraph.setRobotSceneManager(this);
     }
     removeUmapGraph(uGraphId: string)
     {

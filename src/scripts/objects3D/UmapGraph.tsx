@@ -11,7 +11,10 @@
  * the Graph class is created.
  */
 
+import { RobotSceneManager } from "../RobotSceneManager";
 import { Graph } from "./Graph";
+import { Robot } from "./Robot";
+import { RobotJoint } from "./RobotJoint";
 import { UmapPoint } from "./UmapPoint";
 
 export type umap_type = "Parametric" | "Regular";
@@ -53,6 +56,8 @@ export class UmapGraph {
     protected _maxNeighborDistance: number;
     protected _neighborDistance: number;
     protected _displayNeighbors: Boolean; // false if clear all neighbors
+    protected _robotSceneManager: RobotSceneManager | undefined;
+    protected _selectedRobotJointName: string;
 
     //unique to parametric UMAP
     protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
@@ -120,6 +125,34 @@ export class UmapGraph {
         this._maxNeighborDistance = 10;
         this._neighborDistance = 5;
         this._displayNeighbors = true;
+
+        this._selectedRobotJointName =  "";
+    }
+
+
+    setRobotSceneManager(robotSceneManager: RobotSceneManager){
+        this._robotSceneManager = robotSceneManager;
+    }
+
+    setSelectedRobotJointName(robotJointName: string){
+        this._selectedRobotJointName = robotJointName;
+    }
+
+    selectedRobotJointName(): string{
+        return this._selectedRobotJointName;
+    }
+
+    currRobot(): Robot | undefined {
+        if(this._robotSceneManager === undefined) return;
+        for(const [, point] of this._UMAPPoints){
+            const [sceneId, robotName] = point.robotInfo().split("#");
+            let scene = this._robotSceneManager.robotSceneById(sceneId);
+            if (scene === undefined) return;
+            if (!this._robotSceneManager.isActiveRobotScene(scene))
+                this._robotSceneManager.activateRobotScene(scene);
+            let robot = scene.getRobotByName(robotName);
+            return robot;
+        }
     }
 
     displayNeighbors(): Boolean {

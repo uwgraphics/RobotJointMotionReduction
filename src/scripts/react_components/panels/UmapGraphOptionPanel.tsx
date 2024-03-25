@@ -20,6 +20,7 @@ import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { APP } from "../../constants";
 import { PopupHelpPage } from "../popup_help_page";
 import Switch from '@mui/material/Switch';
+import Select from 'react-select'
 
 export interface graph_panel_props {
     robotSceneManager: RobotSceneManager,
@@ -180,6 +181,36 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
+    /**
+     * Generate options for robot part dropdown
+     * @returns 
+     */
+    genRobotPartOptions(){
+      let result = [];
+      const {robotSceneManager, currSelectedGraph} = this.props;
+      let robot = currSelectedGraph?.currRobot();
+      if(robot !== undefined){
+        for(const joint of robot.articuatedJoints()){
+          result.push({
+            value: joint.name(),
+            label: joint.name()
+          })
+        } 
+      }       
+      return result; 
+    } 
+
+    /**
+     * Handle changing scenes
+     * @param e 
+     * @returns 
+     */
+    onChangeRobotPart(e:any){
+      const value = e.value;
+      if(!value) return;
+      const {robotSceneManager, currSelectedGraph} = this.props;
+      currSelectedGraph?.setSelectedRobotJointName(value);
+    }
     render() {
         const {currSelectedGraph} = this.props
         let currStaticRobotScene = this.props.robotSceneManager.getCurrStaticRobotScene();
@@ -501,6 +532,14 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                           step={0.01}
                           value={currStaticRobotScene?.robotOpacity()}
                           onMouseUp={currStaticRobotScene?.setRobotOpacity.bind(currStaticRobotScene)}
+                        />
+                        <label>Robot Part of the Traces</label>
+                        <Select
+                          placeholder={"Select a robot part ..."}
+                          options={this.genRobotPartOptions()}
+                          onChange={this.onChangeRobotPart.bind(this)}
+                          isSearchable={true}
+                          styles={selectStyles}
                         />
                       </div>
                     </div>
