@@ -540,7 +540,8 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                           max={1}
                           step={0.01}
                           value={currStaticRobotScene?.robotOpacity()}
-                          onMouseUp={currStaticRobotScene?.setRobotOpacity.bind(currStaticRobotScene)}
+                          // onMouseUp={currStaticRobotScene?.setRobotOpacity.bind(currStaticRobotScene)}
+                          onChange={currStaticRobotScene?.setRobotOpacity.bind(currStaticRobotScene)}
                         />
                         <label>Robot Part of the Traces</label>
                         <Select
