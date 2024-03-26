@@ -427,8 +427,8 @@ export class Trace {
             }
         if(same_point){
             let marker = (new T.Mesh(
-                new T.SphereGeometry(0.01, 10, 10),
-                new T.MeshLambertMaterial({ color: "red" })
+                new T.SphereGeometry(0.005, 10, 10),
+                new T.MeshBasicMaterial({ color: new T.Color(this._color).convertSRGBToLinear()})
             ));
             marker.position.copy(point1);
             return marker;
