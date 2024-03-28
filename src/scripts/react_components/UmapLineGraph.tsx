@@ -373,6 +373,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     x.push(pointIn2D[0], pointIn2D2[0]);
                     y.push(pointIn2D[1], pointIn2D2[1]);
                     let showlegend = (j === 1) ? true : false;
+                    // higher speed will have lighter color
                     let color = chroma(line_colors[i]).brighten(data[i][j].speedRatio() * 3).hex();
                     plot_data.push({
                         x: x,
