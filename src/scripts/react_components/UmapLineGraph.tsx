@@ -9,6 +9,7 @@ import { Datum, LegendClickEvent, PlotDatum, PlotHoverEvent, PlotMouseEvent, Plo
 import { Cluster, Clusterer } from "k-medoids";
 import { StaticRobotScene } from "../scene/StaticRobotScene";
 import { Distances, UmapPoint } from "../objects3D/UmapPoint";
+import chroma from 'chroma-js';
 
 
 /**
@@ -257,6 +258,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
 
+        if (prevProps.displaySpeed !== this.props.displaySpeed) {
+            this.calculateData(this.props.displaySpeed.valueOf());
+        }
+
 
         if (prevProps.showLines !== this.props.showLines) {
             let plot_data = [];
@@ -266,15 +271,27 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 || data.id.startsWith("false proximity") || data.id.startsWith("backgroundPoints") 
                 || data.id.startsWith("selected points")){
                     plot_data.push(data);
+                } else if(data.id.startsWith("speed")){
+                    plot_data.push({
+                        x: data.x,
+                        y: data.y,
+                        name: data.name,
+                        id: data.id,
+                        showlegend: data.showlegend,
+                        legendgroup: data.legendgroup,
+                        mode: mode,
+                        marker: data.marker
+                    });
                 } else{
                     plot_data.push({
                         x: data.x,
                         y: data.y,
                         name: data.name,
                         id: data.id,
-                        showlegend: true,
+                        showlegend: data.showlegend,
                         mode: mode,
-                        marker: data.marker
+                        marker: data.marker,
+                        line: data.line
                     });
                 }
             }
@@ -332,7 +349,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     /**
      * draw the traces under the current time frames
      */
-    calculateData(){
+    calculateData(displaySpeed: boolean){
         // return 1;
         const {times,
             startTime, endTime, currTime, 
@@ -347,30 +364,63 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let plot_data = [];
         let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
         let UmapData: Map<string, UmapPoint[]> = new Map();
-        for(let i=0; i<data.length; i++){
-            let x = [], y = [];
-            for(const point of data[i]){
-                const pointIn2D = point.pointIn2D();
-                x.push(pointIn2D[0]);
-                y.push(pointIn2D[1]);
-            }
-            plot_data.push({
-                x: x,
-                y: y,
-                name: line_names[i],
-                id: line_ids[i],
-                showlegend: true,
-                mode: mode,
-                marker: {
-                    size: 4,
-                    color: line_colors[i],
-                },
-                line: {
-                    color: line_colors[i],
+        if (displaySpeed) {
+            for (let i = 0; i < data.length; i++) {
+                for (let j = 1; j < data[i].length; j++) {
+                    let x = [], y = [];
+                    const pointIn2D = data[i][j - 1].pointIn2D();
+                    const pointIn2D2 = data[i][j].pointIn2D();
+                    x.push(pointIn2D[0], pointIn2D2[0]);
+                    y.push(pointIn2D[1], pointIn2D2[1]);
+                    let showlegend = (j === 1) ? true : false;
+                    let color = chroma(line_colors[i]).brighten(data[i][j].speedRatio() * 3).hex();
+                    plot_data.push({
+                        x: x,
+                        y: y,
+                        name: line_names[i],
+                        id: "speed" + line_ids[i],
+                        showlegend: showlegend,
+                        legendgroup: line_names[i],
+                        mode: mode,
+                        marker: {
+                            size: 4,
+                            color: color,
+                        },
+                        line: {
+                            color: color,
+                        }
+                    });
                 }
-            });
-            UmapData.set(line_ids[i], data[i]);
+
+                UmapData.set(line_ids[i], data[i]);
+            }
+        } else {
+            for (let i = 0; i < data.length; i++) {
+                let x = [], y = [];
+                for (const point of data[i]) {
+                    const pointIn2D = point.pointIn2D();
+                    x.push(pointIn2D[0]);
+                    y.push(pointIn2D[1]);
+                }
+                plot_data.push({
+                    x: x,
+                    y: y,
+                    name: line_names[i],
+                    id: line_ids[i],
+                    showlegend: true,
+                    mode: mode,
+                    marker: {
+                        size: 4,
+                        color: line_colors[i],
+                    },
+                    line: {
+                        color: line_colors[i],
+                    }
+                });
+                UmapData.set(line_ids[i], data[i]);
+            }
         }
+
 
         let x = [], y = [];
         for (const point of backgroundPoints) {
@@ -427,7 +477,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             line_idx = event.points[i].curveNumber;
             let line_id: string = plotly_data[line_idx].id;
             if(line_id.startsWith("gap") || line_id.startsWith("false proximity") 
-            || line_id.startsWith("backgroundPoints") || line_id.startsWith("points in region")) continue;
+            || line_id.startsWith("backgroundPoints") || line_id.startsWith("points in region")
+            || line_id.startsWith("speed")) continue;
             if(line_id.startsWith("nneighbor")) {
                 let [, point_id] = line_id.split("#");
                 let point = this.props.graph.getUmapPoint(point_id);
@@ -480,7 +531,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let line_id: string = plotly_data[line_idx].id;
         if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") 
         || line_id.startsWith("false proximity") || line_id.startsWith("selected points")
-        || line_id.startsWith("points in region")) return;
+        || line_id.startsWith("points in region") || line_id.startsWith("speed")) return;
 
         let plot_data = [], points: PointInfo[] = [];
         for(let i=0; i<plotly_data.length; i++){

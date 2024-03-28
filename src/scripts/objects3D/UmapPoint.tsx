@@ -51,6 +51,8 @@ export class UmapPoint {
     protected _nneighborsIn2D: Map<UmapPoint, Distances>; // key: the id of n neighbors in UMAP 2D plot, value: info about the distances
     protected _prevPoint: Map<UmapPoint, Distances>; // key: the id of n neighbors in UMAP 2D plot, value: info about the distances
     protected _maxNeighborDistance: number; // the max distance to its neighbors
+    protected _speed: number; // the robot joint "speed" of the segement between previous point and this point
+    protected _speedRatio: number; // the relative speed with respect to the speed of the entire trace
     constructor(id: string, pointInHD: number[], pointIn2D: number[]) {
         this._id = id;
         this._pointInHD = pointInHD;
@@ -62,6 +64,24 @@ export class UmapPoint {
         this._time = 0;
         this._robotInfo = "";
         this._maxNeighborDistance = 0;
+        this._speed = 0;
+        this._speedRatio = 0;
+    }
+
+    speedRatio(): number{
+        return this._speedRatio;
+    }
+
+    setSpeedRatio(speedRatio: number){
+        this._speedRatio = speedRatio;
+    }
+
+    speed(): number{
+        return this._speed;
+    }
+
+    setSpeed(speed: number){
+        this._speed = speed;
     }
 
     maxNeighborDistance(): number{

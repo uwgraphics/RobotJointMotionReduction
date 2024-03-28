@@ -419,8 +419,26 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                         let distance_HD = euclideanDistance(filterdUmapData[i].pointInHD(), prevPoint.pointInHD());
                         let distance_2D = euclideanDistance(filterdUmapData[i].pointIn2D(), prevPoint.pointIn2D());
                         filterdUmapData[i].setPrePoint(prevPoint, distance_HD, distance_2D);
+                        let time_diff = filterdUmapData[i].time() - prevPoint.time();
+                        if(time_diff !== 0)
+                            filterdUmapData[i].setSpeed(distance_HD / time_diff);
                     }
                 }
+
+                let max_speed = 0, min_speed = Number.MAX_VALUE;
+                for(let i=1; i<times.length; i++){
+                    let speed = filterdUmapData[i].speed();
+                    if(speed < min_speed) min_speed = speed;
+                    if(speed > max_speed) max_speed = speed;
+                }
+                if(max_speed > min_speed){
+                    for(let i=1; i<times.length; i++){
+                        let speed = filterdUmapData[i].speed();
+                        let ratio = (speed - min_speed) / (max_speed - min_speed);
+                        filterdUmapData[i].setSpeedRatio(ratio);
+                    }
+                }
+                
 
                 _times.push(times);
                 umapData.push(filterdUmapData);
@@ -778,6 +796,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               neighborDistance={this.props.graph.neighborDistance()}
               displayNeighbors={this.props.graph.displayNeighbors()}
               displayPointsInRegion={this.props.graph.displayPointsInRegion()}
+              displaySpeed={this.props.graph.displaySpeed()}
               onGraphUpdate={this.onGraphUpdate.bind(this)}
               onCurrChange={this.onCurrTimeChange.bind(this)}
               onStartChange={this.onStartTimeChange.bind(this)}

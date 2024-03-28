@@ -59,6 +59,7 @@ export class UmapGraph {
     protected _robotSceneManager: RobotSceneManager | undefined;
     protected _selectedRobotJointName: string;
     protected _displayPointsInRegion: Boolean; // false if clear all points in selected region
+    protected _displaySpeed: Boolean; // true if display the colored speed traces
 
     //unique to parametric UMAP
     protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
@@ -122,13 +123,21 @@ export class UmapGraph {
         this._backgroundPointsMax = 2 * Math.PI;
         this._backgroundPointsMin = -2 * Math.PI;
         this._autoencoder = new Boolean(false);
-
+        this._displaySpeed = new Boolean(false);
         this._maxNeighborDistance = 10;
         this._neighborDistance = 5;
         this._displayNeighbors = true;
         this._displayPointsInRegion = true;
 
         this._selectedRobotJointName =  "";
+    }
+
+    displaySpeed(): Boolean {
+        return this._displaySpeed;
+    }
+
+    toggleDisplaySpeed(){
+        this._displaySpeed = new Boolean(!this._displaySpeed.valueOf());
     }
 
 

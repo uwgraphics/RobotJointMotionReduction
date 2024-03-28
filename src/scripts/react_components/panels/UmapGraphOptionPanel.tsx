@@ -190,6 +190,15 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
     }
 
+    toggleDisplaySpeed() {
+      this.props.robotSceneManager.getCurrUmapGraph()?.toggleDisplaySpeed();
+      console.log("toggle display speed");
+      this.setState({ // triggers scene option panel to update
+        need_update: !this.state.need_update
+      });
+      this.props.forceUpdateTabNames();  // trigger the graph update instantaneously
+    }
+
     /**
      * Generate options for robot part dropdown
      * @returns 
@@ -422,6 +431,14 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                   onChange={this.toggleShowAllTraces.bind(this)}
                 />
                 <label>Show</label>
+              </div>
+
+              <div>
+                <label>display speed</label>
+                <Switch
+                  checked={currSelectedGraph?.displaySpeed().valueOf()}
+                  onChange={this.toggleDisplaySpeed.bind(this)}
+                />
               </div>
 
               <Accordion allowZeroExpanded allowMultipleExpanded>
