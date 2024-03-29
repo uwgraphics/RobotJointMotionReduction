@@ -380,7 +380,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         x: x,
                         y: y,
                         name: line_names[i],
-                        id: "speed" + line_ids[i],
+                        id: "speed#" + j + "#" + line_ids[i],
                         showlegend: showlegend,
                         legendgroup: line_names[i],
                         mode: mode,
@@ -479,8 +479,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             line_idx = event.points[i].curveNumber;
             let line_id: string = plotly_data[line_idx].id;
             if(line_id.startsWith("gap") || line_id.startsWith("false proximity") 
-            || line_id.startsWith("backgroundPoints") || line_id.startsWith("points in region")
-            || line_id.startsWith("speed")) continue;
+            || line_id.startsWith("backgroundPoints") || line_id.startsWith("points in region")) continue;
             if(line_id.startsWith("nneighbor")) {
                 let [, point_id] = line_id.split("#");
                 let point = this.props.graph.getUmapPoint(point_id);
@@ -501,6 +500,20 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 return;
             }
             point_idx = event.points[i].pointIndex;
+            if(line_id.startsWith("speed")){
+                let [, index, curve_id, robot_name] = line_id.split("#");
+                curve_id = curve_id + "#" + robot_name;
+                let index_num = parseInt(index);
+                console.log(line_id);
+                let trace = this.state.zoomedUMAPData.get(curve_id);
+                console.log(this.state.zoomedUMAPData)
+                console.log(curve_id)
+                if(trace !== undefined){
+                    let selected_time = trace[index_num + point_idx].time();
+                    this.props.robotSceneManager.setCurrTime(selected_time);
+                    return;
+                }
+            }
         }
         if(point_idx !== -1){
             let selected_time = this.state.zoomedTimes[0][point_idx]
