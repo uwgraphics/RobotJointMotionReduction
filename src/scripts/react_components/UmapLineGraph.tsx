@@ -46,6 +46,7 @@ interface line_graph_props {
     neighborDistance: number,
     displayNeighbors: Boolean,
     displayPointsInRegion: Boolean,
+    displaySpeed: Boolean,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
