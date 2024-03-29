@@ -304,7 +304,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if (prevProps.times !== this.props.times || prevProps.umapData !== this.props.umapData ||
             colorChange || lineWidthChange || axisColorChange ||
             boundChangeInZoom) {
-            this.calculateData();
+            this.calculateData(this.props.displaySpeed.valueOf());
         }
         
     }
