@@ -1020,12 +1020,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             plot_data.push(data);
         }
 
-        let zoomedUMAPData = [];
-        for(const [i, data] of plotly_data.entries()){
-            let line_id = data.id;
-            let umapData = this.state.zoomedUMAPData.get(line_id);
-            if(umapData !== undefined) zoomedUMAPData.push(umapData);
-        }
+        // let zoomedUMAPData = [];
+        // for(const [i, data] of plotly_data.entries()){
+        //     let line_id = data.id;
+        //     let umapData = this.state.zoomedUMAPData.get(line_id);
+        //     if(umapData !== undefined) zoomedUMAPData.push(umapData);
+        // }
 
         let gaps: number = 0;
         let gap_x: any[] = [], gap_y: any[] = [];
@@ -1041,7 +1041,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         });
         let distances: Distances[] = [];
-        for(const trace of zoomedUMAPData){
+        for(const [, trace] of this.state.zoomedUMAPData){
             for(const data of trace){
                 for(const [prevPoint, distance] of data.prevPoint()){
                     if(distance.distanceIn2D() > min_dis_2D){
@@ -1114,12 +1114,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             plot_data.push(data);
         }
 
-        let zoomedUMAPData = [];
-        for(const [i, data] of plotly_data.entries()){
-            let line_id = data.id;
-            let umapData = this.state.zoomedUMAPData.get(line_id);
-            if(umapData !== undefined) zoomedUMAPData.push(umapData);
-        }
+        // let zoomedUMAPData = [];
+        // for(const [i, data] of plotly_data.entries()){
+        //     let line_id = data.id;
+        //     let umapData = this.state.zoomedUMAPData.get(line_id);
+        //     if(umapData !== undefined) zoomedUMAPData.push(umapData);
+        // }
 
         let stretches: number = 0;
         let stretch_x: any[] = [], stretch_y: any[] = [];
@@ -1136,7 +1136,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         });
 
         let distances: Distances[] = [];
-        for(const trace of zoomedUMAPData){
+        for(const [, trace] of this.state.zoomedUMAPData){
             for(const data of trace){
                 for(const [neighbor, distance] of data.nneighborsInHD()){
                     if(distance.distanceIn2D() > min_dis_2D && distance.distanceInHD() <= max_dis_HD){
@@ -1207,12 +1207,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let data = plotly_data[i];
             plot_data.push(data);
         }
-        let zoomedUMAPData = [];
-        for(const [i, data] of plotly_data.entries()){
-            let line_id = data.id;
-            let umapData = this.state.zoomedUMAPData.get(line_id);
-            if(umapData !== undefined) zoomedUMAPData.push(umapData);
-        }
+        // let zoomedUMAPData = [];
+        // for(const [i, data] of plotly_data.entries()){
+        //     let line_id = data.id;
+        //     let umapData = this.state.zoomedUMAPData.get(line_id);
+        //     if(umapData !== undefined) zoomedUMAPData.push(umapData);
+        // }
 
         let false_proximities: number = 0;
         let fp_x: any[] = [], fp_y: any[] = [];
@@ -1229,7 +1229,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         });
 
         let distances: Distances[] = [];
-        for(const trace of zoomedUMAPData){
+        for(const [, trace] of this.state.zoomedUMAPData){
             for(const data of trace){
                 for(const [neighbor, distance] of data.nneighborsIn2D()){
                     if(distance.distanceInHD() > min_dis_HD && distance.distanceIn2D() <= max_dis_2D){
