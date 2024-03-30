@@ -504,10 +504,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 let [, index, curve_id, robot_name] = line_id.split("#");
                 curve_id = curve_id + "#" + robot_name;
                 let index_num = parseInt(index);
-                console.log(line_id);
                 let trace = this.state.zoomedUMAPData.get(curve_id);
-                console.log(this.state.zoomedUMAPData)
-                console.log(curve_id)
                 if(trace !== undefined){
                     let selected_time = trace[index_num + point_idx].time();
                     this.props.robotSceneManager.setCurrTime(selected_time);
