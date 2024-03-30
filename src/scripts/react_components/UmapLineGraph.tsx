@@ -756,7 +756,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const { line_ids, line_colors, graph } = this.props;
         const { plotly_data } = this.state;
         let line_id: string = plotly_data[event.curveNumber].id;
-
+        if(line_id.startsWith("speed")){
+            let [, index, curve_id, robot_name] = line_id.split("#");
+            line_id = curve_id + "#" + robot_name;
+        }
         let index = -1;
         for (let i = 0; i < line_ids.length; i++)
             if (line_ids[i] === line_id) {
