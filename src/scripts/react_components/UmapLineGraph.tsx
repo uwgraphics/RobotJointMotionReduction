@@ -798,8 +798,14 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             if(clusteredData[0] === point.x && clusteredData[1] === point.y 
                 && typeof point.x === "number" && typeof point.y === "number"){
                     let line_id = plotly_data[point.curveNumber].id;
+                    let point_idx = point.pointIndex;
+                    if(line_id.startsWith("speed")){
+                        let [, index, curve_id, robot_name] = line_id.split("#");
+                        line_id = curve_id + "#" + robot_name;
+                        point_idx = parseInt(index);
+                    }
                     let trace = zoomedUMAPData.get(line_id);
-                    if(trace !== undefined) return trace[point.pointIndex];
+                    if(trace !== undefined) return trace[point_idx];
             }
         }
     }
@@ -832,9 +838,15 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         } else{
             for(const point of points){
                 let line_id = plotly_data[point.curveNumber].id;
+                let point_idx = point.pointIndex;
+                if(line_id.startsWith("speed")){
+                    let [, index, curve_id, robot_name] = line_id.split("#");
+                    line_id = curve_id + "#" + robot_name;
+                    point_idx = parseInt(index);
+                }
                 let trace = zoomedUMAPData.get(line_id);
                 if(trace !== undefined)
-                    selectedPoints.push(trace[point.pointIndex]);
+                    selectedPoints.push(trace[point_idx]);
             }
         }
         let plot_data = [];
@@ -864,10 +876,16 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let colors: string[] = [];
         for(const point of points){
             let line_id = plotly_data[point.curveNumber].id;
+            let point_idx = point.pointIndex;
+            if (line_id.startsWith("speed")) {
+                let [, index, curve_id, robot_name] = line_id.split("#");
+                line_id = curve_id + "#" + robot_name;
+                point_idx = parseInt(index);
+            }
             let trace = zoomedUMAPData.get(line_id);
             colors.push(plotly_data[point.curveNumber].marker.color)
             if(trace !== undefined)
-                allPoints.push(trace[point.pointIndex]);
+                allPoints.push(trace[point_idx]);
         }
         let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints, false);
         this.showRobotScenes(selectedPoints, selectedPointsNames, true, newID(), allPoints, colors);
