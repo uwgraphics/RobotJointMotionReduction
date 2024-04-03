@@ -195,7 +195,7 @@ export class StaticRobotScene extends ThreeScene {
      * @param color The color of the traces. If undefined, then pick one from the color palettes of the current scene
      * @returns The computed traces
      */
-     addTraces(robot:Robot, times: number[], robotPart: RobotJoint, color?: string, axisSize?: number, density?: number, traceSize?: number){
+     addTraces(robot:Robot, times: number[], robotPart: RobotJoint | RobotLink | undefined, color?: string, axisSize?: number, density?: number, traceSize?: number){
         for (const trace of RobotScene.newTraces(robot, times, robotPart, color, axisSize, density, traceSize)) {
             trace.setParentScene(this);
             this._traces.push(trace);

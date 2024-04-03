@@ -962,8 +962,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
 
         // add traces to the scene
-        let selectedRobotJointName = graph.selectedRobotJointName();
-        if ( selectedRobotJointName.length > 0) {
+        let selectedRobotPartName = graph.selectedRobotPartName();
+        if ( selectedRobotPartName.length > 0) {
             let traceMap: Map<UmapPoint, number[]> = new Map();
             let colorMap: Map<UmapPoint, string> = new Map();
             let visited: Set<UmapPoint> = new Set();
@@ -999,9 +999,18 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 let robot = scene.getRobotByName(robotName);
                 if (robot !== undefined) {
                     let color = colorMap.get(point);
-                    let selectedRobotJoint = robot.getArticuatedJointMap().get(selectedRobotJointName);
+                    let selectedRobotJoint = robot.getArticuatedJointMap().get(selectedRobotPartName);
                     if(selectedRobotJoint !== undefined)
                         staticRobotScene.addTraces(robot, trace, selectedRobotJoint, (color === undefined) ? "red" : color);
+                    else {
+                        let selectedRobotLink = robot.linkMap().get(selectedRobotPartName)
+                        if(selectedRobotLink !== undefined)
+                            staticRobotScene.addTraces(robot, trace, selectedRobotLink, (color === undefined) ? "red" : color);
+                        else if(robot.name() === selectedRobotPartName) {
+                            staticRobotScene.addTraces(robot, trace, undefined, (color === undefined) ? "red" : color);
+                        }
+                            
+                    }
                 }
             }
         }

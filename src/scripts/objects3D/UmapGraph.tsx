@@ -57,7 +57,7 @@ export class UmapGraph {
     protected _neighborDistance: number;
     protected _displayNeighbors: Boolean; // false if clear all neighbors
     protected _robotSceneManager: RobotSceneManager | undefined;
-    protected _selectedRobotJointName: string;
+    protected _selectedRobotPartName: string;
     protected _displayPointsInRegion: Boolean; // false if clear all points in selected region
     protected _displaySpeed: Boolean; // true if display the colored speed traces
 
@@ -129,7 +129,7 @@ export class UmapGraph {
         this._displayNeighbors = true;
         this._displayPointsInRegion = true;
 
-        this._selectedRobotJointName =  "";
+        this._selectedRobotPartName =  "";
     }
 
     displaySpeed(): Boolean {
@@ -145,12 +145,12 @@ export class UmapGraph {
         this._robotSceneManager = robotSceneManager;
     }
 
-    setSelectedRobotJointName(robotJointName: string){
-        this._selectedRobotJointName = robotJointName;
+    setSelectedRobotPartName(name: string){
+        this._selectedRobotPartName = name;
     }
 
-    selectedRobotJointName(): string{
-        return this._selectedRobotJointName;
+    selectedRobotPartName(): string{
+        return this._selectedRobotPartName;
     }
 
     currRobot(): Robot | undefined {

@@ -208,10 +208,20 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       const {robotSceneManager, currSelectedGraph} = this.props;
       let robot = currSelectedGraph?.currRobot();
       if(robot !== undefined){
+        result.push({
+          value: robot.name(),
+          label: robot.name()
+        })
         for(const joint of robot.articuatedJoints()){
           result.push({
             value: joint.name(),
             label: joint.name()
+          })
+        } 
+        for(const link of robot.links()){
+          result.push({
+            value: link.name(),
+            label: link.name()
           })
         } 
       }       
@@ -227,7 +237,7 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
       const value = e.value;
       if(!value) return;
       const {robotSceneManager, currSelectedGraph} = this.props;
-      currSelectedGraph?.setSelectedRobotJointName(value);
+      currSelectedGraph?.setSelectedRobotPartName(value);
     }
     render() {
         const {currSelectedGraph} = this.props
