@@ -10,6 +10,7 @@ import { Cluster, Clusterer } from "k-medoids";
 import { StaticRobotScene } from "../scene/StaticRobotScene";
 import { Distances, UmapPoint } from "../objects3D/UmapPoint";
 import chroma from 'chroma-js';
+import tinycolor from "tinycolor2";
 
 
 /**
@@ -375,7 +376,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     y.push(pointIn2D[1], pointIn2D2[1]);
                     let showlegend = (j === 1) ? true : false;
                     // higher speed will have lighter color
-                    let color = chroma(line_colors[i]).brighten(data[i][j].speedRatio() * 3).hex();
+                    const line_color = tinycolor(line_colors[i]);
+                    let hslColor = line_color.toHsl();
+                    let color_hsl = { h: hslColor.h, s: hslColor.s, l: data[i][j].speedRatio()};
+                    const color = tinycolor(color_hsl).toHexString();
+                    // let color = chroma(line_colors[i]).brighten(data[i][j].speedRatio() * 3).hex();
                     plot_data.push({
                         x: x,
                         y: y,

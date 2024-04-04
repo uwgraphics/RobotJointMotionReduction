@@ -446,6 +446,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                     for (let i = 1; i < trace.length; i++) {
                         let speed = trace[i].speed();
                         let ratio = (speed - min_speed) / (max_speed - min_speed);
+                        ratio = 0.2 + ratio * 0.6 // set the ratio to be in [0.2, 0.8]
                         trace[i].setSpeedRatio(ratio);
                     }
                 }
