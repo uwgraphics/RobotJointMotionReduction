@@ -424,27 +424,31 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                             filterdUmapData[i].setSpeed(distance_HD / time_diff);
                     }
                 }
-
-                let max_speed = 0, min_speed = Number.MAX_VALUE;
-                for(let i=1; i<times.length; i++){
-                    let speed = filterdUmapData[i].speed();
-                    if(speed < min_speed) min_speed = speed;
-                    if(speed > max_speed) max_speed = speed;
-                }
-                if(max_speed > min_speed){
-                    for(let i=1; i<times.length; i++){
-                        let speed = filterdUmapData[i].speed();
-                        let ratio = (speed - min_speed) / (max_speed - min_speed);
-                        filterdUmapData[i].setSpeedRatio(ratio);
-                    }
-                }
                 
-
                 _times.push(times);
                 umapData.push(filterdUmapData);
 
                 index = index + lengths[robotIndex];
                 robotIndex++;
+            }
+
+            let max_speed = 0, min_speed = Number.MAX_VALUE;
+            for(const trace of umapData){
+                for (let i = 1; i < trace.length; i++) {
+                    let speed = trace[i].speed();
+                    if (speed < min_speed) min_speed = speed;
+                    if (speed > max_speed) max_speed = speed;
+                }
+            }
+            
+            if (max_speed > min_speed) {
+                for(const trace of umapData){
+                    for (let i = 1; i < trace.length; i++) {
+                        let speed = trace[i].speed();
+                        let ratio = (speed - min_speed) / (max_speed - min_speed);
+                        trace[i].setSpeedRatio(ratio);
+                    }
+                }
             }
             
             for(let i=index; i<embedding.length; i++){
