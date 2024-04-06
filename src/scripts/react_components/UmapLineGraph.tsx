@@ -678,6 +678,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let data = plotly_data[i];
             if(!data.id.startsWith("nneighbors") && !data.id.startsWith("selected points#neighbors"))
                 plot_data.push(data);
+            else if(data.id.startsWith("selected points#neighbors")) this.selectedPointsCount--;
         }
         this.setState({
             plotly_data: plot_data,
@@ -934,6 +935,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let data = plotly_data[i];
             if(!data.id.startsWith("points in region") && !data.id.startsWith("selected points#region"))
                 plot_data.push(data);
+            else if(data.id.startsWith("selected points#region")) this.selectedPointsCount--;
         }
         this.setState({
             plotly_data: plot_data,
