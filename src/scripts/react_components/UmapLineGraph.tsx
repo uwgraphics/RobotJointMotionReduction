@@ -11,6 +11,7 @@ import { StaticRobotScene } from "../scene/StaticRobotScene";
 import { Distances, UmapPoint } from "../objects3D/UmapPoint";
 import chroma from 'chroma-js';
 import tinycolor from "tinycolor2";
+import { kmeans} from 'ml-kmeans';
 
 
 /**
@@ -602,11 +603,20 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let selectedPoints: UmapPoint[] = [];
         if (nneighbors_points.length > 8) {  
             // find 9 clusters and use the first point in every cluster to represent the cluster
-            const clusterer = Clusterer.getInstance(nneighbors_points, 8);
-            for (const data of clusterer.Medoids) {
-                let point = this.findPoints(data, points);
-                if(point !== undefined) selectedPoints.push(point);
+            let ans = kmeans(nneighbors_points, 8, {});
+            let visited_cluster: Set<number> = new Set(); 
+            for (let i=0; i<ans.clusters.length; i++) {
+                if(!visited_cluster.has(ans.clusters[i])){
+                    let point = this.findPoints(nneighbors_points[i], points);
+                    if (point !== undefined) selectedPoints.push(point);
+                    visited_cluster.add(ans.clusters[i])
+                }
             }
+            // const clusterer = Clusterer.getInstance(nneighbors_points, 8);
+            // for (const data of clusterer.Medoids) {
+            //     let point = this.findPoints(data, points);
+            //     if(point !== undefined) selectedPoints.push(point);
+            // }
         } else{
             for(const data of nneighbors_points){
                 let point = this.findPoints(data, points);
@@ -835,16 +845,29 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const {zoomedUMAPData, plotly_data} = this.state;
         let selectedPoints: UmapPoint[] = [];
         if(points.length > 9){
-            let data = [];
-            for(const point of points)
-                data.push([point.x, point.y])
-            // find 9 clusters and use the first point in every cluster to represent the cluster
-            const clusterer = Clusterer.getInstance(data, 9);
-            //const clusteredData = clusterer.getClusteredData();  
-            for(const data of clusterer.Medoids){
-                let point = this.findPoints(data, points);
-                if(point !== undefined) selectedPoints.push(point);
+            let data: number[][] = [];
+            for(const point of points){
+                let x = point.x, y = point.y;
+                if(typeof x === "number" && typeof y === "number")
+                    data.push([x, y])
             }
+                
+            // find 9 clusters and use the first point in every cluster to represent the cluster
+            let ans = kmeans(data, 9, {});
+            let visited_cluster: Set<number> = new Set(); 
+            for (let i=0; i<ans.clusters.length; i++) {
+                if(!visited_cluster.has(ans.clusters[i])){
+                    let point = this.findPoints(data[i], points);
+                    if (point !== undefined) selectedPoints.push(point);
+                    visited_cluster.add(ans.clusters[i])
+                }
+            }
+            // const clusterer = Clusterer.getInstance(data, 9);
+            // //const clusteredData = clusterer.getClusteredData();  
+            // for(const data of clusterer.Medoids){
+            //     let point = this.findPoints(data, points);
+            //     if(point !== undefined) selectedPoints.push(point);
+            // }
         } else{
             for(const point of points){
                 let line_id = plotly_data[point.curveNumber].id;

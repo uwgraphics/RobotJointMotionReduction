@@ -29,6 +29,7 @@
     "k-medoids": "^1.0.7",
     "lodash": "^4.17.21",
     "mersennetwister": "^0.2.3",
+    "ml-kmeans": "^6.0.0",
     "multiselect-react-dropdown": "^2.0.25",
     "plotly.js": "^2.27.0",
     "plotly.js-dist-min": "^2.27.0",
