@@ -129,6 +129,26 @@ export function findLargestSmallerElement(array: number[], target: number): numb
 
     return result;
 }
+
+export function findLargestSmallerOrEqualElement(array: number[], target: number): number {
+    let left = 0;
+    let right = array.length - 1;
+    let result = -1;
+
+    while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+
+        if (array[mid] <= target) {
+            result = mid; // Update the result and continue searching in the right half
+            left = mid + 1;
+        } else {
+            right = mid - 1; // Search in the left half
+        }
+    }
+
+    return result;
+}
+
 /**
  * generate n points in k dimension
  * @param n 

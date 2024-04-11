@@ -1,6 +1,6 @@
 import { Component, createRef } from "react";
 import * as d3 from 'd3'; 
-import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterEqual, euclideanDistance, findLargestSmallerElement, genSafeLogger, newID } from "../helpers";
+import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterEqual, euclideanDistance, findLargestSmallerElement, findLargestSmallerOrEqualElement, genSafeLogger, lightenColor, newID } from "../helpers";
 import _ from 'lodash';
 import Plot from 'react-plotly.js';
 import { RobotSceneManager } from "../RobotSceneManager";
@@ -303,6 +303,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             });
         }
 
+        // if(currTimeChange){
+        //     this.drawCurrentPoints();
+        // }
         
         if (prevProps.times !== this.props.times || prevProps.umapData !== this.props.umapData ||
             colorChange || lineWidthChange || axisColorChange ||
@@ -347,6 +350,44 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
         // console.log(vals);
         return [zoomedTimes, zoomedUmapData]
+    }
+
+    getCurrTimeIndex(times: number[], currTime: number): number
+    {
+        // return Math.floor(Math.random() * times.length);
+        return findLargestSmallerOrEqualElement(times, currTime);
+    }
+
+    drawCurrentPoints(){
+        const {times, currTime, umapData} = this.props;
+        const {plotly_data} = this.state;
+        
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let line_id: string = data.id;
+            if(line_id.startsWith("currPoint")) continue;
+            plot_data.push(data);
+        }
+        for(let i=0; i<umapData.length; i++){
+            let currTimeIndex = this.getCurrTimeIndex(times[i], currTime);
+            let currPoint = umapData[i][currTimeIndex];
+            plot_data.push({
+                x: [currPoint.pointIn2D()[0]],
+                y: [currPoint.pointIn2D()[1]],
+                id: "currPoint" + i,
+                showlegend: false,
+                mode: 'markers',
+                marker: {
+                    size: 8,
+                    opacity: 0.5,
+                    color: "red",
+                }
+            });
+        }
+        this.setState({
+            plotly_data: plot_data,
+        });
     }
 
     /**
@@ -449,6 +490,22 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         });
 
+        // for(let i=0; i<umapData.length; i++){
+        //     let currTimeIndex = this.getCurrTimeIndex(times[i], currTime);
+        //     let currPoint = umapData[i][currTimeIndex];
+        //     plot_data.push({
+        //         x: [currPoint.pointIn2D()[0]],
+        //         y: [currPoint.pointIn2D()[1]],
+        //         id: "currPoint" + i,
+        //         showlegend: false,
+        //         mode: 'markers',
+        //         marker: {
+        //             size: 8,
+        //             opacity: 0.5,
+        //             color: "red",
+        //         }
+        //     });
+        // }
         this.setState({
             plotly_data: plot_data,
             zoomedTimes: zoomedTimes,
