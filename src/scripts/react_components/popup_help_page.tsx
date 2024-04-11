@@ -50,6 +50,9 @@ import LoadAndSavePanelScreenshot from "../../assets/LoadAndSavePanelScreenshot.
 import LS_Workspace from "../../assets/LS_Workspace.gif"
 
 
+import select_show_traces from "../../assets/select_show_traces_enhancement.gif"
+import diagnose_tool_ordering from "../../assets/diagnose_tool_ordering.gif"
+import show_nneighbors_presentation from "../../assets/show_nneighbors_presentation.gif"
 /**
  * An enum denoting what page of the popups should currently be shown.
  */
@@ -431,7 +434,53 @@ function popupHelpPageContent(params:PopupHelpPageParams): ReactElement | null {
                 </p>
                 <img src={UmapOption_CreateUmap}/>
 
-                <h3> Control the settings of the selected UMAP Graph Panel </h3>
+                <h3> Interact with 2D graph </h3>
+                <ul>
+                    <li>Compare motions</li>
+                    <ul>
+                        <li>
+                            Select a region
+                            <p>
+                                Click on the "Box Select" button on top of the graph. Then select a region 
+                                in the graph and nine points will be selected 
+                                from the points in that region and their corresponding robot 
+                                poses will be displayed in the 3D views;
+                                If you want to see the corresponding robot joint traces, then you 
+                                need to select a joint under section "Associated Robot Scenes", and 
+                                then select a region in the graph.
+                            </p>
+                            <img src={select_show_traces}/>
+                        </li>
+                    </ul>
+                    <li>Diagnose Tool</li>
+                    <ul>
+                        <li>
+                            Display gaps/stretches/folds
+                            <p>
+                                Adjust the distance value to set the minimum distance to for 
+                                two points to be consider as gaps/stretches/folds; 
+                                Click on the toggle button in the option panel to see 
+                                the gaps/stretches/folds which will be displayed in a list 
+                                sorted by its distances in descending order. Click on their 
+                                legend and see the corresponding robot poses in 3D. 
+                            </p>
+                            <img src={diagnose_tool_ordering}/>
+                        </li>
+                        <li>
+                            Display its neighbors
+                            <p>
+                                Click on a point in the graph and see its neighbors;
+                                Eight points will be selected from its neighbors and their 
+                                corresponding robot poses will be displayed in the 3D views;
+                                In the nine-window view, the center window is the robot pose 
+                                corresponding to the point you just clicked.
+                            </p>
+                            <img src={show_nneighbors_presentation}/>
+                        </li>
+                        
+                    </ul>
+                </ul>
+                {/* <h3> Control the settings of the selected UMAP Graph Panel </h3>
                 <ul>
                     <li>type the name in the text input field next to "Name" and press "enter" key to change the name of the UMAP Graph</li>
                     <li>click on "Background Color" or "Axis Color" and then click on the color map to change the background color and the axis color (border color)</li>
@@ -440,7 +489,7 @@ function popupHelpPageContent(params:PopupHelpPageParams): ReactElement | null {
                     <img src={UmapOption_ChangeLineWidth}/>
                     <li>drag the slide bar to change the three parameters (number of neighbors, minimum distance, and spread) in order to create a UMAP</li>
                     <img src={UmapOption_ChangeParams}/>
-                </ul>
+                </ul> */}
             </div>
         </div>;
     } else if (params.page === PopupHelpPage.UmapGraphPanel) { 
