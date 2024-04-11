@@ -1112,6 +1112,7 @@ html, body {
                         height: 100%;
                         display: block;
                         color: var(--panel-text-color);
+                        overflow: scroll;
                         .LegendMessage{
                             margin: 1rem;
                             align-items: center;
@@ -1168,6 +1169,23 @@ html, body {
                         border-width: 0.2rem;
                         border-style: solid;
                         // margin: 0;
+                    }
+
+                    .NineScenes{
+                        height: 100%;
+                        .Rows{
+                            display: flex;
+                            height: 33%;
+                            .Scene{
+                                display: flex;
+                                flex-direction: column;
+                                text-align: center;
+                                flex: 1;
+                                .RobotCanvas{
+                                    flex: 1
+                                }
+                            }
+                        }
                     }
                 }
 

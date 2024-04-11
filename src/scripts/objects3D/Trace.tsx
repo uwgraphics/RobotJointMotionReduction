@@ -9,6 +9,7 @@ import { RobotLink } from "./RobotLink";
 import { SubscribeArrayWithArg } from "../subscriptable/SubscribeArrayWithArg";
 import { SubscriptableValue } from "../subscriptable/SubscriptableValue";
 import { Id } from "../Id";
+import { StaticRobotScene } from "../scene/StaticRobotScene";
 
 /**
  * Enum for the base "shape" of the trace.
@@ -36,7 +37,7 @@ type TRACEMOD = typeof TRACEMOD[keyof typeof TRACEMOD];
  */
 export class Trace {
     protected _id;
-    protected _parentScene: SubscriptableValue<RobotScene | undefined>; // The scene that the Trace is in
+    protected _parentScene: SubscriptableValue<RobotScene | StaticRobotScene | undefined>; // The scene that the Trace is in
     protected _points: T.Vector3[];
     //protected _currGeom: T.Object3D;
     protected _currPosGeom: T.Object3D; // the orignal trace geometry i.e. cones
@@ -117,7 +118,7 @@ export class Trace {
         this._traceSize = traceSize;
         console.log(traceSize);
         
-        this._parentScene = new SubscriptableValue(undefined) as SubscriptableValue<RobotScene | undefined>;
+        this._parentScene = new SubscriptableValue(undefined) as SubscriptableValue<RobotScene | StaticRobotScene | undefined>;
         this.update(points, robot, robotPart, times, traceType, rotations);
 
         let _this = new WeakRef(this); // weakref so that neither function holds onto this object.
@@ -289,11 +290,11 @@ export class Trace {
         return true;
     }
 
-    beforeParentSceneSet(): SubscribeArrayWithArg<[RobotScene | undefined, RobotScene | undefined]> {
+    beforeParentSceneSet(): SubscribeArrayWithArg<[RobotScene | StaticRobotScene | undefined, RobotScene | StaticRobotScene | undefined]> {
         return this._parentScene.beforeSet();
     }
 
-    afterParentSceneSet(): SubscribeArrayWithArg<[RobotScene | undefined, RobotScene | undefined]> {
+    afterParentSceneSet(): SubscribeArrayWithArg<[RobotScene | StaticRobotScene | undefined, RobotScene | StaticRobotScene | undefined]> {
         return this._parentScene.afterSet();
     }
 
@@ -392,7 +393,7 @@ export class Trace {
      * @returns The trace's current parent RobotScene. This is the scene that
      * the Trace is actually displayed in.
      */
-    parentScene(): RobotScene | undefined {
+    parentScene(): RobotScene | StaticRobotScene | undefined {
         return this._parentScene.value();
     }
 
@@ -412,10 +413,26 @@ export class Trace {
         if (points === undefined) {
             points = [];
         }
-
+        console.log(points)
         // Need at least 2 points to trace through
         if (points.length === 0) { points.push(new T.Vector3(), new T.Vector3()); }
         else if (points.length === 1) { points.push(points[0].clone()); }
+
+        let same_point = true;
+        let point1 = points[0];
+        for(const point of points)
+            if(!point.equals(point1)){
+                same_point = false;
+                break;
+            }
+        if(same_point){
+            let marker = (new T.Mesh(
+                new T.SphereGeometry(0.005, 10, 10),
+                new T.MeshBasicMaterial({ color: new T.Color(this._color).convertSRGBToLinear()})
+            ));
+            marker.position.copy(point1);
+            return marker;
+        }
 
         const lineCurve = new T.CatmullRomCurve3(points, false);
 
@@ -438,12 +455,12 @@ export class Trace {
                 const currPt = points[i];
                 const nextPt = points[i + 1];
 
-//                let marker = (new T.Mesh(
-//                    new SphereGeometry(0.001, 10, 10),
-//                    new T.MeshLambertMaterial({ color: "red" })
-//                ));
-//                marker.position.copy(currPt);
-//                coneLine.add(marker);
+            //    let marker = (new T.Mesh(
+            //        new T.SphereGeometry(0.005, 10, 10),
+            //        new T.MeshLambertMaterial({ color: "red" })
+            //    ));
+            //    marker.position.copy(currPt);
+            //    coneLine.add(marker);
                 
                 const dist = currPt.distanceTo(nextPt);
                 if (dist === 0) { continue; }
@@ -523,7 +540,7 @@ export class Trace {
     /**
      * @param newParentScene The new parent scene of this Trace.
      */
-    setParentScene(newParentScene: RobotScene | undefined) {
+    setParentScene(newParentScene: RobotScene| StaticRobotScene | undefined) {
         if (newParentScene === this._parentScene.value()) { return; }
 
         this._parentScene.setValue(

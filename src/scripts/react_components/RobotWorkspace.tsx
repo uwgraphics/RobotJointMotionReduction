@@ -32,6 +32,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { APP } from "../constants";
 import { PopupHelpPage } from "./popup_help_page";
+import { StaticRobotSceneOptionPanel } from "./panels/StaticRobotSceneOptionPanel";
+import { StaticRobotScene } from "../scene/StaticRobotScene";
+import { StaticRobotCanvas } from "./StaticRobotCanvas";
 
 export interface robot_workspace_props {
     robotSceneManager: RobotSceneManager,
@@ -118,6 +121,7 @@ const DEFAULT_GRAPH_KEY = newID(4);
 const DEFAULT_GRAPH_TAB = `Graph&${DEFAULT_GRAPH_KEY}&motion`;
 const QUATERNION_OPTIONS_TAB = "Quaternion Options";
 const UMAP_GRAPH_OPTIONS_TAB = "UMAP Options"
+const STATIC_ROBOT_SCENE_OPTIONS_TAB = "Static Robot Scene Options";
 
 // @ts-ignore
 export const WorkspaceContext:React.Context<ReactContextT> = React.createContext();
@@ -175,6 +179,98 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
         });
     }
 
+    addNewStaticRobotCanvasPanel(targetSceneIds: string[], showNineScenes: boolean, selectedPointsNames: string[]) {
+
+        let tabs: TabBase[] = [];
+        let newTabId_1 = "StaticRobotScene-One";
+        newTabId_1 += "&" + targetSceneIds[targetSceneIds.length - 1];
+        if (showNineScenes) {
+            let newTabId_9 = "StaticRobotScene-Nine";
+            // if(!showNineScenes) newTabId = "StaticRobotScene-One";
+            for (let i = 0; i < targetSceneIds.length - 1; i++)
+                newTabId_9 += "&" + targetSceneIds[i] + "&" + selectedPointsNames[i];
+
+            tabs = [{ id: newTabId_9 }, { id: newTabId_1 }];
+        } else {
+            tabs = [{ id: newTabId_1 }];
+        }
+
+        const updatedLayoutBase = { ...this.state.layoutBase };
+
+        if (updatedLayoutBase.floatbox !== undefined) {
+            const panel: PanelBase = {
+                tabs: tabs,
+                activeId: newTabId_1,
+                x: 170,
+                y: 0,
+                w: 600,
+                h: 600,
+            };
+            updatedLayoutBase.floatbox.children.push(panel);
+            this.setState({
+                layoutBase: updatedLayoutBase,
+            });
+        }
+    }
+
+    /**
+     * remove a tab given its tabId
+     * @param tabId 
+     */
+    removeTab(tabId: string) {
+
+        const updatedLayoutBase = { ...this.state.layoutBase };
+
+        let removeSceneFromTabs = (boxChildren: (BoxBase | PanelBase)[], tabId: string): void =>{
+            for (let i = 0; i < boxChildren.length; i++) {
+                let panel = boxChildren[i] as PanelBase;
+                let panelId = panel.activeId;
+                
+                if (panelId !== undefined) {
+                    if (panelId === tabId) {
+                        if(panel.tabs !== undefined){
+                            if(panel.tabs.length > 1){ // set the tab active id to be the first panel id that is not tabId
+                                for(const tab of panel.tabs){
+                                    if(tab.id !== undefined && tab.id !== tabId){
+                                        panel.activeId = tab.id;
+                                        break;
+                                    }
+                                }
+                            } 
+                        }
+                    }
+                }
+
+                if (panel.tabs !== undefined) {
+                    panel.tabs = panel.tabs.filter(tab => tab.id !== tabId);
+                }
+                
+
+                let box = boxChildren[i] as BoxBase;
+                if(box.children !== undefined && box.children.length > 0)
+                removeSceneFromTabs(box.children, tabId);
+            }
+        }
+
+        removeSceneFromTabs(updatedLayoutBase.dockbox.children, tabId);
+
+        if (updatedLayoutBase.floatbox?.children !== undefined) {
+            removeSceneFromTabs(updatedLayoutBase.floatbox.children, tabId);
+        }
+
+        if (updatedLayoutBase.maxbox?.children !== undefined) {
+            removeSceneFromTabs(updatedLayoutBase.maxbox.children, tabId);
+        }
+        
+        if (updatedLayoutBase.windowbox?.children !== undefined) {
+            removeSceneFromTabs(updatedLayoutBase.windowbox.children, tabId);
+        }
+
+        this.setState({
+            layoutBase: updatedLayoutBase,
+        });
+    }
+
     onSaveLayout(): LayoutBase | undefined
     {
         let layout = this.getLayout();
@@ -219,6 +315,10 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
     setUmapGraphOptionPanelActive()
     {
         this.getLayout()?.updateTab(UMAP_GRAPH_OPTIONS_TAB,  null, true);
+    }
+    setStaticRobotSceneOptionPanelActive()
+    {
+        this.getLayout()?.updateTab(STATIC_ROBOT_SCENE_OPTIONS_TAB,  null, true);
     }
 
     /**
@@ -387,6 +487,7 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                             { id: GRAPH_OPTIONS_TAB, },
                                             { id: QUATERNION_OPTIONS_TAB, },
                                             { id: UMAP_GRAPH_OPTIONS_TAB, },
+                                            { id: STATIC_ROBOT_SCENE_OPTIONS_TAB,},
                                             // { id: GRAPH_SELECTION_TAB, },
                                             // { id: GRAPH_OPTION_TAB, },
                                             // { id: EDIT_ANIMATIONS_TAB, },
@@ -706,6 +807,27 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                 ),
             };
         }
+        else if(id === STATIC_ROBOT_SCENE_OPTIONS_TAB)
+        {
+            let sceneManager = this.props.robotSceneManager;
+            return {
+                id: STATIC_ROBOT_SCENE_OPTIONS_TAB,
+                title: STATIC_ROBOT_SCENE_OPTIONS_TAB,
+                
+                content: (
+                    <WorkspaceContext.Consumer>
+                        {(ctx:ReactContextT) => {
+                            return <StaticRobotSceneOptionPanel
+                                    robotSceneManager={sceneManager}
+                                    getParentDockLayout={ctx.getParentDockLayout}
+                                    forceUpdateTabNames={this.forceUpdateTabNames.bind(this)}
+                                    currStaticRobotScene={sceneManager.getCurrStaticRobotScene()}
+                            />;
+                        }}
+                    </WorkspaceContext.Consumer>
+                ),
+            };
+        }
         else if (id === SELECTION_TAB) {
             return {
                 id: SELECTION_TAB,
@@ -998,6 +1120,8 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                     force_update={this.state.force_update}
                                     graph={graph}
                                     setUmapGraphOptionPanelActive={this.setUmapGraphOptionPanelActive.bind(this)}
+                                    addNewStaticRobotCanvasPanel={this.addNewStaticRobotCanvasPanel.bind(this)}
+                                    removeTab={this.removeTab.bind(this)}
                             />;
                         }}
                     </WorkspaceContext.Consumer>
@@ -1182,6 +1306,93 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                 robotSceneManager={sceneManager} 
                                 setQuaternionSceneOptionPanelActive={this.setQuaternionSceneOptionPanelActive.bind(this)}
                                 />;
+                        }}
+                    </WorkspaceContext.Consumer>
+                ),
+            };
+        }
+        else if (id.startsWith('StaticRobotScene-Nine')) {
+            let sceneIds = id.split("&").slice(1);
+            let sceneManager = this.props.robotSceneManager;
+
+            let staticRobotScenes: StaticRobotScene[][] = []
+            for(let i=0; i<3; i++)
+                staticRobotScenes[i] = [];
+            let nameIdMap: Map<string, string> = new Map(); // maps id to name, this is needed because we cannot use array to add html elements (we use array.map instead)
+            // the array will be in a format like [id1, name1, id2, name2....]
+            for(let i=0; i<sceneIds.length; i+=2){
+                let sceneId = sceneIds[i];
+                let pointName = sceneIds[i+1];
+                nameIdMap.set(sceneId, pointName);
+                let staticRobotScene: StaticRobotScene | undefined = sceneManager.getStaticRobotSceneById(sceneId);
+                if(staticRobotScene === undefined)
+                {
+                    staticRobotScene = new StaticRobotScene(sceneManager, sceneId);
+                    //sceneManager.setCurrStaticRobotScene(sceneId);
+                }
+                staticRobotScenes[Math.floor(i/6)].push(staticRobotScene);
+            }
+            
+
+            return {
+                id: id,
+                closable: true,
+                cached: true,
+                title: "nine scenes",
+                content: (
+                    <WorkspaceContext.Consumer>
+                        {() => {
+                            return <div className="NineScenes">
+                                {staticRobotScenes.map(rows => (
+                                    <div className="Rows">
+                                        {rows.map(staticRobotScene => (
+                                            <div className="Scene">
+                                                <label style={{backgroundColor: staticRobotScene.backgroundColor(), color: staticRobotScene === sceneManager.getCurrStaticRobotScene() ? "yellow" : "rgb(238, 238, 238)"}}>{nameIdMap.get(staticRobotScene.id().value())}</label>
+                                                <StaticRobotCanvas
+                                                    key={staticRobotScene.id().value()}
+                                                    allowSelecting={true}
+                                                    staticRobotScene={staticRobotScene}
+                                                    robotSceneManager={sceneManager}
+                                                    setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>;
+                        }}
+                    </WorkspaceContext.Consumer>
+                ),
+            };
+        }
+        else if (id.startsWith('StaticRobotScene-One')) {
+            let sceneIds = id.split("&").slice(1);
+            let sceneManager = this.props.robotSceneManager;
+
+            let sceneId = sceneIds[0];
+            let staticRobotScene: StaticRobotScene | undefined = sceneManager.getStaticRobotSceneById(sceneId);
+            if (staticRobotScene === undefined) {
+                staticRobotScene = new StaticRobotScene(sceneManager, sceneId);
+                //sceneManager.setCurrStaticRobotScene(sceneId);
+            }
+            
+
+            return {
+                id: id,
+                closable: true,
+                cached: true,
+                title: "one scene",
+                content: (
+                    <WorkspaceContext.Consumer>
+                        {() => {
+                            if (staticRobotScene === undefined) return;
+                            return <StaticRobotCanvas
+                                  key={staticRobotScene.id().value()}
+                                  allowSelecting={true}
+                                  staticRobotScene={staticRobotScene}
+                                  robotSceneManager={sceneManager} 
+                                  setStaticRobotSceneOptionPanelActive={this.setStaticRobotSceneOptionPanelActive.bind(this)}
+                                />
                         }}
                     </WorkspaceContext.Consumer>
                 ),

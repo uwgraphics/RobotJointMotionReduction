@@ -13,6 +13,7 @@ import { RobotScene } from '../scene/RobotScene';
 import T from "../true_three";
 import { SubscribeArrayWithArg } from "../subscriptable/SubscribeArrayWithArg";
 import { SubscriptableValue } from "../subscriptable/SubscriptableValue";
+import { StaticRobotScene } from "../scene/StaticRobotScene";
 
 
 /**
@@ -92,6 +93,8 @@ export class Robot {
     protected _eulerRotation: T.Euler;
 
     protected _parentScene: SubscriptableValue<undefined | RobotScene>;
+
+    protected _parentStaticRobotScene: StaticRobotScene | undefined;
 
     protected _meshes: T.Mesh[];
     protected _joints: RobotJoint[];
@@ -338,6 +341,13 @@ export class Robot {
             null
         );
 
+        APP.updateUI();
+        APP.render();
+    }
+
+    setParentStaticRobotScene(newStaticRobotScene: StaticRobotScene | undefined) {
+        if (newStaticRobotScene === this._parentStaticRobotScene) { return; }
+        newStaticRobotScene?.scene().add(this.rootGroup());
         APP.updateUI();
         APP.render();
     }

@@ -1,11 +1,17 @@
 import { Component, createRef } from "react";
 import * as d3 from 'd3'; 
-import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterEqual, findLargestSmallerElement, genSafeLogger } from "../helpers";
+import { binarySearchIndexLargestSmallerEqual, binarySearchIndexSmallestGreaterEqual, euclideanDistance, findLargestSmallerElement, findLargestSmallerOrEqualElement, genSafeLogger, lightenColor, newID } from "../helpers";
 import _ from 'lodash';
-import { umap_data_entry } from "./panels/UmapGraphPanel";
 import Plot from 'react-plotly.js';
 import { RobotSceneManager } from "../RobotSceneManager";
 import { UmapGraph } from "../objects3D/UmapGraph";
+import { Datum, LegendClickEvent, PlotDatum, PlotHoverEvent, PlotMouseEvent, PlotSelectionEvent } from "plotly.js";
+import { Cluster, Clusterer } from "k-medoids";
+import { StaticRobotScene } from "../scene/StaticRobotScene";
+import { Distances, UmapPoint } from "../objects3D/UmapPoint";
+import chroma from 'chroma-js';
+import tinycolor from "tinycolor2";
+import { kmeans} from 'ml-kmeans';
 
 
 /**
@@ -15,9 +21,8 @@ import { UmapGraph } from "../objects3D/UmapGraph";
 interface line_graph_props {
     robotSceneManager: RobotSceneManager,
     graph: UmapGraph,
-    times: number[][],
-    xVals: number[][],
-    yVals: number[][],
+    times: number[][], // the global time array that ignores the time range selected by the users
+    umapData: UmapPoint[][],
     startTime: number,
     endTime: number,
     currTime: number,
@@ -32,16 +37,32 @@ interface line_graph_props {
     lineWidth: number,
     axisColor: string,
     showLines: Boolean,
+    displayGap: Boolean,
+    min2DGapDis: number,
+    displayStretch: Boolean,
+    min2DStretchDis: number,
+    displayFalseProximity: Boolean,
+    minHighDGapDis: number,
+    showAllTraces: Boolean,
+    backgroundPoints: UmapPoint[],
+    neighborDistance: number,
+    displayNeighbors: Boolean,
+    displayPointsInRegion: Boolean,
+    displaySpeed: Boolean,
     onGraphUpdate: (updated:boolean) => boolean,
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
     onEndChange: (newValue:number) => void,
+    addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean, selectedPointsNames: string[]) => void,
+    removeTab: (tabId: string) => void,
 }
 
 
 interface line_graph_state {
     // w: number,
     // h: number,
+    zoomedTimes: number[][], // the time array that corresponds to the time range selected by the users
+    zoomedUMAPData: Map<string, UmapPoint[]>, // key is the line id, value is the corresponding umap data presented in the graph
     prev_x: any,
     prev_y: any,
     margin: margin_obj,
@@ -56,7 +77,7 @@ interface line_graph_state {
     originalMouseXCoord: number
     currDragItem: dragItem;
     // umap_data: umap_data_entry[][];
-    plotly_data: any;
+    plotly_data: any[];
     plotly_layout: any;
     plotly_frames: any;
     plotly_config: any;
@@ -68,16 +89,30 @@ interface margin_obj{
     bottom: number, 
     left: number 
 }
+interface PointInfo {
+    x: number,
+    y: number,
+    curveNumber: number, 
+    pointIndex: number,
+}
 export class UmapLineGraph extends Component<line_graph_props, line_graph_state> {
     protected _graphDiv: React.RefObject<HTMLDivElement>;
+    protected click_on_point: boolean; // true if the onplotlyclick function is called, stop event from propogating
+    protected selectedPointsCount: number; // the count of the total selected points shown in the scene
+    protected selectedPointsMap: Map<string, string>; // store the mapping of the id of selected points to the id of the corresponding static robot scene
     constructor(props:line_graph_props){
         super(props);
         this._graphDiv = createRef();
-        this.drawGraph.bind(this);
+        this.click_on_point = false;
+        this.selectedPointsCount = 0;
+        this.selectedPointsMap = new Map();
+        // this.drawGraph.bind(this);
         const {width, height} = this.props;
         this.state = {
             // w: width,//+300,//1015,
             // h: height,//600,
+            zoomedTimes: [],
+            zoomedUMAPData: new Map(),
             prev_x: null,
             prev_y: null,
             margin: {
@@ -161,49 +196,121 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             });
         }
 
+        if (prevProps.showAllTraces !== this.props.showAllTraces) {
+            this.dispalyAllTraces(this.props.showAllTraces.valueOf());
+        }
+
+        if (prevProps.displayGap !== this.props.displayGap) {
+            if(this.props.displayGap.valueOf()){
+                this.displayGaps(0.1, this.props.min2DGapDis);
+            } else{
+                this.removeGaps();
+            }
+        }
+
+        if (prevProps.min2DGapDis !== this.props.min2DGapDis) {
+            if(this.props.displayGap.valueOf()){
+                this.displayGaps(0.1, this.props.min2DGapDis);
+            }
+                
+        }
+
+        if (prevProps.displayStretch !== this.props.displayStretch) {
+            if(this.props.displayStretch.valueOf()){
+                this.displayStretches(0.1, this.props.min2DStretchDis);
+            } else{
+                this.removeStretches();
+            }
+        }
+
+        if (prevProps.min2DStretchDis !== this.props.min2DStretchDis) {
+            if(this.props.displayStretch.valueOf()){
+                this.displayStretches(0.1, this.props.min2DStretchDis);
+            }
+        }
+
+        if (prevProps.displayFalseProximity !== this.props.displayFalseProximity) {
+            if(this.props.displayFalseProximity.valueOf()){
+                this.displayFalseProximity(0.1, this.props.minHighDGapDis);
+            } else{
+                this.removeFalseProximity();
+            }
+        }
+
+        if (prevProps.minHighDGapDis !== this.props.minHighDGapDis) {
+            if(this.props.displayFalseProximity.valueOf()){
+                this.displayFalseProximity(0.1, this.props.minHighDGapDis);
+            }
+        }
+
+        if(prevProps.neighborDistance !== this.props.neighborDistance){
+            this.filterNeighbors();
+        }
+
+        if(prevProps.displayNeighbors !== this.props.displayNeighbors){
+            if(!this.props.displayNeighbors.valueOf()){
+                this.removeAllNeighbors();
+                this.props.graph.toggleDisplayNeighbors();
+            }
+        }
+
+        if(prevProps.displayPointsInRegion !== this.props.displayPointsInRegion){
+            if(!this.props.displayPointsInRegion.valueOf()){
+                this.removeAllPointsInRegion();
+                this.props.graph.toggleDisplayPointsInRegion();
+            }
+        }
+
+        if (prevProps.displaySpeed !== this.props.displaySpeed) {
+            this.calculateData(this.props.displaySpeed.valueOf());
+        }
+
+
         if (prevProps.showLines !== this.props.showLines) {
             let plot_data = [];
             let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
             for (const data of this.state.plotly_data) {
-                plot_data.push({
-                    x: data.x,
-                    y: data.y,
-                    name: data.name,
-                    showlegend: true,
-                    mode: mode,
-                    marker: {
-                        size: 2
-                    }
-                });
+                if(data.id.startsWith("nneighbor") || data.id.startsWith("gap") || data.id.startsWith("stretch") 
+                || data.id.startsWith("false proximity") || data.id.startsWith("backgroundPoints") 
+                || data.id.startsWith("selected points")){
+                    plot_data.push(data);
+                } else if(data.id.startsWith("speed")){
+                    plot_data.push({
+                        x: data.x,
+                        y: data.y,
+                        name: data.name,
+                        id: data.id,
+                        showlegend: data.showlegend,
+                        legendgroup: data.legendgroup,
+                        mode: mode,
+                        marker: data.marker
+                    });
+                } else{
+                    plot_data.push({
+                        x: data.x,
+                        y: data.y,
+                        name: data.name,
+                        id: data.id,
+                        showlegend: data.showlegend,
+                        mode: mode,
+                        marker: data.marker,
+                        line: data.line
+                    });
+                }
             }
             this.setState({
                 plotly_data: plot_data,
             });
         }
 
+        // if(currTimeChange){
+        //     this.drawCurrentPoints();
+        // }
         
-        if (prevProps.times !== this.props.times || prevProps.xVals !== this.props.xVals ||
+        if (prevProps.times !== this.props.times || prevProps.umapData !== this.props.umapData ||
             colorChange || lineWidthChange || axisColorChange ||
-            boundChangeInZoom || currTimeChange) {
-                console.log("hello")
-            // if(this._graphDiv.current && this._graphDiv.current.children.length > 0){
-            //     this._graphDiv.current.removeChild(this._graphDiv.current.children[0]);
-            // }
-            // const {w, h} = this.state;
-            const {width, height} = this.props;
-            this.calculateData(boundChangeInZoom, colorChange, windowChanged);
-            // let svg = this.drawGraph(boundChangeInZoom, colorChange, windowChanged);
-            // // log(svg);
-            // // console.log("width " + w + " height " + h);
-            // if(svg){
-            //     d3.select(this._graphDiv.current)
-            //         .append("svg")
-            //         .attr("width", width)
-            //         .attr("height", height)
-            //         .node().appendChild(svg);
-            // }
-            
-            // this.drawGraph();
+            boundChangeInZoom) {
+            this.calculateData(this.props.displaySpeed.valueOf());
         }
         
     }
@@ -214,19 +321,20 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param endTime 
      * @returns 
      */
-    filterData(startTime: number, endTime: number): [number[][], number[][], number[][]]
+    filterData(startTime: number, endTime: number): [number[][], UmapPoint[][]]
     {
-        let zoomedTimes: number[][] = [], zoomedXValues: number[][] = [], zoomedYValues: number[][] = [];
-        const {times, xVals, yVals} = this.props;
+        let zoomedTimes: number[][] = [], zoomedUmapData: UmapPoint[][] = [];
+        const {times, umapData} = this.props;
         if(times.length === 0){
-            return [[[0]], [[0]], [[0]]];
+            return [[[]], [[]]];
         }
         
         for (let i = 0; i < times.length; i++) {
             let index = 0;
             zoomedTimes[i] = [];
-            zoomedXValues[i] = [];
-            zoomedYValues[i] = [];
+            zoomedUmapData[i] = [];
+            // zoomedXValues[i] = [];
+            // zoomedYValues[i] = [];
             let startIndex = binarySearchIndexSmallestGreaterEqual(times[i], startTime);
             let endIndex = binarySearchIndexLargestSmallerEqual(times[i], endTime);
             if(startIndex === undefined) startIndex = 0;
@@ -234,710 +342,1130 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             for (let j = startIndex; j < endIndex; j++) {
                 
                 zoomedTimes[i][index] = times[i][j];
-                zoomedXValues[i][index] = xVals[i][j];
-                zoomedYValues[i][index] = yVals[i][j];
+                // zoomedXValues[i][index] = xVals[i][j];
+                // zoomedYValues[i][index] = yVals[i][j];
+                zoomedUmapData[i][index] = umapData[i][j];
                 index++;
             }
         }
         // console.log(vals);
-        return [zoomedTimes, zoomedXValues, zoomedYValues]
-    }
-    /**
-     * 
-     * @param a times array
-     * @param b values array
-     * @returns list of data entry to plug into d3 graph
-     */
-    parseData(x:number[], y: number[]):umap_data_entry[]{
-        let result = [];
-        for(let i = 0; i < x.length; i++){
-            result.push({x: x[i], y: y[i]})
-        }
-        return result;
-
-    }
-    /**
-     * flatten 2d array to 1d array
-     * @param data 2d array
-     * @returns 1d array
-     */
-    concatData(data:number[][]):number[]{
-        let result:number[] = [];
-        for(let i = 0; i < data.length; i++){
-            result = result.concat(data[i]);
-        }
-        return result;
-    }
-    /**
-     * cauculate the offset given start, end, and current
-     * @param width 
-     * @param start 
-     * @param end 
-     * @param curr 
-     * @returns 
-     */
-    calculateOffset(width: number, start: number, end: number, curr: number):number{
-        if(end === start) return 0;
-        const length = end - start;
-        return (curr-start)/length * width;
+        return [zoomedTimes, zoomedUmapData]
     }
 
     getCurrTimeIndex(times: number[], currTime: number): number
     {
-        return findLargestSmallerElement(times, currTime);
+        // return Math.floor(Math.random() * times.length);
+        return findLargestSmallerOrEqualElement(times, currTime);
     }
 
-    getCurrCoordinate(currTimeIndex: number, x: number[], y: number[], currTime: number, times: number[])
-    {
-        let prevIndex = currTimeIndex, nextIndex = currTimeIndex + 1;
-        if(nextIndex >= x.length) return [x[x.length-1], y[x.length-1]];
-        if(prevIndex === -1)
-            return [x[0], y[0]];
-        let interpolate: (prev: number, next: number, ratio: number) => number = (prev, next, ratio) => {
-            return prev * (1-ratio) + next * ratio;
-        }
-
-        let ratio = (currTime - times[prevIndex]) / (times[nextIndex] - times[prevIndex]);
-        return [interpolate(x[prevIndex], x[nextIndex], ratio), interpolate(y[prevIndex], y[nextIndex], ratio)]
-    }
-
-    /**
-     * Compute time given x position and other time data
-     * @param width width of axis
-     * @param start start time
-     * @param end end time
-     * @param xPos position to compute time for
-     * @returns 
-     */
-    static TimeFromXPosition(width: number, start: number, end: number, xPos: number):number{
-        const length = end - start;
-        let result = (xPos)/width * length;
-        if (result > end){
-            result = end;
-        }else if(result < start){
-            result = start
-        }
-        return result;
-
-    }
-    // /**
-    //  * check if any update is needed based on prev_map
-    //  * @returns boolean
-    //  */
-    // prevMapChanged(){
-    //     const {prev_map} = this.props;
-    //     const {prev_lines} = this.state;
-    //     if(prev_map.size === 0){
-    //         // log("prev map empty");
-    //         return true;
-    //     }
-    //     for(const [id, ] of prev_map){
-    //         //this would never be -1 because fillgraphdata changed that
-    //         // if(ind === -1){
-    //         //     log("prev map changed");
-    //         //     return true;
-    //         // }
-    //         if(!(id in prev_lines)){
-    //             // log("prev map changed");
-    //             return true;
-    //         }
-    //     }
-    //     // log("prev map unchanged");
-    //     return false;
-    // }
-
-    // /**
-    //  * handle dragging current time(red vertical line)
-    //  * @param event 
-    //  * @returns 
-    //  */
-    // dragCurr(event: any){
-    //     const {/*w,*/ time_min, time_max, margin, mouseXCoord, originalMouseXCoord, currDragItem} = this.state;
-    //     let width = this.props.width-margin.right -margin.left;
-    //     // log("in dragCurr, mouseX = "+event.x)
-    //     let xPos = event.x;
-    //     if(xPos > width && this.state.mouseXCoord < 0){
-    //         // log("recorded event.x: "+ xPos);
-    //         this.setState({
-    //             mouseXCoord: xPos,
-    //             currDragItem: "curr"
-    //         })
-    //         return;
-    //     }
-    //     if(xPos > width){
-    //         if(currDragItem !== "curr"){
-    //             return;
-    //         }
-    //         xPos = xPos - mouseXCoord + originalMouseXCoord;
-    //     }
-    //     // while(xPos > width && event.x !== event.subject.x){
-    //     //     // log("decrementing");
-    //     //     // log(event);
-    //     //     xPos -= width;
-    //     // }
-    //     //let xPos = event.x-width;//this cause rectangle to disappeare for a little but no cycling effect
-    //     //let xPos = (event.x>width)? event.x-width: event.x; //this creates cycle effect
+    drawCurrentPoints(){
+        const {times, currTime, umapData} = this.props;
+        const {plotly_data} = this.state;
         
-    //     let newCurr = LineGraph.TimeFromXPosition(width, time_min, time_max, xPos);
-    //     // log("in dragCurr")
-    //     // log(newCurr);
-    //     if(newCurr < time_min){
-    //         newCurr = time_min;
-    //     }else if(newCurr > time_max){
-    //         newCurr = time_max;
-    //     }
-    //     this.props.onCurrChange(newCurr);
-    //     // this.s?
-  
-    // }
-    // /**
-    //  * handle dragging start of yellow rectangle
-    //  * @param event 
-    //  * @returns 
-    //  */
-    // dragStart(event: any){
-    //     const {/*w,*/ time_min, time_max, margin, mouseXCoord, originalMouseXCoord, currDragItem} = this.state;
-    //     let width = this.props.width-margin.right-margin.left;
-    //     // log("in dragStart, mouseX = "+event.x)
-
-    //     // let xPos = (event.x === event.subject.x)?event.x:event.x-width;
-    //     let xPos = event.x;
-    //     if(event.x < 0){
-    //         xPos = 0;
-    //     }
-    //     if(xPos > width && this.state.mouseXCoord < 0){
-    //         // log("recorded event.x: "+ xPos);
-    //         this.setState({
-    //             mouseXCoord: xPos,
-    //             currDragItem: "start"
-    //         })
-    //         return;
-    //     }
-    //     if(xPos > width){
-    //         if(currDragItem !== "start"){
-    //             return;
-    //         }
-    //             xPos = xPos - mouseXCoord + originalMouseXCoord;
-
-    //         // }
-    //     }
-    //     let newStart = LineGraph.TimeFromXPosition(width, time_min, time_max, xPos);
-    //     if(newStart > time_max){
-    //         newStart = time_max;
-    //     }else if(newStart < time_min){
-    //         newStart = time_min;
-    //     }
-    //     this.props.onStartChange(newStart);
-    // }
-    // /**
-    //  * handle dragging end of yellow triangle
-    //  * @param event 
-    //  * @returns 
-    //  */
-    // dragEnd(event: any){
-    //     const {/*w,*/ time_min, time_max, margin, mouseXCoord, originalMouseXCoord, currDragItem} = this.state;
-    //     let width = this.props.width-margin.right-margin.left;
-    //     // let xPos = (event.x === event.subject.x)?event.x:event.x-width; 
-    //     let xPos = event.x;
-    //     if(xPos > width && this.state.mouseXCoord < 0){
-    //         // log("recorded event.x: "+ xPos);
-    //         this.setState({
-    //             mouseXCoord: xPos,
-    //             currDragItem: "end"
-    //         })
-    //         return;
-    //     }
-    //     if(xPos > width){
-    //         if(currDragItem !== "end"){
-    //             return;
-    //         }
-    //         xPos = xPos - mouseXCoord + originalMouseXCoord;
-    //     }
-    //     // log("drag End x position is "+xPos );
-    //     // log(event);
-    //     let newEnd = LineGraph.TimeFromXPosition(width, time_min, time_max, xPos);
-    //     if(newEnd > time_max){
-    //         newEnd = time_max;
-    //     }else if(newEnd < time_min){
-    //         newEnd = time_min;
-    //     }
-    //     // log("in dragEnd");
-    //     // log(newEnd);
-    //     this.props.onEndChange(newEnd);
-
-    // }
-    /**
-     * record current mouse position
-     * @param event 
-     */
-    currMouse(event:any){
-        this.setState({
-            originalMouseXCoord: event.x
-        })
-    }
-    /**
-     * record end mouse position
-     * @param event 
-     */
-    endMouse(event:any){
-        this.setState({
-            mouseXCoord: -1,
-            originalMouseXCoord: -1
-        })
-    }
-
-    /**
-     * calculate the Euclean distance between two points in 2d space
-     * @param p1 
-     * @param p2 
-     * @returns 
-     */
-    calculateDistance(p1: umap_data_entry, p2: umap_data_entry): number
-    {
-        return Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
-    }
-    /**
-     * do not connect two points if their distance is greater than 1
-     * @param data 
-     */
-    filterDataByDistance(data: umap_data_entry[]): umap_data_entry[][]
-    {
-        let result: umap_data_entry[][] = [];
-        if(data.length == 0) return result;
-        let curr: umap_data_entry[] = [];
-        curr.push(data[0]);
-        for(let i=1; i<data.length; i++)
-        {
-            if(this.calculateDistance(data[i], data[i-1]) <= 2)
-                curr.push(data[i]);
-            else{
-                result.push(curr);
-                curr = [];
-                curr.push(data[i]);
-            }
-        }
-        if(curr.length > 0 ) result.push(curr);
-        return result;
-    }
-
-    /**
-     * draws everything in the graph using d3
-     * @param boundChangeInZoom 
-     * @param colorChange 
-     * @param windowChanged 
-     * @returns svg node component
-     */
-    calculateData(boundChangeInZoom?:boolean, colorChange?:boolean, windowChanged?:boolean):any{
-        // return 1;
-        const {times, xVals, yVals, 
-            startTime, endTime, currTime, 
-            isTimeWarp, lineWidth, axisColor,
-            line_names, line_colors, line_ids,
-            onGraphUpdate} = this.props;
-        const w = this.props.width;
-        const h = this.props.height;
-        const isDataChanged = true;
-        
-        const {margin, prev_x, prev_y} = this.state;
-        //width = w - margin.left - margin.right,
-        const width = w - margin.left - margin.right,
-        height = h - margin.top - margin.bottom;
-
-        let [zoomedTimes, zoomedXValues, zoomedYValues] = this.filterData(startTime, endTime);
-
-        let data:umap_data_entry[][] = [this.parseData(zoomedXValues[0], zoomedYValues[0])];
-        for(let i = 1; i < zoomedXValues.length; i++){
-            data.push(this.parseData(zoomedXValues[i], zoomedYValues[i]));
-            // console.log(i + " " + data[i].length);
-        }  
-
-        let xConcat = this.concatData(zoomedXValues);
-        let yConcat = this.concatData(zoomedYValues);
-        for(let i=0; i<xVals.length; i++)
-        {
-            let timeIndex = this.getCurrTimeIndex(times[i], currTime);
-            const [currX, currY] = this.getCurrCoordinate(timeIndex, xVals[i], yVals[i], currTime, times[i]);
-            const currXPos = this.calculateOffset(width, d3.min(xConcat), d3.max(xConcat), currX);
-            const currYPos = this.calculateOffset(height, d3.min(yConcat), d3.max(yConcat), currY);
-            const radius = 4;
-        }
-      
-       
-        onGraphUpdate(true);
         let plot_data = [];
-        let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
-        for(let i=0; i<data.length; i++){
-            let x = [], y = [];
-            for(const point of data[i]){
-                x.push(point.x);
-                y.push(point.y);
-            }
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let line_id: string = data.id;
+            if(line_id.startsWith("currPoint")) continue;
+            plot_data.push(data);
+        }
+        for(let i=0; i<umapData.length; i++){
+            let currTimeIndex = this.getCurrTimeIndex(times[i], currTime);
+            let currPoint = umapData[i][currTimeIndex];
             plot_data.push({
-                x: x,
-                y: y,
-                name: line_names[i],
-                showlegend: true,
-                mode: mode,
+                x: [currPoint.pointIn2D()[0]],
+                y: [currPoint.pointIn2D()[1]],
+                id: "currPoint" + i,
+                showlegend: false,
+                mode: 'markers',
                 marker: {
-                    size: 2
+                    size: 8,
+                    opacity: 0.5,
+                    color: "red",
                 }
             });
         }
         this.setState({
             plotly_data: plot_data,
-            // umap_data: data,
         });
     }
 
     /**
-     * draws everything in the graph using d3
-     * @param boundChangeInZoom 
-     * @param colorChange 
-     * @param windowChanged 
-     * @returns svg node component
+     * draw the traces under the current time frames
      */
-    drawGraph(boundChangeInZoom?:boolean, colorChange?:boolean, windowChanged?:boolean):any{
+    calculateData(displaySpeed: boolean){
         // return 1;
-        const {times, xVals, yVals, 
+        const {times,
             startTime, endTime, currTime, 
             isTimeWarp, lineWidth, axisColor,
             line_names, line_colors, line_ids,
-            onGraphUpdate} = this.props;
-        const w = this.props.width;
-        const h = this.props.height;
-        const isDataChanged = true;
-        
-        const {margin, prev_x, prev_y} = this.state;
-        //width = w - margin.left - margin.right,
-        const width = w - margin.left - margin.right,
-        height = h - margin.top - margin.bottom;
-        
-        // create svg component
-        let svg = d3.select(this._graphDiv.current).append("svg").remove()
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},     ${margin.top})`);
+            onGraphUpdate, umapData, backgroundPoints} = this.props;
 
-        const min = 0, max = 8; // default min and max of x and y axis
-        // if(!times.length || !xVals.length){
-        //     // draw an empty graph
-        //     // log("Warning: Empty times and vals for LineGraph")
-
-        //     // const timeBarStart = LineGraph.xPositionFromTime(width, min, max, startTime);
-        //     // const timeBarCurr = LineGraph.xPositionFromTime(width, min, max, currTime);
-        //     // const timeBarEnd = LineGraph.xPositionFromTime(width, min, max, endTime);
-        //     // console.log(startTime + " " + endTime + " " + width);
-        //     // console.log(this.props.width);
-        //     // svg.append("rect")
-        //     //     .attr("x", timeBarCurr -1)
-        //     //     .attr("y", 0)
-        //     //     .attr("width", 2)
-        //     //     .attr("height", height)
-        //     //     .attr("fill", "#b00")
-        //     //     .attr("fill-opacity","75%");
-
-        //     x_axis = d3.scaleLinear().range([0, width]);
-        //     y_axis = d3.scaleLinear().range([height, 0]);
-        //     x_axis.domain(d3.extent([startTime, endTime]));
-        //     y_axis.domain(d3.extent([min, max]));
-        //     let xAxis = svg.append("g")
-        //         .attr("transform", `translate(0, ${height})`)
-        //         .call(d3.axisBottom(x_axis).tickSize(0));
-        //     let yAxis = svg.append("g")
-        //         .call(d3.axisLeft(y_axis).tickSize(0));
-
-        //     xAxis.selectAll("line, path")
-        //         .style("stroke", axisColor);
-        //     yAxis.selectAll("line, path")
-        //         .style("stroke", axisColor);
-        //     xAxis.selectAll("text")
-        //         .style("fill", axisColor);
-        //     yAxis.selectAll("text")
-        //         .style("fill", axisColor);
-            
-        //     onGraphUpdate(true);
-        //     return svg.node();
-        // }
-
-        let [zoomedTimes, zoomedXValues, zoomedYValues] = this.filterData(startTime, endTime);
-
-        let data:umap_data_entry[][] = [this.parseData(zoomedXValues[0], zoomedYValues[0])];
-        for(let i = 1; i < zoomedXValues.length; i++){
-            data.push(this.parseData(zoomedXValues[i], zoomedYValues[i]));
-            console.log(i + " " + data[i].length);
-        }  
-        // let dragC = d3.drag()
-        //     .on('start', (event:any)=>{this.currMouse(event)})
-        //     .on('drag', (event:any)=>{this.dragCurr(event)})
-        //     .on('end', (event:any)=>{this.endMouse(event)});
-            
-        // let dragS = d3.drag()
-        //     .on('start', (event:any)=>{this.currMouse(event)})
-        //     .on('drag', (event:any)=>{this.dragStart(event)})
-        //     .on('end', (event:any)=>{this.endMouse(event)});
-        // let dragE = d3.drag()
-        //     .on('start', (event:any)=>{this.currMouse(event)})
-        //     .on('drag', (event:any)=>{this.dragEnd(event)})
-        //     .on('end', (event:any)=>{this.endMouse(event)}); 
-        let xConcat = this.concatData(zoomedXValues);
-        let yConcat = this.concatData(zoomedYValues);
-        for(let i=0; i<xVals.length; i++)
-        {
-            let timeIndex = this.getCurrTimeIndex(times[i], currTime);
-            const [currX, currY] = this.getCurrCoordinate(timeIndex, xVals[i], yVals[i], currTime, times[i]);
-            const currXPos = this.calculateOffset(width, d3.min(xConcat), d3.max(xConcat), currX);
-            const currYPos = this.calculateOffset(height, d3.min(yConcat), d3.max(yConcat), currY);
-            const radius = 4;
-            // console.log(currX + " " + currY + " " + currXPos + " " + currYPos);
-            svg.append("circle")
-                .attr("cx", currXPos)
-                .attr("cy", height - currYPos)
-                .attr("r", radius)
-                .attr("fill", "#b00")
-                .attr("fill-opacity","75%");
-        }
-        
-        // const timeBarStart = LineGraph.xPositionFromTime(width, /*timeMin, timeMax*/d3.min(timeConcat), d3.max(timeConcat), startTime);
-        
-        // const timeBarEnd = LineGraph.xPositionFromTime(width, /*timeMin, timeMax*/d3.min(timeConcat), d3.max(timeConcat), endTime);
-        // console.log(timeBarStart + " " + (timeBarCurr - 2) + " " + (timeBarEnd - timeBarStart));
-        
-
-            // svg.append("rect")
-            //     .attr("x", timeBarCurr -1)
-            //     .attr("y", 0)
-            //     .attr("width", 2)
-            //     .attr("height", height)
-            //     .attr("fill", "#b00")
-            //     .attr("fill-opacity","75%");
-
-        
-        // Add X axis and Y axis
-        var x_axis: { (arg0: number): number; (arg0: number): number; domain: any; }; //type is generated by Typescript
-        var y_axis: { (arg0: number): number; (arg0: number): number; domain: any; };
-        if(onGraphUpdate(false) || isDataChanged || boundChangeInZoom || windowChanged || !prev_x || !prev_y){
-            x_axis = d3.scaleLinear().range([0, width]).domain(d3.extent(xConcat));
-            y_axis = d3.scaleLinear().range([height, 0]).domain(d3.extent(yConcat));
-        }else{
-            x_axis = prev_x;
-            y_axis = prev_y;
-        }
-        
-        let bottonAxis = d3.axisBottom(x_axis).tickSize(0).tickValues([]);
-        let leftAxis = d3.axisLeft(y_axis).tickSize(0).tickValues([]);
-        let topAxis = d3.axisTop(x_axis).tickSize(0).tickValues([]);
-        let rightAxis = d3.axisRight(y_axis).tickSize(0).tickValues([]);
-
-        let bottomAxisGroup = svg.append("g")
-            .attr("transform", `translate(0, ${height})`)
-            .classed('GraphAxis', true)
-            .call(bottonAxis);
-        
-        let leftAxisGroup = svg.append("g")
-            .classed('GraphAxis', true)
-            .call(leftAxis);
-
-        let topAxisGroup = svg.append("g")
-            .classed('GraphAxis', true)
-            .call(topAxis);
-
-        let rightAxisGroup = svg.append("g")
-            .attr("transform", `translate(${width}, 0)`)
-            .classed('GraphAxis', true)
-            .call(rightAxis);
-
-        bottomAxisGroup.selectAll("line, path")
-            .style("stroke", axisColor);
-        leftAxisGroup.selectAll("line, path")
-            .style("stroke", axisColor);
-        topAxisGroup.selectAll("line, path")
-            .style("stroke", axisColor);
-        rightAxisGroup.selectAll("line, path")
-            .style("stroke", axisColor);
+        let [zoomedTimes, data] = this.filterData(startTime, endTime);
       
-        // add the Line
-        let id;
-        let valueLine = d3.line()
-                    .x((d:umap_data_entry):number => { return x_axis(d.x); })
-                    .y((d:umap_data_entry):number => { return y_axis(d.y); });
-        if(isTimeWarp){
-            let path1 = svg.append("path").remove()
-                    .append("path")
-                    .data([data[1]])
-                    .attr("class", "line")
-                    .attr("fill", "none")
-                    .attr("stroke", line_colors[1])
-                    .attr("stroke-width", lineWidth)
-                    .attr("d", valueLine)
-                    .node()
-            
-            svg.node().appendChild(path1);
-            let path2 = svg.append("path").remove()
-                    .append("path")
-                    .data([data[0]])
-                    .attr("class", "line")
-                    .attr("fill", "none")
-                    .attr("stroke", line_colors[0])
-                    .attr("stroke-width", lineWidth)
-                    .attr("d", valueLine)
-                    .node()
-
-            svg.node().appendChild(path2);
-        }else{
-            // for UMAP, we need to redraw the graph every time when the line changes
-            for(let i = 0; i < data.length; i++){
-                id = line_ids[i];
-                // if(prev_lines.has(id) && !boundChangeInZoom && !colorChange && !windowChanged && !onGraphUpdate(false)){ //not new select and have previous line
-                //     svg.node().appendChild(prev_lines.get(id));            
-                // }else{
-                for (const d of this.filterDataByDistance(data[i])) {
-                    let path = svg.append("path").remove()
-                        .append("path")
-                        .data([d])
-                        .attr("class", "line")
-                        .attr("fill", "none")
-                        .attr("stroke", line_colors[i])
-                        .attr("stroke-width", lineWidth)
-                        .attr("d", valueLine)
-                        .node()
-                    svg.node().appendChild(path);
+       
+        onGraphUpdate(true);
+        let plot_data = [];
+        let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
+        let UmapData: Map<string, UmapPoint[]> = new Map();
+        if (displaySpeed) {
+            for (let i = 0; i < data.length; i++) {
+                for (let j = 1; j < data[i].length; j++) {
+                    let x = [], y = [];
+                    const pointIn2D = data[i][j - 1].pointIn2D();
+                    const pointIn2D2 = data[i][j].pointIn2D();
+                    x.push(pointIn2D[0], pointIn2D2[0]);
+                    y.push(pointIn2D[1], pointIn2D2[1]);
+                    let showlegend = (j === 1) ? true : false;
+                    // higher speed will have lighter color
+                    const line_color = tinycolor(line_colors[i]);
+                    let hslColor = line_color.toHsl();
+                    let color_hsl = { h: hslColor.h, s: hslColor.s, l: data[i][j].speedRatio()};
+                    const color = tinycolor(color_hsl).toHexString();
+                    // let color = chroma(line_colors[i]).brighten(data[i][j].speedRatio() * 3).hex();
+                    plot_data.push({
+                        x: x,
+                        y: y,
+                        name: line_names[i],
+                        id: "speed#" + j + "#" + line_ids[i],
+                        showlegend: showlegend,
+                        legendgroup: line_names[i],
+                        mode: mode,
+                        marker: {
+                            size: 4,
+                            color: color,
+                        },
+                        line: {
+                            color: color,
+                        }
+                    });
                 }
-                
-                //     prev_lines.set(id, path);
-                // }
+
+                UmapData.set(line_ids[i], data[i]);
+            }
+        } else {
+            for (let i = 0; i < data.length; i++) {
+                let x = [], y = [];
+                for (const point of data[i]) {
+                    const pointIn2D = point.pointIn2D();
+                    x.push(pointIn2D[0]);
+                    y.push(pointIn2D[1]);
+                }
+                plot_data.push({
+                    x: x,
+                    y: y,
+                    name: line_names[i],
+                    id: line_ids[i],
+                    showlegend: true,
+                    mode: mode,
+                    marker: {
+                        size: 4,
+                        color: line_colors[i],
+                    },
+                    line: {
+                        color: line_colors[i],
+                    }
+                });
+                UmapData.set(line_ids[i], data[i]);
+            }
+        }
+
+
+        let x = [], y = [];
+        for (const point of backgroundPoints) {
+            const pointIn2D = point.pointIn2D();
+            x.push(pointIn2D[0]);
+            y.push(pointIn2D[1]);
+        }
+        plot_data.push({
+            x: x,
+            y: y,
+            name: "backgroundPoints",
+            id: "backgroundPoints",
+            visible: "legendonly",
+            mode: "markers",
+            marker: {
+                size: 4,
+                color: "grey",
+            }
+        });
+
+        // for(let i=0; i<umapData.length; i++){
+        //     let currTimeIndex = this.getCurrTimeIndex(times[i], currTime);
+        //     let currPoint = umapData[i][currTimeIndex];
+        //     plot_data.push({
+        //         x: [currPoint.pointIn2D()[0]],
+        //         y: [currPoint.pointIn2D()[1]],
+        //         id: "currPoint" + i,
+        //         showlegend: false,
+        //         mode: 'markers',
+        //         marker: {
+        //             size: 8,
+        //             opacity: 0.5,
+        //             color: "red",
+        //         }
+        //     });
+        // }
+        this.setState({
+            plotly_data: plot_data,
+            zoomedTimes: zoomedTimes,
+            zoomedUMAPData: UmapData,
+        });
+    }
+
+    /**
+     * find the hovered_point in the neighbors of the point
+     * @param point 
+     * @param hovered_point 
+     * @param before_reduction 
+     * @returns 
+     */
+    findNeighborPoints(point: UmapPoint, hovered_point: Datum[], before_reduction: boolean): UmapPoint | undefined{
+        let nneighbors = point.nneighborsIn2D();
+        if(before_reduction) nneighbors = point.nneighborsInHD();
+        for(const [neighbor, distance] of nneighbors){
+            if(neighbor.pointIn2D()[0] === hovered_point[0] && 
+                neighbor.pointIn2D()[1] === hovered_point[1])
+                return neighbor;
+        }
+    }
+
+    /**
+     * hover event handler
+     * whenever users hover on a point, set the global time to the corresponding point
+     * @param event 
+     */
+    onPlotlyHover(event: Readonly<PlotHoverEvent>) {
+        const {plotly_data} = this.state;
+        let line_idx: number = -1, point_idx: number = -1;
+        for (var i = 0; i < event.points.length; i++) {
+            line_idx = event.points[i].curveNumber;
+            let line_id: string = plotly_data[line_idx].id;
+            if(line_id.startsWith("gap") || line_id.startsWith("false proximity") 
+            || line_id.startsWith("backgroundPoints") || line_id.startsWith("points in region")) continue;
+            if(line_id.startsWith("nneighbor")) {
+                let [, point_id] = line_id.split("#");
+                let point = this.props.graph.getUmapPoint(point_id);
+                if(point === undefined) continue;
+                let neighbor = this.findNeighborPoints(point, [event.points[i].x, event.points[i].y], line_id.startsWith("nneighbors-before reduction"));
+                if(neighbor !== undefined) {
+                    this.props.robotSceneManager.setCurrTime(neighbor.time());
+                    return;
+                }
+            }
+            if(line_id.startsWith("selected points")){
+                let [, , point_id] = line_id.split("#");
+                let sceneId = this.selectedPointsMap.get(point_id);
+                if(sceneId === undefined) continue;
+                // let scene = this.props.robotSceneManager.getStaticRobotSceneById(sceneId);
+                // if(scene === undefined) continue;
+                this.props.robotSceneManager.setCurrStaticRobotScene(sceneId);
+                return;
+            }
+            point_idx = event.points[i].pointIndex;
+            if(line_id.startsWith("speed")){
+                let [, index, curve_id, robot_name] = line_id.split("#");
+                curve_id = curve_id + "#" + robot_name;
+                let index_num = parseInt(index);
+                let trace = this.state.zoomedUMAPData.get(curve_id);
+                if(trace !== undefined){
+                    let selected_time = trace[index_num + point_idx].time();
+                    this.props.robotSceneManager.setCurrTime(selected_time);
+                    return;
+                }
+            }
+        }
+        if(point_idx !== -1){
+            let selected_time = this.state.zoomedTimes[0][point_idx]
+            this.props.robotSceneManager.setCurrTime(selected_time);
+        }
+    }
+
+    onPanelClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>){
+        if(this.click_on_point) event.stopPropagation();
+        this.click_on_point = false;
+    }
+
+    /**
+     * click event handler
+     * whenever users clicks a point, show its n-neighbors
+     * unless it is a hightlighted n-neighbors point
+     * @param event 
+     */
+    onPlotlyClick(event: Readonly<PlotMouseEvent>) {
+        this.click_on_point = true;
+        event.event.stopPropagation();
+        const {plotly_data, zoomedUMAPData} = this.state;
+        let line_idx: number = 0, point_idx: number = 0, point_x = 0, point_y = 0;
+        for (let i = 0; i < event.points.length; i++) {
+            line_idx = event.points[i].curveNumber;
+            point_idx = event.points[i].pointIndex;
+            point_x = event.points[i].x as number;
+            point_y = event.points[i].y as number;
+        }
+        let line_id: string = plotly_data[line_idx].id;
+        if(line_id.startsWith("speed")){
+            let [, index, curve_id, robot_name] = line_id.split("#");
+            line_id = curve_id + "#" + robot_name;
+            point_idx = parseInt(index);
+        }
+        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") 
+        || line_id.startsWith("false proximity") || line_id.startsWith("selected points")
+        || line_id.startsWith("points in region") || line_id.startsWith("speed")) return;
+
+        let plot_data = [], points: PointInfo[] = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            plot_data.push(data);
+            for(let j=0; j<data.x.length; j++){
+                points.push({x: data.x[j], y: data.y[j], curveNumber: i, pointIndex: j, });
+            }
+        }
+
+        let trace = zoomedUMAPData.get(line_id);
+        if(trace === undefined) {
+            if(line_id.startsWith("backgroundPoints")){
+                trace = this.props.backgroundPoints;
+            } else return;
+        };
+        let point_selected: UmapPoint = trace[point_idx]; // the Umap point that is clicked on by the user
+        this.props.graph.setMaxNeighborDistance(point_selected.maxNeighborDistance());
+        // console.log(point_selected.maxNeighborDistance())
+        // console.log(this.props.graph.maxNeighborDistance())
+        // console.log(this.props.graph.neighborDistance())
+        this.displayNeighbors(plot_data, point_selected, points);
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    displayNeighbors(plot_data: any[], point_selected: UmapPoint, points: PointInfo[]){
+        let nneighbors = point_selected.nneighborsInHD();
+        let nneighbors_id = "nneighbors-before reduction#" + point_selected.id(), nneighbors_name = "nneighbors"+ "<br>" + "before reduction";
+        if(!this.props.graph.nneighborMode().valueOf()){
+            // show nneighbors after reduction
+            nneighbors = point_selected.nneighborsIn2D();
+            nneighbors_id = "nneighbors-after reduction#" + point_selected.id();
+            nneighbors_name = "nneighbors"+ "<br>" + "after reduction";
+        }
+        let nneighbors_points: number[][] = [];
+        // console.log(this.props.graph.neighborDistance())
+        for(const [nneighbor, distance] of nneighbors){
+            if((this.props.graph.nneighborMode().valueOf() && distance.distanceInHD() <= this.props.graph.neighborDistance())
+                || (!this.props.graph.nneighborMode().valueOf() && distance.distanceIn2D() <= this.props.graph.neighborDistance())) 
+                nneighbors_points.push(nneighbor.pointIn2D())
+        }
+            
+        let selectedPoints: UmapPoint[] = [];
+        if (nneighbors_points.length > 8) {  
+            // find 9 clusters and use the first point in every cluster to represent the cluster
+            let ans = kmeans(nneighbors_points, 8, {});
+            let visited_cluster: Set<number> = new Set(); 
+            for (let i=0; i<ans.clusters.length; i++) {
+                if(!visited_cluster.has(ans.clusters[i])){
+                    let point = this.findPoints(nneighbors_points[i], points);
+                    if (point !== undefined) selectedPoints.push(point);
+                    visited_cluster.add(ans.clusters[i])
+                }
+            }
+            // const clusterer = Clusterer.getInstance(nneighbors_points, 8);
+            // for (const data of clusterer.Medoids) {
+            //     let point = this.findPoints(data, points);
+            //     if(point !== undefined) selectedPoints.push(point);
+            // }
+        } else{
+            for(const data of nneighbors_points){
+                let point = this.findPoints(data, points);
+                if(point !== undefined) selectedPoints.push(point);
             }
         }
         
-        // //add draggable components(just rectangles)
-        // svg.append("rect")
-        //         .attr("x", timeBarCurr -20)
-        //         .attr("y", 0)
-        //         .attr("width", 40)
-        //         .attr("height", height)
-        //         .attr("fill", "#b00")
-        //         .attr("fill-opacity","0%")
-        //         .call(dragC);
-            
-        //     svg.append("rect")
-        //         .attr("x", timeBarStart)
-        //         .attr("y", 0)
-        //         .attr("width", 30)
-        //         .attr("height", height)
-        //         .attr("fill", "#ff0")
-        //         .attr("fill-opacity","0%")
-        //         .call(dragS);
-
-        //     svg.append("rect")
-        //         .attr("x", timeBarEnd-30)
-        //         .attr("y", 0)
-        //         .attr("width", 30) 
-        //         .attr("height", height)
-        //         .attr("fill", "#ff0")
-        //         .attr("fill-opacity","0%")
-        //         .call(dragE);
-
+        // console.log(selectedPoints);
         
-        this.setState({
-            // w: width + margin.left + margin.right,
-            // h: height + margin.top + margin.bottom,
-            // prev_lines: prev_lines,
-            prev_x: x_axis,
-            prev_y: y_axis,
-            // newCurr: newCurr
-
-            // time_min: d3.min(timeConcat), 
-            // time_max: d3.max(timeConcat),
+        let x = [], y = [];
+        for (const point of nneighbors_points) {
+            x.push(point[0]);
+            y.push(point[1]);
+        }
+        plot_data.push({
+            x: x,
+            y: y,
+            name: nneighbors_name,
+            id: nneighbors_id,
+            showlegend: true,
+            mode: "markers",
+            marker: {
+                size: 8,
+                opacity: 0.5,
+            }
         });
-        // this._graphDiv.current!.appendChild(svg.node());
-        // let temp = d3.select(this._graphDiv.current).append("svg")
-        //     .attr("width", width + margin.left + margin.right)
-        //     .attr("height", height + margin.top + margin.bottom)
-        //     .append(svg)
-        // this._graphDiv.current!.appendChild(temp);
-        // log(svg.node());
-        onGraphUpdate(true);
-        return svg.node();
-        
 
+        plot_data.push({
+            x: [point_selected.pointIn2D()[0]],
+            y: [point_selected.pointIn2D()[1]],
+            name: "selected points - clicked",
+            id: "selected points#neighbors#" + point_selected.id(),
+            showlegend: true,
+            mode: "markers",
+            marker: {
+                size: 16,
+                opacity: 0.3,
+            }
+        });
+        let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints, true);
+        selectedPoints.push(point_selected)
+        selectedPointsNames.push("selected points - clicked");
+        
+        if(selectedPoints.length > 4){  // make sure that the robot pose corresponding to the selected point is in the middle
+            let temp = selectedPoints[4];
+            selectedPoints[4] = selectedPoints[selectedPoints.length-1];
+            selectedPoints[selectedPoints.length-1] = temp;
+            let temp2 = selectedPointsNames[4];
+            selectedPointsNames[4] = selectedPointsNames[selectedPointsNames.length-1];
+            selectedPointsNames[selectedPointsNames.length-1] = temp2;
+        }
+        this.showRobotScenes(selectedPoints, selectedPointsNames, true, newID(), [], []);
     }
+
+    removeAllNeighbors(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            if(!data.id.startsWith("nneighbors") && !data.id.startsWith("selected points#neighbors"))
+                plot_data.push(data);
+            else if(data.id.startsWith("selected points#neighbors")) this.selectedPointsCount--;
+        }
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    filterNeighbors(){
+        const { graph } = this.props;
+        const { plotly_data } = this.state;
+        let plot_data = [], points: PointInfo[] = [];
+        let selectedPoints: Set<UmapPoint> = new Set(); 
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            for(let j=0; j<data.x.length; j++){
+                points.push({x: data.x[j], y: data.y[j], curveNumber: i, pointIndex: j, });
+            }
+            if(data.id.startsWith("nneighbors")){
+                let [, point_selected_id] = data.id.split("#");
+                let point_selected = graph.getUmapPoint(point_selected_id);
+                if(point_selected === undefined) continue;
+                selectedPoints.add(point_selected);
+            } else if(data.id.startsWith("selected points#neighbors")){
+                this.selectedPointsCount--;
+                continue;
+            } 
+            else plot_data.push(data);
+        }
+        for(const selected_point of selectedPoints)
+            this.displayNeighbors(plot_data, selected_point, points);
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * add selected points to the plotly data
+     * @param plot_data 
+     * @param selectedPoints 
+     * @returns a string array that stores all their name
+     */
+    addSelectedPoints(plot_data: any[], selectedPoints: UmapPoint[], neighbors: boolean): string[] {
+        let selectedPointsNames: string[] = [];
+        for(const point of selectedPoints){
+            let pointName = "selected points " + this.selectedPointsCount;
+            let pointId = "selected points#" + (neighbors?"neighbors":"region") + "#" + point.id();
+            this.selectedPointsCount++;
+            selectedPointsNames.push(pointName)
+            plot_data.push({
+                x: [point.pointIn2D()[0]],
+                y: [point.pointIn2D()[1]],
+                name: pointName,
+                id: pointId,
+                showlegend: true,
+                mode: "markers",
+                marker: {
+                    size: 16,
+                    opacity: 0.3,
+                }
+            });
+        }
+        return selectedPointsNames;
+    }
+
+    /**
+     * legend click handler
+     * whenever users click the legend, if the corresponding trace is gap, then display the window
+     * @param event 
+     * @returns 
+     */
+    onPlotlyLegendClick(event: Readonly<LegendClickEvent>) {
+        const { graph, robotSceneManager } = this.props;
+        const { plotly_data } = this.state;
+        let line_id: string = plotly_data[event.curveNumber].id;
+        if((line_id.startsWith("gap") || line_id.startsWith("false proximity")) || line_id.startsWith("stretch")){
+            const [, point1_id, point2_id] = line_id.split("#");
+            let point1 = graph.getUmapPoint(point1_id);
+            let point2 = graph.getUmapPoint(point2_id);
+            if (point1 !== undefined && point2 !== undefined) {
+                if(plotly_data[event.curveNumber].visible !== true)
+                    this.showRobotScenes([point1, point2], [], false, line_id, [], []);
+                else{
+                    this.props.removeTab("StaticRobotScene-One&" + line_id);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * legend double click handler
+     * whenever users double click the legend, the corresponding line will be deleted
+     * @param event 
+     * @returns 
+     */
+    onPlotlyLegendDoubleClick(event: Readonly<LegendClickEvent>) {
+        const { line_ids, line_colors, graph } = this.props;
+        const { plotly_data } = this.state;
+        let line_id: string = plotly_data[event.curveNumber].id;
+        if(line_id.startsWith("speed")){
+            let [, index, curve_id, robot_name] = line_id.split("#");
+            line_id = curve_id + "#" + robot_name;
+        }
+        let index = -1;
+        for (let i = 0; i < line_ids.length; i++)
+            if (line_ids[i] === line_id) {
+                index = i;
+                break;
+            }
+        if (index > -1) {
+            graph.setDeleteLine(line_ids[index], line_colors[index]);
+        } else{
+            if(line_id.startsWith("selected points")) this.selectedPointsCount--;
+            // if (line_id.startsWith("nneighbor")) {
+                let plot_data = [];
+                for (let i = 0; i < plotly_data.length; i++) {
+                    if(i === event.curveNumber) continue;
+                    let data = plotly_data[i];
+                    plot_data.push(data);
+                }
+                this.setState({
+                    plotly_data: plot_data,
+                });
+            // }
+        }
+        console.log(event.data[event.curveNumber]);
+        return false;
+    }
+
+    /**
+     * find the point corresponding to the data in clusteredData
+     * @param clusteredData 
+     * @param points 
+     * @returns 
+     */
+    findPoints(clusteredData: Datum[], points: PlotDatum[] | PointInfo[]): UmapPoint | undefined{
+        const {plotly_data, zoomedUMAPData} = this.state;
+        for(const point of points){
+            if(clusteredData[0] === point.x && clusteredData[1] === point.y 
+                && typeof point.x === "number" && typeof point.y === "number"){
+                    let line_id = plotly_data[point.curveNumber].id;
+                    let point_idx = point.pointIndex;
+                    if(line_id.startsWith("speed")){
+                        let [, index, curve_id, robot_name] = line_id.split("#");
+                        line_id = curve_id + "#" + robot_name;
+                        point_idx = parseInt(index);
+                    }
+                    let trace = zoomedUMAPData.get(line_id);
+                    if(trace !== undefined) return trace[point_idx];
+            }
+        }
+    }
+
+    /**
+     * selected event handler (can be either box select or Lasso select) 
+     * first calculate 9 points that can best represent the data
+     * (if less than 9, then use all points), then show the robot motion
+     * correspond to these points
+     * @param event 
+     */
+    onPlotlySelected(event: Readonly<PlotSelectionEvent>){
+        if(event === undefined || event.points === undefined) return;
+        let points = event.points;
+        if(points.length === 0) return;
+
+        const {zoomedUMAPData, plotly_data} = this.state;
+        let selectedPoints: UmapPoint[] = [];
+        if(points.length > 9){
+            let data: number[][] = [];
+            for(const point of points){
+                let x = point.x, y = point.y;
+                if(typeof x === "number" && typeof y === "number")
+                    data.push([x, y])
+            }
+                
+            // find 9 clusters and use the first point in every cluster to represent the cluster
+            let ans = kmeans(data, 9, {});
+            let visited_cluster: Set<number> = new Set(); 
+            for (let i=0; i<ans.clusters.length; i++) {
+                if(!visited_cluster.has(ans.clusters[i])){
+                    let point = this.findPoints(data[i], points);
+                    if (point !== undefined) selectedPoints.push(point);
+                    visited_cluster.add(ans.clusters[i])
+                }
+            }
+            // const clusterer = Clusterer.getInstance(data, 9);
+            // //const clusteredData = clusterer.getClusteredData();  
+            // for(const data of clusterer.Medoids){
+            //     let point = this.findPoints(data, points);
+            //     if(point !== undefined) selectedPoints.push(point);
+            // }
+        } else{
+            for(const point of points){
+                let line_id = plotly_data[point.curveNumber].id;
+                let point_idx = point.pointIndex;
+                if(line_id.startsWith("speed")){
+                    let [, index, curve_id, robot_name] = line_id.split("#");
+                    line_id = curve_id + "#" + robot_name;
+                    point_idx = parseInt(index);
+                }
+                let trace = zoomedUMAPData.get(line_id);
+                if(trace !== undefined)
+                    selectedPoints.push(trace[point_idx]);
+            }
+        }
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            plot_data.push(data);
+        }
+        let x = [], y = [];
+        for (const point of points) {
+            x.push(point.x);
+            y.push(point.y);
+        }
+        plot_data.push({
+            x: x,
+            y: y,
+            name: "points in region",
+            id: "points in region",
+            showlegend: true,
+            mode: "markers",
+            marker: {
+                size: 8,
+                opacity: 0.5,
+            }
+        });
+
+        let allPoints: UmapPoint[] = [];
+        let colors: string[] = [];
+        for(const point of points){
+            let line_id = plotly_data[point.curveNumber].id;
+            let point_idx = point.pointIndex;
+            if (line_id.startsWith("speed")) {
+                let [, index, curve_id, robot_name] = line_id.split("#");
+                line_id = curve_id + "#" + robot_name;
+                point_idx = parseInt(index);
+            }
+            let trace = zoomedUMAPData.get(line_id);
+            colors.push(plotly_data[point.curveNumber].marker.color)
+            if(trace !== undefined)
+                allPoints.push(trace[point_idx]);
+        }
+        let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints, false);
+        this.showRobotScenes(selectedPoints, selectedPointsNames, true, newID(), allPoints, colors);
+        this.setState({
+            plotly_data: plot_data
+        });
+    }
+
+    removeAllPointsInRegion(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            if(!data.id.startsWith("points in region") && !data.id.startsWith("selected points#region"))
+                plot_data.push(data);
+            else if(data.id.startsWith("selected points#region")) this.selectedPointsCount--;
+        }
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * display robots corresponding to the point from the {curveNumber[i]}th curve
+     * at index {pointIndices[i]} in 3D scene(s)
+     * @param selectedPoints 
+     * @param selectedPointsNames the name of each point; since I do not want to use the id of the points as its name, this string array is needed
+     * @param showNineScenes true if show ninescenes, otherwise false
+     * @param oneSceneId the sceneId of the gaps and the false proximity will be specified so that the scene can be deleted automatically
+     * @returns 
+     */
+    showRobotScenes(selectedPoints: UmapPoint[], selectedPointsNames: string[],  showNineScenes: boolean, oneSceneId: string, allPoints: UmapPoint[], allPointsColors: string[]){
+        const { line_ids, line_colors, graph, times, robotSceneManager } = this.props;
+        const { plotly_data, zoomedTimes } = this.state;
+        let sceneIds = [];
+        // let showNineScenes = graph.showNineScenes().valueOf();
+        if(showNineScenes){ // create nine scenes to show the robots
+            for (const point of selectedPoints) {
+                let newSceneId = newID();
+                let staticRobotScene = new StaticRobotScene(robotSceneManager, newSceneId);
+                sceneIds.push(newSceneId);
+                this.selectedPointsMap.set(point.id(), newSceneId);
+
+                const [sceneId, robotName] = this.decomposeId(point.robotInfo());
+                let scene = robotSceneManager.robotSceneById(sceneId);
+                if (scene === undefined) return;
+                if (!robotSceneManager.isActiveRobotScene(scene))
+                    robotSceneManager.activateRobotScene(scene);
+                let robot = scene.getRobotByName(robotName);
+                if (robot !== undefined) staticRobotScene.addChildRobot(robot, point.time());
+            }
+        }
+        // create one scene to show the robots
+        let sceneId = newID();
+        if (oneSceneId !== undefined) sceneId = oneSceneId;
+        let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
+        sceneIds.push(sceneId);
+        for (const point of selectedPoints) {
+            const [sceneId, robotName] = this.decomposeId(point.robotInfo());
+            let scene = robotSceneManager.robotSceneById(sceneId);
+            if (scene === undefined) return;
+            if (!robotSceneManager.isActiveRobotScene(scene))
+                robotSceneManager.activateRobotScene(scene);
+            let robot = scene.getRobotByName(robotName);
+            if (robot !== undefined) {
+                staticRobotScene.addChildRobot(robot, point.time());
+                robot.setOpacity(0.5);
+            }
+        }
+
+
+        // add traces to the scene
+        let selectedRobotPartName = graph.selectedRobotPartName();
+        if ( selectedRobotPartName.length > 0) {
+            let traceMap: Map<UmapPoint, number[]> = new Map();
+            let colorMap: Map<UmapPoint, string> = new Map();
+            let visited: Set<UmapPoint> = new Set();
+            let pointsSet: Set<UmapPoint> = new Set();
+            for (const point of allPoints) pointsSet.add(point);
+            for (const [i, point] of allPoints.entries()) { // find points that are adjacent so they can be shown in the same trace
+                if (visited.has(point)) continue;
+                visited.add(point);
+                let trace = [];
+                let currPoint = point;
+                while (pointsSet.has(currPoint)) {
+                    traceMap.delete(currPoint);
+                    colorMap.delete(currPoint);
+                    trace.unshift(currPoint.time());
+                    visited.add(currPoint);
+                    let prevPoint;
+                    for (const [prev_point, distance] of currPoint.prevPoint()) {
+                        prevPoint = prev_point;
+                    }
+                    if (prevPoint === undefined || prevPoint === currPoint) break;
+                    currPoint = prevPoint;
+                }
+                traceMap.set(point, trace);
+                colorMap.set(point, allPointsColors[i]);
+            }
+            for (const [point, trace] of traceMap) {
+                console.log(trace);
+                const [sceneId, robotName] = this.decomposeId(point.robotInfo());
+                let scene = robotSceneManager.robotSceneById(sceneId);
+                if (scene === undefined) return;
+                if (!robotSceneManager.isActiveRobotScene(scene))
+                    robotSceneManager.activateRobotScene(scene);
+                let robot = scene.getRobotByName(robotName);
+                if (robot !== undefined) {
+                    let color = colorMap.get(point);
+                    let selectedRobotJoint = robot.getArticuatedJointMap().get(selectedRobotPartName);
+                    if(selectedRobotJoint !== undefined)
+                        staticRobotScene.addTraces(robot, trace, selectedRobotJoint, (color === undefined) ? "red" : color);
+                    else {
+                        let selectedRobotLink = robot.linkMap().get(selectedRobotPartName)
+                        if(selectedRobotLink !== undefined)
+                            staticRobotScene.addTraces(robot, trace, selectedRobotLink, (color === undefined) ? "red" : color);
+                        else if(robot.name() === selectedRobotPartName) {
+                            staticRobotScene.addTraces(robot, trace, undefined, (color === undefined) ? "red" : color);
+                        }
+                            
+                    }
+                }
+            }
+        }
+
+        this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes, selectedPointsNames);
+        this.props.robotSceneManager.setShouldSyncViews(true);
+    }
+
+    
+    /**
+     * connect two points that are ajacent in their original high dimension
+     * but their distance in 2D is greater than min_dis
+     * @param min_dis 
+     */
+    displayGaps(max_dis_HD: number, min_dis_2D: number){
+        const { plotly_data } = this.state;
+
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            plot_data.push(data);
+        }
+
+        // let zoomedUMAPData = [];
+        // for(const [i, data] of plotly_data.entries()){
+        //     let line_id = data.id;
+        //     let umapData = this.state.zoomedUMAPData.get(line_id);
+        //     if(umapData !== undefined) zoomedUMAPData.push(umapData);
+        // }
+
+        let gaps: number = 0;
+        let gap_x: any[] = [], gap_y: any[] = [];
+        plot_data.push({
+            x: gap_x,
+            y: gap_y,
+            id: "gapAll",
+            name: "gapAll",
+            mode: "lines",
+            line: {
+                color: 'rgb(242, 243, 174)',
+                width: 3,
+            }
+        });
+        let distances: Distances[] = [];
+        for(const [, trace] of this.state.zoomedUMAPData){
+            for(const data of trace){
+                for(const [prevPoint, distance] of data.prevPoint()){
+                    if(distance.distanceIn2D() > min_dis_2D){
+                        distances.push(distance);
+                    }
+                }
+            }
+        }
+
+        distances.sort((a, b) => b.distanceIn2D() - a.distanceIn2D());
+
+        for(const distance of distances){
+            let data = distance.point1(), prevPoint = distance.point2();
+            plot_data.push({
+                x: [data.pointIn2D()[0], prevPoint.pointIn2D()[0]],
+                y: [data.pointIn2D()[1], prevPoint.pointIn2D()[1]],
+                id: "gap#" + data.id() + "#" + prevPoint.id(),
+                name: "gap-" + gaps,
+                mode: "lines",
+                visible: "legendonly",
+                line: {
+                    color: 'rgb(219, 64, 82)',
+                    width: 3,
+                }
+            });
+            gaps++;
+
+            gap_x.push(data.pointIn2D()[0]);
+            gap_x.push(prevPoint.pointIn2D()[0]);
+            gap_x.push(null);
+            gap_y.push(data.pointIn2D()[1]);
+            gap_y.push(prevPoint.pointIn2D()[1]);
+            gap_y.push(null);
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * remove all the lines that connect the gaps
+     */
+    removeGaps(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let id = data.id as string;
+            if(id.startsWith("gap")) continue;
+            plot_data.push(data);
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * connect two points that are close in their original high dimension
+     * but their distance in 2D is greater than min_dis
+     * @param min_dis 
+     */
+    displayStretches(max_dis_HD: number, min_dis_2D: number){
+        const { plotly_data } = this.state;
+
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            plot_data.push(data);
+        }
+
+        // let zoomedUMAPData = [];
+        // for(const [i, data] of plotly_data.entries()){
+        //     let line_id = data.id;
+        //     let umapData = this.state.zoomedUMAPData.get(line_id);
+        //     if(umapData !== undefined) zoomedUMAPData.push(umapData);
+        // }
+
+        let stretches: number = 0;
+        let stretch_x: any[] = [], stretch_y: any[] = [];
+        plot_data.push({
+            x: stretch_x,
+            y: stretch_y,
+            id: "stretchAll",
+            name: "stretchAll",
+            mode: "lines",
+            line: {
+                color: 'rgb(152, 203, 104)',
+                width: 3,
+            }
+        });
+
+        let distances: Distances[] = [];
+        for(const [, trace] of this.state.zoomedUMAPData){
+            for(const data of trace){
+                for(const [neighbor, distance] of data.nneighborsInHD()){
+                    if(distance.distanceIn2D() > min_dis_2D && distance.distanceInHD() <= max_dis_HD){
+                        distances.push(distance);
+                    }
+                }
+            }
+        }
+
+        distances.sort((a, b) => b.distanceIn2D() - a.distanceIn2D());
+
+        for(const distance of distances){
+            let data = distance.point1(), neighbor = distance.point2();
+            plot_data.push({
+                x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
+                y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
+                id: "stretch#" + data.id() + "#" + neighbor.id(),
+                name: "stretch-" + stretches,
+                mode: "lines",
+                visible: "legendonly",
+                line: {
+                    color: 'rgb(255, 82, 27)',
+                    width: 3,
+                }
+            });
+            stretches++;
+
+            stretch_x.push(data.pointIn2D()[0]);
+            stretch_x.push(neighbor.pointIn2D()[0]);
+            stretch_x.push(null);
+            stretch_y.push(data.pointIn2D()[1]);
+            stretch_y.push(neighbor.pointIn2D()[1]);
+            stretch_y.push(null);   
+        }
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * remove all the lines that connect the stetches
+     */
+    removeStretches(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let id = data.id as string;
+            if(id.startsWith("stretch")) continue;
+            plot_data.push(data);
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * show two points that are ajacent (distance smaller than max_dis_2D) in 2D
+     * but their distance in original high dimension is greater than min_dis_HD
+     * @param max_dis_2D
+     * @param min_dis_HD 
+     */
+    displayFalseProximity(max_dis_2D: number, min_dis_HD: number){
+        const { plotly_data} = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            plot_data.push(data);
+        }
+        // let zoomedUMAPData = [];
+        // for(const [i, data] of plotly_data.entries()){
+        //     let line_id = data.id;
+        //     let umapData = this.state.zoomedUMAPData.get(line_id);
+        //     if(umapData !== undefined) zoomedUMAPData.push(umapData);
+        // }
+
+        let false_proximities: number = 0;
+        let fp_x: any[] = [], fp_y: any[] = [];
+        plot_data.push({
+            x: fp_x,
+            y: fp_y,
+            id: "false proximityAll",
+            name: "false proximityAll",
+            mode: "markers",
+            line: {
+                color: 'rgb(193, 131, 159)',
+                width: 3,
+            }
+        });
+
+        let distances: Distances[] = [];
+        for(const [, trace] of this.state.zoomedUMAPData){
+            for(const data of trace){
+                for(const [neighbor, distance] of data.nneighborsIn2D()){
+                    if(distance.distanceInHD() > min_dis_HD && distance.distanceIn2D() <= max_dis_2D){
+                        distances.push(distance);
+                    }
+                }
+            }
+        }
+
+        distances.sort((a, b) => b.distanceInHD() - a.distanceInHD());
+
+        for(const distance of distances){
+            let data = distance.point1(), neighbor = distance.point2();
+            plot_data.push({
+                x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
+                y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
+                id: "false proximity#" + data.id() + "#" + neighbor.id(),
+                name: "false proximity-" + false_proximities,
+                mode: "markers",
+                visible: "legendonly",
+                marker: {
+                    color: 'rgb(195, 178, 153)',
+                }
+            });
+            false_proximities++;
+
+            fp_x.push(data.pointIn2D()[0]);
+            fp_x.push(neighbor.pointIn2D()[0]);
+            fp_x.push(null);
+            fp_y.push(data.pointIn2D()[1]);
+            fp_y.push(neighbor.pointIn2D()[1]);
+            fp_y.push(null);
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * remove all false proximity points
+     */
+    removeFalseProximity(){
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let id = data.id as string;
+            if(id.startsWith("false proximity")) continue;
+            plot_data.push(data);
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * 
+     * @param show true if show all traces, false if hide them
+     */
+    dispalyAllTraces(show: boolean){
+        console.log("display all traces");
+        const { plotly_data } = this.state;
+        let plot_data = [];
+        for(let i=0; i<plotly_data.length; i++){
+            let data = plotly_data[i];
+            let id = data.id as string;
+            if(id.startsWith("gap") || id.startsWith("false proximity")){
+                plot_data.push(data);
+                continue;
+            }
+            plot_data.push({
+                x: data.x,
+                y: data.y,
+                name: data.name,
+                id: data.id,
+                showlegend: data.showlegend,
+                mode: data.mode,
+                marker: data.marker,
+                visible: show,
+            });
+        }
+
+        this.setState({
+            plotly_data: plot_data,
+        });
+    }
+
+    /**
+     * decompose the id of the drag button
+     * to sceneId, robotName, partName
+     * @param eventName
+     * @returns 
+     */
+    decomposeId(eventName:string)
+    {
+        const [sceneId, robotName] = eventName.split("#");
+        return [sceneId, robotName];
+    }
+
 
     render() {
         //const {w, h} = this.state;
         const {isTimeWarp, times, selected, axisColor, width, height, line_names} = this.props;
         // const {umap_data} = this.state;
         const {plotly_config, plotly_data, plotly_frames, plotly_layout} = this.state;
-        let styles = {display: "inline-block", marginBottom: "10px", color: axisColor};
-        // if(selected !== undefined && selected)
-        //     styles = {display: "inline-block", marginBottom: "10px", color:"yellow"}
-        // else
-        //     styles = {display: "inline-block", marginBottom: "10px"}
-
-        // let plot_data = [];
-        // for(let i=0; i<umap_data.length; i++){
-        //     let x = [], y = [];
-        //     for(const point of umap_data[i]){
-        //         x.push(point.x);
-        //         y.push(point.y);
-        //     }
-        //     plot_data.push({
-        //         x: x,
-        //         y: y,
-        //         name: line_names[i],
-        //         showlegend: true,
-        //         mode: 'markers',
-        //         marker: {
-        //             size: 2
-        //         }
-        //     });
-        // }
 
         return (
             <div>
                 <div style={{textAlign: "center"}}>
                 </div>
-                <div className="UmapGraph" id="UmapGraph" ref={this._graphDiv}>
+                <div className="UmapGraph" id="UmapGraph" ref={this._graphDiv} onClick={(event) => this.onPanelClick(event)}>
                 <Plot
                     data={plotly_data}
                     layout={plotly_layout}
                     frames={plotly_frames}
                     config={plotly_config}
-                    // data={plot_data}
-                    // layout={{ width: width, height: height, font: {color: "white"}, 
-                    // /*title: 'A Fancy Plot',*/ plot_bgcolor:"rgb(23, 24, 25)", paper_bgcolor:"rgb(23, 24, 25)",
-                    // yaxis: {
-                    //     showgrid: false
-                    //   },
-                    // xaxis: {
-                    //     showgrid: false  
-                    // } }}
-                    onHover={(event) => {
-                        
-                        let pts = '';
-                        for (var i = 0; i < event.points.length; i++) {
-                            pts = 'x = ' + event.points[i].x + '\ny = ' +
-                            event.points[i].y + " from " + event.points[i].data.name + " with index " + event.points[i].pointIndex
-                                + " at time " + this.props.times[0][event.points[i].pointIndex] + '\n\n';
-                            let selected_time = this.props.times[0][event.points[i].pointIndex]
-                            this.props.robotSceneManager.setCurrTime(selected_time);
-                        }
-                        // alert('Closest point clicked:\n\n' + pts);
-                    } }
-                    onLegendDoubleClick={(event) => {   
-                        this.props.graph.setDeleteLine(this.props.line_ids[event.curveNumber], this.props.line_colors[event.curveNumber]);    
-                        console.log(event);
-                        return false;
-                    }}
+                    onHover={(event) => this.onPlotlyHover(event)}
+                    onClick={(event) => this.onPlotlyClick(event)}
+                    onLegendClick={(event) => this.onPlotlyLegendClick(event)}
+                    onLegendDoubleClick={(event) => this.onPlotlyLegendDoubleClick(event)}
                     onInitialized={(figure) => this.setState({
                         plotly_data: figure.data,
                         plotly_layout: figure.layout,
                         plotly_frames: figure.frames
                     })}
-                    onUpdate={(figure) => this.setState({
-                        plotly_data: figure.data,
-                        plotly_layout: figure.layout,
-                        plotly_frames: figure.frames
-                    })}
+                    // onUpdate={(figure) => {
+                    //     this.setState({
+                    //         plotly_data: figure.data,
+                    //         plotly_layout: figure.layout,
+                    //         plotly_frames: figure.frames
+                    //     }); 
+                    // }}
+                    onSelected={(event) => this.onPlotlySelected(event)}
                 />
                 </div>
             </div>

@@ -78,6 +78,26 @@ let ESC_MAP: { [key: string]: string } = {
     "'": '&#39;'
 };
 
+
+/**
+ * take two number array and calculate their euclidean distance
+ * @param point1 
+ * @param point2 
+ * @returns 
+ */
+export function euclideanDistance(point1: number[], point2: number[]) {
+    if (point1.length !== point2.length) {
+        throw new Error('Points must have the same dimensionality');
+    }
+
+    let sumOfSquares = 0;
+    for (let i = 0; i < point1.length; i++) {
+        sumOfSquares += Math.pow(point1[i] - point2[i], 2);
+    }
+
+    return Math.sqrt(sumOfSquares);
+}
+
 /**
  * Sanatizes text so that it is safe to put into the DOM.
  * @param s The text to sanatize.
@@ -108,6 +128,45 @@ export function findLargestSmallerElement(array: number[], target: number): numb
     }
 
     return result;
+}
+
+export function findLargestSmallerOrEqualElement(array: number[], target: number): number {
+    let left = 0;
+    let right = array.length - 1;
+    let result = -1;
+
+    while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+
+        if (array[mid] <= target) {
+            result = mid; // Update the result and continue searching in the right half
+            left = mid + 1;
+        } else {
+            right = mid - 1; // Search in the left half
+        }
+    }
+
+    return result;
+}
+
+/**
+ * generate n points in k dimension
+ * @param n 
+ * @param k 
+ * @returns 
+ */
+export function generateRandomPoints(n: number, k: number, max: number, min: number): number[][] {
+    const points: number[][] = [];
+
+    for (let i = 0; i < n; i++) {
+        const point: number[] = [];
+        for (let j = 0; j < k; j++) {
+            point.push(Math.random() * (max - min) + min);
+        }
+        points.push(point);
+    }
+
+    return points;
 }
 
 /**
