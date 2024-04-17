@@ -545,7 +545,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             || line_id.startsWith("backgroundPoints") || line_id.startsWith("points in region")) continue;
             if(line_id.startsWith("nneighbor")) {
                 let [, point_id] = line_id.split("#");
-                let point = this.props.graph.getUmapPoint(point_id);
+
+                let point = this.props.graph.getUmapPoint(+point_id);
                 if(point === undefined) continue;
                 let neighbor = this.findNeighborPoints(point, [event.points[i].x, event.points[i].y], line_id.startsWith("nneighbors-before reduction"));
                 if(neighbor !== undefined) {
@@ -811,8 +812,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let line_id: string = plotly_data[event.curveNumber].id;
         if((line_id.startsWith("gap") || line_id.startsWith("false proximity")) || line_id.startsWith("stretch")){
             const [, point1_id, point2_id] = line_id.split("#");
-            let point1 = graph.getUmapPoint(point1_id);
-            let point2 = graph.getUmapPoint(point2_id);
+            let point1 = graph.getUmapPoint(+point1_id);
+            let point2 = graph.getUmapPoint(+point2_id);
             if (point1 !== undefined && point2 !== undefined) {
                 if(plotly_data[event.curveNumber].visible !== true)
                     this.showRobotScenes([point1, point2], [], false, line_id, [], []);
@@ -1018,7 +1019,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 let newSceneId = newID();
                 let staticRobotScene = new StaticRobotScene(robotSceneManager, newSceneId);
                 sceneIds.push(newSceneId);
-                this.selectedPointsMap.set(point.id(), newSceneId);
+                this.selectedPointsMap.set(point.id().toString(), newSceneId);
 
                 const [sceneId, robotName] = this.decomposeId(point.robotInfo());
                 let scene = robotSceneManager.robotSceneById(sceneId);

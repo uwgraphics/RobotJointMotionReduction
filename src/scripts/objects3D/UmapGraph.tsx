@@ -48,7 +48,7 @@ export class UmapGraph {
     protected _randomSeed: number; // the random seed for the UMAP algo
     protected _showAllTraces: Boolean; // true if show all traces, otherwise hide them
     protected _UMAPType: umap_type;
-    protected _UMAPPoints: Map<string, UmapPoint>; // map that stores all the umap points
+    protected _UMAPPoints: Map<number, UmapPoint>; // map that stores all the umap points
     protected _backgroundPointsRatio: number; // the ratio of the background points to the total robot joint points
     protected _backgroundPointsMax: number; // the max of the background points
     protected _backgroundPointsMin: number; // the min of the background points
@@ -247,15 +247,15 @@ export class UmapGraph {
         this._lossWeight = weight;
     }
 
-    allUmapPoints():Map<string, UmapPoint>{
+    allUmapPoints():Map<number, UmapPoint>{
         return this._UMAPPoints;
     }
 
-    setUmapPoints(points: Map<string, UmapPoint>){
+    setUmapPoints(points: Map<number, UmapPoint>){
         this._UMAPPoints = points;
     }
 
-    getUmapPoint(id: string): UmapPoint | undefined{
+    getUmapPoint(id: number): UmapPoint | undefined{
         return this._UMAPPoints.get(id);
     }
 

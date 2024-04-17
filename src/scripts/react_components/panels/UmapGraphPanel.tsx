@@ -194,8 +194,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         try {
             const response = await axios.post('http://localhost:5000/api/data', dataToSend);
             // console.log(response.data);
+            UmapPoint.resetCounter();
             for(let i=0; i<jointData.length; i++){
-                let umapPoint: UmapPoint = new UmapPoint(new Id().value(), jointData[i], response.data.UMAPData[i]);
+                let umapPoint: UmapPoint = new UmapPoint(jointData[i], response.data.UMAPData[i]);
                 umapData.push(umapPoint);
             }
 
@@ -458,7 +459,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             }
         }
 
-        let UmapPointsMap: Map<string, UmapPoint> = new Map();
+        let UmapPointsMap: Map<number, UmapPoint> = new Map();
         for(const trace of umapData){
             for(const point of trace){
                 UmapPointsMap.set(point.id(), point);
