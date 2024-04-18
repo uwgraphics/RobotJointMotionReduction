@@ -1161,7 +1161,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 x: [data.pointIn2D()[0], prevPoint.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], prevPoint.pointIn2D()[1]],
                 id: "gap#" + data.id() + "#" + prevPoint.id(),
-                name: "gap-" + gaps,
+                name: "gap " + distance.distanceIn2D().toFixed(2),
                 mode: "lines",
                 visible: "legendonly",
                 line: {
@@ -1256,7 +1256,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
                 id: "stretch#" + data.id() + "#" + neighbor.id(),
-                name: "stretch-" + stretches,
+                name: "stretch " + distance.distanceIn2D().toFixed(2),
                 mode: "lines",
                 visible: "legendonly",
                 line: {
@@ -1349,7 +1349,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
                 id: "false proximity#" + data.id() + "#" + neighbor.id(),
-                name: "false proximity-" + false_proximities,
+                name: "false proximity " + distance.distanceInHD().toFixed(2),
                 mode: "markers",
                 visible: "legendonly",
                 marker: {
