@@ -138,10 +138,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             plotly_layout: {width: width, height: height, font: {color: "black"}, 
             plot_bgcolor:"white", paper_bgcolor:"white",
             yaxis: {
-                showgrid: false
+                showgrid: false,
+                zeroline: false,
               },
             xaxis: {
-                showgrid: false  
+                showgrid: false,
+                zeroline: false,
             }}, 
             plotly_frames: [], 
             plotly_config: {'scrollZoom': true},
@@ -192,10 +194,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     width: this.props.width, height: this.props.height, font: {color: "black"}, 
                     plot_bgcolor:"white", paper_bgcolor:"white",
                     yaxis: {
-                        showgrid: false
-                    },
+                        showgrid: false,
+                        zeroline: false,
+                      },
                     xaxis: {
-                        showgrid: false
+                        showgrid: false,
+                        zeroline: false,
                     }
                 },
             });
