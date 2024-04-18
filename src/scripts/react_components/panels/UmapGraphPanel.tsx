@@ -194,8 +194,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         try {
             const response = await axios.post('http://localhost:5000/api/data', dataToSend);
             // console.log(response.data);
+            UmapPoint.resetCounter();
             for(let i=0; i<jointData.length; i++){
-                let umapPoint: UmapPoint = new UmapPoint(new Id().value(), jointData[i], response.data.UMAPData[i]);
+                let umapPoint: UmapPoint = new UmapPoint(jointData[i], response.data.UMAPData[i]);
                 umapData.push(umapPoint);
             }
 
@@ -307,7 +308,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         if(d1.length !== d2.length) return false;
         for(let i=0; i<d1.length; i++)
             // if(d1[i] !== d2[i]) return false;
-            if (Math.abs(d1[i] - d2[i]) > 0.01) return false;
+            if (Math.abs(d1[i] - d2[i]) > 0.0001) return false;
         return true;
     }
 
@@ -374,6 +375,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         let lengths: number[] = []; // the length of data array for each robot after filtering
         for (const [eventName, [times, jointData]] of currRobots) {
             // console.log(jointData)
+            console.log(jointData)
             let [filteredData, filteredTime] = this.filterJointData(jointData, times);
             filteredJointData = filteredJointData.concat(filteredData);
             // filteredJointData = filteredJointData.concat(jointData);
@@ -457,12 +459,13 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             }
         }
 
-        let UmapPointsMap: Map<string, UmapPoint> = new Map();
+        let UmapPointsMap: Map<number, UmapPoint> = new Map();
         for(const trace of umapData){
             for(const point of trace){
                 UmapPointsMap.set(point.id(), point);
             }
         }
+        console.log(umapData)
         this.props.graph.setUmapPoints(UmapPointsMap);
         this.times = _times;
         this.umapData = umapData;

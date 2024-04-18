@@ -83,6 +83,8 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
 
     onBackgroundColorChange(newValue: string) {
       this.props.robotSceneManager.getCurrUmapGraph()?.setBackgroundColor(newValue);
+      for(const scene of this.props.robotSceneManager.allStaticRobotScenes())
+        scene.setBackgroundColor(newValue);
       this.props.forceUpdateTabNames(); // trigger the graph update instantaneously
     }
 

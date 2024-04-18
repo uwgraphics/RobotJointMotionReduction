@@ -132,8 +132,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             currDragItem: null,
             // umap_data: [],
             plotly_data: [], 
-            plotly_layout: {width: width, height: height, font: {color: "white"}, 
-            plot_bgcolor:"rgb(23, 24, 25)", paper_bgcolor:"rgb(23, 24, 25)",
+            // plotly_layout: {width: width, height: height, font: {color: "white"}, 
+            // plot_bgcolor:"rgb(23, 24, 25)", paper_bgcolor:"rgb(23, 24, 25)",
+            plotly_layout: {width: width, height: height, font: {color: "black"}, 
+            plot_bgcolor:"white", paper_bgcolor:"white",
             yaxis: {
                 showgrid: false
               },
@@ -184,8 +186,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if(windowChanged){
             this.setState({
                 plotly_layout: {
-                    width: this.props.width, height: this.props.height, font: { color: "white" },
-                    plot_bgcolor: "rgb(23, 24, 25)", paper_bgcolor: "rgb(23, 24, 25)",
+                    // width: this.props.width, height: this.props.height, font: { color: "white" },
+                    // plot_bgcolor: "rgb(23, 24, 25)", paper_bgcolor: "rgb(23, 24, 25)",
+                    width: this.props.width, height: this.props.height, font: {color: "black"}, 
+                    plot_bgcolor:"white", paper_bgcolor:"white",
                     yaxis: {
                         showgrid: false
                     },
@@ -545,7 +549,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             || line_id.startsWith("backgroundPoints") || line_id.startsWith("points in region")) continue;
             if(line_id.startsWith("nneighbor")) {
                 let [, point_id] = line_id.split("#");
-                let point = this.props.graph.getUmapPoint(point_id);
+
+                let point = this.props.graph.getUmapPoint(+point_id);
                 if(point === undefined) continue;
                 let neighbor = this.findNeighborPoints(point, [event.points[i].x, event.points[i].y], line_id.startsWith("nneighbors-before reduction"));
                 if(neighbor !== undefined) {
@@ -660,19 +665,20 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let selectedPoints: UmapPoint[] = [];
         if (nneighbors_points.length > 8) {  
             // find 9 clusters and use the first point in every cluster to represent the cluster
-            let ans = kmeans(nneighbors_points, 8, {});
-            let visited_cluster: Set<number> = new Set(); 
-            for (let i=0; i<ans.clusters.length; i++) {
-                if(!visited_cluster.has(ans.clusters[i])){
-                    let point = this.findPoints(nneighbors_points[i], points);
-                    if (point !== undefined) selectedPoints.push(point);
-                    visited_cluster.add(ans.clusters[i])
-                }
+            const clusterer = Clusterer.getInstance(nneighbors_points, 8);
+            const clusteredData = clusterer.getClusteredData(); 
+            for (const data of clusterer.Medoids) {
+                let point = this.findPoints(data, points);
+                if(point !== undefined) selectedPoints.push(point);
             }
-            // const clusterer = Clusterer.getInstance(nneighbors_points, 8);
-            // for (const data of clusterer.Medoids) {
-            //     let point = this.findPoints(data, points);
-            //     if(point !== undefined) selectedPoints.push(point);
+            // let ans = kmeans(nneighbors_points, 8, {});
+            // let visited_cluster: Set<number> = new Set(); 
+            // for (let i=0; i<ans.clusters.length; i++) {
+            //     if(!visited_cluster.has(ans.clusters[i])){
+            //         let point = this.findPoints(nneighbors_points[i], points);
+            //         if (point !== undefined) selectedPoints.push(point);
+            //         visited_cluster.add(ans.clusters[i])
+            //     }
             // }
         } else{
             for(const data of nneighbors_points){
@@ -811,8 +817,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let line_id: string = plotly_data[event.curveNumber].id;
         if((line_id.startsWith("gap") || line_id.startsWith("false proximity")) || line_id.startsWith("stretch")){
             const [, point1_id, point2_id] = line_id.split("#");
-            let point1 = graph.getUmapPoint(point1_id);
-            let point2 = graph.getUmapPoint(point2_id);
+            let point1 = graph.getUmapPoint(+point1_id);
+            let point2 = graph.getUmapPoint(+point2_id);
             if (point1 !== undefined && point2 !== undefined) {
                 if(plotly_data[event.curveNumber].visible !== true)
                     this.showRobotScenes([point1, point2], [], false, line_id, [], []);
@@ -911,20 +917,20 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
                 
             // find 9 clusters and use the first point in every cluster to represent the cluster
-            let ans = kmeans(data, 9, {});
-            let visited_cluster: Set<number> = new Set(); 
-            for (let i=0; i<ans.clusters.length; i++) {
-                if(!visited_cluster.has(ans.clusters[i])){
-                    let point = this.findPoints(data[i], points);
-                    if (point !== undefined) selectedPoints.push(point);
-                    visited_cluster.add(ans.clusters[i])
-                }
+            const clusterer = Clusterer.getInstance(data, 9);
+            const clusteredData = clusterer.getClusteredData(); 
+            for(const data of clusterer.Medoids){
+                let point = this.findPoints(data, points);
+                if(point !== undefined) selectedPoints.push(point);
             }
-            // const clusterer = Clusterer.getInstance(data, 9);
-            // //const clusteredData = clusterer.getClusteredData();  
-            // for(const data of clusterer.Medoids){
-            //     let point = this.findPoints(data, points);
-            //     if(point !== undefined) selectedPoints.push(point);
+            // let ans = kmeans(data, 9, {});
+            // let visited_cluster: Set<number> = new Set(); 
+            // for (let i=0; i<ans.clusters.length; i++) {
+            //     if(!visited_cluster.has(ans.clusters[i])){
+            //         let point = this.findPoints(data[i], points);
+            //         if (point !== undefined) selectedPoints.push(point);
+            //         visited_cluster.add(ans.clusters[i])
+            //     }
             // }
         } else{
             for(const point of points){
@@ -1018,7 +1024,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 let newSceneId = newID();
                 let staticRobotScene = new StaticRobotScene(robotSceneManager, newSceneId);
                 sceneIds.push(newSceneId);
-                this.selectedPointsMap.set(point.id(), newSceneId);
+                this.selectedPointsMap.set(point.id().toString(), newSceneId);
 
                 const [sceneId, robotName] = this.decomposeId(point.robotInfo());
                 let scene = robotSceneManager.robotSceneById(sceneId);
@@ -1160,7 +1166,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 x: [data.pointIn2D()[0], prevPoint.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], prevPoint.pointIn2D()[1]],
                 id: "gap#" + data.id() + "#" + prevPoint.id(),
-                name: "gap-" + gaps,
+                name: "gap " + distance.distanceIn2D().toFixed(2),
                 mode: "lines",
                 visible: "legendonly",
                 line: {
@@ -1255,7 +1261,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
                 id: "stretch#" + data.id() + "#" + neighbor.id(),
-                name: "stretch-" + stretches,
+                name: "stretch " + distance.distanceIn2D().toFixed(2),
                 mode: "lines",
                 visible: "legendonly",
                 line: {
@@ -1348,7 +1354,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
                 id: "false proximity#" + data.id() + "#" + neighbor.id(),
-                name: "false proximity-" + false_proximities,
+                name: "false proximity " + distance.distanceInHD().toFixed(2),
                 mode: "markers",
                 visible: "legendonly",
                 marker: {

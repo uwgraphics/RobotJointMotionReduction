@@ -487,7 +487,7 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                             { id: GRAPH_OPTIONS_TAB, },
                                             { id: QUATERNION_OPTIONS_TAB, },
                                             { id: UMAP_GRAPH_OPTIONS_TAB, },
-                                            { id: STATIC_ROBOT_SCENE_OPTIONS_TAB,},
+                                            // { id: STATIC_ROBOT_SCENE_OPTIONS_TAB,},
                                             // { id: GRAPH_SELECTION_TAB, },
                                             // { id: GRAPH_OPTION_TAB, },
                                             // { id: EDIT_ANIMATIONS_TAB, },

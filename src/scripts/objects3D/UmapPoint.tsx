@@ -1,22 +1,16 @@
 import { Id } from "../Id";
 
 export class Distances{
-    protected _id: string;
     
     protected _point1: UmapPoint; 
     protected _point2: UmapPoint; 
     protected _distanceInHD: number; // the distances in original high dimension
     protected _distanceIn2D: number; // the distances in UMAP 2D plot
-    constructor(id: string, point1: UmapPoint, point2: UmapPoint, distanceInHD: number, distanceIn2D: number) {
-        this._id = id;
+    constructor(point1: UmapPoint, point2: UmapPoint, distanceInHD: number, distanceIn2D: number) {
         this._point1 = point1;
         this._point2 = point2;
         this._distanceInHD = distanceInHD;
         this._distanceIn2D = distanceIn2D;
-    }
-
-    id(): string {
-        return this._id;
     }
 
     point1(): UmapPoint{
@@ -41,7 +35,8 @@ export class Distances{
  */
 
 export class UmapPoint {
-    protected _id: string;
+    static UmapPointCount: number = 0;
+    protected _id: number;
     protected _time: number; // the time frame of the corresponding robot pose
     protected _robotInfo: string; // the info of the corresponding robot pose in a format of sceneId#robotId
     
@@ -53,8 +48,8 @@ export class UmapPoint {
     protected _maxNeighborDistance: number; // the max distance to its neighbors
     protected _speed: number; // the robot joint "speed" of the segement between previous point and this point
     protected _speedRatio: number; // the relative speed with respect to the speed of the entire trace
-    constructor(id: string, pointInHD: number[], pointIn2D: number[]) {
-        this._id = id;
+    constructor(pointInHD: number[], pointIn2D: number[]) {
+        this._id = UmapPoint.UmapPointCount++;
         this._pointInHD = pointInHD;
         this._pointIn2D = pointIn2D;
         this._nneighborsInHD = new Map();
@@ -66,6 +61,11 @@ export class UmapPoint {
         this._maxNeighborDistance = 0;
         this._speed = 0;
         this._speedRatio = 0;
+    }
+
+    static resetCounter(){
+        console.log("reset umap point counter!");
+        UmapPoint.UmapPointCount = 0;
     }
 
     speedRatio(): number{
@@ -108,7 +108,7 @@ export class UmapPoint {
         this._robotInfo = id;
     }
 
-    id(): string {
+    id(): number {
         return this._id;
     }
 
@@ -126,7 +126,7 @@ export class UmapPoint {
 
     addneighborInHD(neighbor: UmapPoint, distanceHD: number, distance2D: number){
         if(neighbor.id() === this.id()) return;
-        let distance: Distances = new Distances(new Id().value(), this, neighbor, distanceHD, distance2D);
+        let distance: Distances = new Distances(this, neighbor, distanceHD, distance2D);
         this._nneighborsInHD.set(neighbor, distance);
         this.setMaxNeighborDistance(distance2D);
         this.setMaxNeighborDistance(distanceHD);
@@ -138,7 +138,7 @@ export class UmapPoint {
 
     addneighborIn2D(neighbor: UmapPoint, distanceHD: number, distance2D: number){
         if(neighbor.id() === this.id()) return;
-        let distance: Distances = new Distances(new Id().value(), this, neighbor, distanceHD, distance2D);
+        let distance: Distances = new Distances(this, neighbor, distanceHD, distance2D);
         this._nneighborsIn2D.set(neighbor, distance);
         this.setMaxNeighborDistance(distance2D);
         this.setMaxNeighborDistance(distanceHD);
@@ -149,7 +149,7 @@ export class UmapPoint {
     }
 
     setPrePoint(prevPoint: UmapPoint, distanceHD: number, distance2D: number){
-        let distance: Distances = new Distances(new Id().value(), this, prevPoint, distanceHD, distance2D);
+        let distance: Distances = new Distances(this, prevPoint, distanceHD, distance2D);
         this._prevPoint.set(prevPoint, distance);
     }
 
