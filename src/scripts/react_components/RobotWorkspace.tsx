@@ -1347,7 +1347,7 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                                     <div className="Rows">
                                         {rows.map(staticRobotScene => (
                                             <div className="Scene">
-                                                <label style={{backgroundColor: staticRobotScene.backgroundColor(), color: staticRobotScene === sceneManager.getCurrStaticRobotScene() ? "yellow" : "black"}}>{nameIdMap.get(staticRobotScene.id().value())}</label>
+                                                <label style={{backgroundColor: staticRobotScene.backgroundColor(), color: staticRobotScene === sceneManager.getCurrStaticRobotScene() ? "yellow" : "rgb(238, 238, 238)"}}>{nameIdMap.get(staticRobotScene.id().value())}</label>
                                                 <StaticRobotCanvas
                                                     key={staticRobotScene.id().value()}
                                                     allowSelecting={true}
