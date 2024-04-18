@@ -1147,8 +1147,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             id: "gapAll",
             name: "gapAll",
             mode: "lines",
+            showlegend: false,
             line: {
-                color: 'rgb(242, 243, 174)',
+                //color: 'rgb(242, 243, 174)',
+                color: 'rgb(255, 150, 150)',
                 width: 3,
             }
         });
