@@ -44,7 +44,8 @@ export class UmapGraph {
     protected _displayStretch: Boolean; // true if display the stetches (similar motion mapped to different places)
     protected _min2DStretchDis: number; // the min stetch distance in the 2D map
     protected _displayFalseProximity: Boolean; // true if display the false proximity
-    protected _minHighDGapDis: number; // the min gap distance in the original high dimension
+    protected _minHDFoldDis: number; // the min folds distance in the original high dimension
+    protected _max2DFoldDis: number; // the max folds distance in the 2D graph
     protected _randomSeed: number; // the random seed for the UMAP algo
     protected _showAllTraces: Boolean; // true if show all traces, otherwise hide them
     protected _UMAPType: umap_type;
@@ -112,7 +113,8 @@ export class UmapGraph {
         this._displayGap = new Boolean(false);
         this._min2DGapDis = 1;
         this._displayFalseProximity = new Boolean(false);
-        this._minHighDGapDis = 1;
+        this._minHDFoldDis = 1;
+        this._max2DFoldDis = 0.01;
         this._displayStretch = new Boolean(false);
         this._min2DStretchDis = 1;
         this._showAllTraces = new Boolean(true);
@@ -285,12 +287,20 @@ export class UmapGraph {
     }
 
 
-    minHighDGapDis(): number{
-        return this._minHighDGapDis;
+    minHDFoldDis(): number{
+        return this._minHDFoldDis;
     }
 
-    setMinHighDGapDis(dis: number) {
-        this._minHighDGapDis = dis;
+    setMinHDFoldDis(dis: number) {
+        this._minHDFoldDis = dis;
+    }
+
+    max2DFoldDis(): number{
+        return this._max2DFoldDis;
+    }
+
+    setMax2DFoldDis(dis: number) {
+        this._max2DFoldDis = dis;
     }
 
     displayFalseProximity(): Boolean{

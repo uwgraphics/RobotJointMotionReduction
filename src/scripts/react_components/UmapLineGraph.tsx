@@ -42,7 +42,8 @@ interface line_graph_props {
     displayStretch: Boolean,
     min2DStretchDis: number,
     displayFalseProximity: Boolean,
-    minHighDGapDis: number,
+    minHDFoldDis: number,
+    max2DFoldDis: number,
     showAllTraces: Boolean,
     backgroundPoints: UmapPoint[],
     neighborDistance: number,
@@ -137,10 +138,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             plotly_layout: {width: width, height: height, font: {color: "black"}, 
             plot_bgcolor:"white", paper_bgcolor:"white",
             yaxis: {
-                showgrid: false
+                showgrid: false,
+                zeroline: false,
               },
             xaxis: {
-                showgrid: false  
+                showgrid: false,
+                zeroline: false,
             }}, 
             plotly_frames: [], 
             plotly_config: {'scrollZoom': true},
@@ -191,10 +194,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     width: this.props.width, height: this.props.height, font: {color: "black"}, 
                     plot_bgcolor:"white", paper_bgcolor:"white",
                     yaxis: {
-                        showgrid: false
-                    },
+                        showgrid: false,
+                        zeroline: false,
+                      },
                     xaxis: {
-                        showgrid: false
+                        showgrid: false,
+                        zeroline: false,
                     }
                 },
             });
@@ -235,15 +240,15 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         if (prevProps.displayFalseProximity !== this.props.displayFalseProximity) {
             if(this.props.displayFalseProximity.valueOf()){
-                this.displayFalseProximity(0.1, this.props.minHighDGapDis);
+                this.displayFalseProximity(this.props.max2DFoldDis, this.props.minHDFoldDis);
             } else{
                 this.removeFalseProximity();
             }
         }
 
-        if (prevProps.minHighDGapDis !== this.props.minHighDGapDis) {
+        if (prevProps.minHDFoldDis !== this.props.minHDFoldDis || prevProps.max2DFoldDis !== this.props.max2DFoldDis) {
             if(this.props.displayFalseProximity.valueOf()){
-                this.displayFalseProximity(0.1, this.props.minHighDGapDis);
+                this.displayFalseProximity(this.props.max2DFoldDis, this.props.minHDFoldDis);
             }
         }
 
