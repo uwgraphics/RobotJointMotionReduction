@@ -132,8 +132,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             currDragItem: null,
             // umap_data: [],
             plotly_data: [], 
-            plotly_layout: {width: width, height: height, font: {color: "white"}, 
-            plot_bgcolor:"rgb(23, 24, 25)", paper_bgcolor:"rgb(23, 24, 25)",
+            // plotly_layout: {width: width, height: height, font: {color: "white"}, 
+            // plot_bgcolor:"rgb(23, 24, 25)", paper_bgcolor:"rgb(23, 24, 25)",
+            plotly_layout: {width: width, height: height, font: {color: "black"}, 
+            plot_bgcolor:"white", paper_bgcolor:"white",
             yaxis: {
                 showgrid: false
               },
@@ -184,8 +186,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if(windowChanged){
             this.setState({
                 plotly_layout: {
-                    width: this.props.width, height: this.props.height, font: { color: "white" },
-                    plot_bgcolor: "rgb(23, 24, 25)", paper_bgcolor: "rgb(23, 24, 25)",
+                    // width: this.props.width, height: this.props.height, font: { color: "white" },
+                    // plot_bgcolor: "rgb(23, 24, 25)", paper_bgcolor: "rgb(23, 24, 25)",
+                    width: this.props.width, height: this.props.height, font: {color: "black"}, 
+                    plot_bgcolor:"white", paper_bgcolor:"white",
                     yaxis: {
                         showgrid: false
                     },

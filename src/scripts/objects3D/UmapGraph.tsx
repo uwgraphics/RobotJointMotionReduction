@@ -90,7 +90,8 @@ export class UmapGraph {
         this._delete_line = delete_line;
 
         this._lineWidth = 1;
-        this._backgroundColor = "#171819"; //rgb(23, 24, 25)
+        this._backgroundColor = "white"; //rgb(23, 24, 25)
+        // this._backgroundColor = "#171819"; //rgb(23, 24, 25)
         this._axisColor = "#B7B7BD"; // rgb(183, 183, 189)
         if(backgroundColor !== undefined)
             this._backgroundColor = backgroundColor;
