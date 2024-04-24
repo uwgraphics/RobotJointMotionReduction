@@ -668,29 +668,33 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
             
         let selectedPoints: UmapPoint[] = [];
-        if (nneighbors_points.length > 8) {  
-            // find 9 clusters and use the first point in every cluster to represent the cluster
-            const clusterer = Clusterer.getInstance(nneighbors_points, 8);
-            const clusteredData = clusterer.getClusteredData(); 
-            for (const data of clusterer.Medoids) {
-                let point = this.findPoints(data, points);
-                if(point !== undefined) selectedPoints.push(point);
-            }
-            // let ans = kmeans(nneighbors_points, 8, {});
-            // let visited_cluster: Set<number> = new Set(); 
-            // for (let i=0; i<ans.clusters.length; i++) {
-            //     if(!visited_cluster.has(ans.clusters[i])){
-            //         let point = this.findPoints(nneighbors_points[i], points);
-            //         if (point !== undefined) selectedPoints.push(point);
-            //         visited_cluster.add(ans.clusters[i])
-            //     }
-            // }
-        } else{
-            for(const data of nneighbors_points){
-                let point = this.findPoints(data, points);
-                if(point !== undefined) selectedPoints.push(point);
+        let numSelectedPoint = this.props.graph.numSelectedPoint() - 1;
+        if(numSelectedPoint > 0){
+            if (nneighbors_points.length > numSelectedPoint) {  
+                // find 9 clusters and use the first point in every cluster to represent the cluster
+                const clusterer = Clusterer.getInstance(nneighbors_points, numSelectedPoint);
+                const clusteredData = clusterer.getClusteredData(); 
+                for (const data of clusterer.Medoids) {
+                    let point = this.findPoints(data, points);
+                    if(point !== undefined) selectedPoints.push(point);
+                }
+                // let ans = kmeans(nneighbors_points, 8, {});
+                // let visited_cluster: Set<number> = new Set(); 
+                // for (let i=0; i<ans.clusters.length; i++) {
+                //     if(!visited_cluster.has(ans.clusters[i])){
+                //         let point = this.findPoints(nneighbors_points[i], points);
+                //         if (point !== undefined) selectedPoints.push(point);
+                //         visited_cluster.add(ans.clusters[i])
+                //     }
+                // }
+            } else{
+                for(const data of nneighbors_points){
+                    let point = this.findPoints(data, points);
+                    if(point !== undefined) selectedPoints.push(point);
+                }
             }
         }
+        
         
         // console.log(selectedPoints);
         
@@ -913,7 +917,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         const {zoomedUMAPData, plotly_data} = this.state;
         let selectedPoints: UmapPoint[] = [];
-        if(points.length > 9){
+        let numSelectedPoint = this.props.graph.numSelectedPoint();
+        if(points.length > numSelectedPoint){
             let data: number[][] = [];
             for(const point of points){
                 let x = point.x, y = point.y;
@@ -922,7 +927,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
                 
             // find 9 clusters and use the first point in every cluster to represent the cluster
-            const clusterer = Clusterer.getInstance(data, 9);
+            const clusterer = Clusterer.getInstance(data, numSelectedPoint);
             const clusteredData = clusterer.getClusteredData(); 
             for(const data of clusterer.Medoids){
                 let point = this.findPoints(data, points);

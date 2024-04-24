@@ -61,6 +61,7 @@ export class UmapGraph {
     protected _selectedRobotPartName: string;
     protected _displayPointsInRegion: Boolean; // false if clear all points in selected region
     protected _displaySpeed: Boolean; // true if display the colored speed traces
+    protected _numSelectedPoint: number; // the number of selected points, default is 9
 
     //unique to parametric UMAP
     protected _lossWeight: number; // For Parametric UMAP, global_correlation_loss_weight: Whether to additionally train on correlation of global pairwise relationships (multidimensional scaling)
@@ -132,7 +133,16 @@ export class UmapGraph {
         this._displayNeighbors = true;
         this._displayPointsInRegion = true;
 
+        this._numSelectedPoint = 9;
         this._selectedRobotPartName =  "";
+    }
+
+    numSelectedPoint(): number{
+        return this._numSelectedPoint;
+    }
+
+    setNumSelectedPoint(num: number){
+        this._numSelectedPoint = num;
     }
 
     displaySpeed(): Boolean {

@@ -453,6 +453,17 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                 />
               </div>
 
+              <div>
+                <LabeledSlider
+                  label={"number of selected points: "}
+                  min={1}
+                  max={9}
+                  step={1}
+                  value={currSelectedGraph?.numSelectedPoint()}
+                  onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setNumSelectedPoint.bind(this.props.robotSceneManager.getCurrUmapGraph())}
+                />
+              </div>
+
               <Accordion allowZeroExpanded allowMultipleExpanded>
                 <AccordionItem>
                   <AccordionItemHeading>
