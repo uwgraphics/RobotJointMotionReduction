@@ -177,9 +177,9 @@ export class StaticRobotScene extends ThreeScene {
         this._traceSize = 1;
 
         this._worldFrameObject = new T.Object3D();
-        this.addWorldFrame();
+        // this.addWorldFrame();
 
-        this._backgroundColor = "#263238"; // default background color of the scene
+        this._backgroundColor = "#ffffff"; // default background color of the scene
         this._robotSceneManager = parentRobotSceneManager;
 
         if(parentRobotSceneManager !== undefined)
