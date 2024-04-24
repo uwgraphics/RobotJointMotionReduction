@@ -54,7 +54,7 @@ interface line_graph_props {
     onCurrChange: (newValue:number) => void,
     onStartChange: (newValue:number) => void,
     onEndChange: (newValue:number) => void,
-    addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean, selectedPointsNames: string[]) => void,
+    addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean, selectedPointsNames: string[], robotSceneIds: string[]) => void,
     removeTab: (tabId: string) => void,
 }
 
@@ -1050,7 +1050,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if (oneSceneId !== undefined) sceneId = oneSceneId;
         let staticRobotScene = new StaticRobotScene(robotSceneManager, sceneId);
         sceneIds.push(sceneId);
+        let selectedPointsMap: Map<string, UmapPoint[]> = new Map();
         for (const point of selectedPoints) {
+            if(!selectedPointsMap.has(point.robotInfo()))
+                selectedPointsMap.set(point.robotInfo(), []);
+            selectedPointsMap.get(point.robotInfo())?.push(point);
             const [sceneId, robotName] = this.decomposeId(point.robotInfo());
             let scene = robotSceneManager.robotSceneById(sceneId);
             if (scene === undefined) return;
@@ -1063,7 +1067,27 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
 
-
+        // create one scene for each robot
+        let robotScenes: Map<string, StaticRobotScene> = new Map();
+        let robotScenesIds = [];
+        for(const [id, points] of selectedPointsMap){
+            let newSceneId = id + "#" + newID(4);
+            let robotScene = new StaticRobotScene(robotSceneManager, newSceneId);
+            robotScenesIds.push(newSceneId);
+            robotScenes.set(id, robotScene);
+            const [sceneId, robotName] = this.decomposeId(id);
+            let scene = robotSceneManager.robotSceneById(sceneId);
+            if (scene === undefined) return;
+            if (!robotSceneManager.isActiveRobotScene(scene))
+                robotSceneManager.activateRobotScene(scene);
+            let robot = scene.getRobotByName(robotName);
+            if (robot !== undefined) {
+                for(const point of points){
+                    robotScene.addChildRobot(robot, point.time());
+                    robot.setOpacity(0.5);
+                }
+            }
+        }
         // add traces to the scene
         let selectedRobotPartName = graph.selectedRobotPartName();
         if ( selectedRobotPartName.length > 0) {
@@ -1101,16 +1125,29 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                     robotSceneManager.activateRobotScene(scene);
                 let robot = scene.getRobotByName(robotName);
                 if (robot !== undefined) {
+                    // create a new robotscene if the scene has not been created by selected points
+                    let robotScene = robotScenes.get(point.robotInfo());
+                    if(robotScene === undefined){
+                        let newSceneId = point.robotInfo() + "#" + newID(4);
+                        robotScene = new StaticRobotScene(robotSceneManager, newSceneId);
+                        robotScenesIds.push(newSceneId);
+                        robotScenes.set(point.robotInfo(), robotScene);
+                    }
+
                     let color = colorMap.get(point);
                     let selectedRobotJoint = robot.getArticuatedJointMap().get(selectedRobotPartName);
                     if(selectedRobotJoint !== undefined)
+                    {
                         staticRobotScene.addTraces(robot, trace, selectedRobotJoint, (color === undefined) ? "red" : color);
-                    else {
+                        robotScene.addTraces(robot, trace, selectedRobotJoint, (color === undefined) ? "red" : color);
+                    } else {
                         let selectedRobotLink = robot.linkMap().get(selectedRobotPartName)
-                        if(selectedRobotLink !== undefined)
+                        if(selectedRobotLink !== undefined) {
                             staticRobotScene.addTraces(robot, trace, selectedRobotLink, (color === undefined) ? "red" : color);
-                        else if(robot.name() === selectedRobotPartName) {
+                            robotScene.addTraces(robot, trace, selectedRobotLink, (color === undefined) ? "red" : color);
+                        } else if(robot.name() === selectedRobotPartName) {
                             staticRobotScene.addTraces(robot, trace, undefined, (color === undefined) ? "red" : color);
+                            robotScene.addTraces(robot, trace, undefined, (color === undefined) ? "red" : color);
                         }
                             
                     }
@@ -1118,7 +1155,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
 
-        this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes, selectedPointsNames);
+        this.props.addNewStaticRobotCanvasPanel(sceneIds, showNineScenes, selectedPointsNames, robotScenesIds);
         this.props.robotSceneManager.setShouldSyncViews(true);
     }
 
