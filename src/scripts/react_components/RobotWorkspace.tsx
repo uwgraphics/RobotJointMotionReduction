@@ -27,7 +27,6 @@ import { QuaternionSpaceLegendPanel } from "./panels/QuaternionSpaceLegendPanel"
 import { UmapGraphOptionPanel } from "./panels/UmapGraphOptionPanel";
 import { UmapGraph } from "../objects3D/UmapGraph";
 import { UmapGraphPanel } from "./panels/UmapGraphPanel";
-import { UmapLegendPanel } from "./panels/UmapLegendPanel";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { APP } from "../constants";
@@ -1207,33 +1206,6 @@ export class RobotWorkspace extends Component<robot_workspace_props, robot_works
                             return <QuaternionSpaceLegendPanel
                                     robotSceneManager={sceneManager}
                                     quaternionSpaceScene={quaternionSpaceScene}
-                            />;
-                        }}
-                    </WorkspaceContext.Consumer>
-                ),
-            };
-        }
-        else if(id.startsWith('UmapLegend'))
-        {
-            let [, key, graph_id] = id.split("&");
-            let graph = this.props.robotSceneManager.getUmapGraphById(graph_id);
-            if (graph === undefined) {
-                return;
-            }
-            return {
-                id: id,
-                closable: true,
-                cached: true,
-                title: "Legend of " + graph.name(),
-                content: (
-                    <WorkspaceContext.Consumer>
-                        {(ctx:ReactContextT) => {
-                            if (graph === undefined) {
-                                return;
-                            }
-                            return <UmapLegendPanel
-                                    graph={graph}
-                                    updateLegendState={this.updateLegendState.bind(this)}
                             />;
                         }}
                     </WorkspaceContext.Consumer>
