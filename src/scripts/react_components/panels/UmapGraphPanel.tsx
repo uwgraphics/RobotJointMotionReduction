@@ -323,7 +323,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             filteredJointData = filteredJointData.concat(backgroundPoints);
             // console.log(backgroundPoints)
             let embedding = await this.sendDataToPython(filteredJointData);
-            // let embedding = await this.convertJointDataToUmap(filteredJointData);
 
             // console.log(embedding)
 
