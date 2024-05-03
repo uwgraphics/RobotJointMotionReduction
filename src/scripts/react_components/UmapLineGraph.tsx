@@ -728,8 +728,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         plot_data.push({
             x: [point_selected.pointIn2D()[0]],
             y: [point_selected.pointIn2D()[1]],
-            name: "selected points - clicked",
-            id: "selected points#neighbors#" + point_selected.id(),
+            name: `${SELECTED_POINTS} - clicked`,
+            id: `${SELECTED_POINTS}#neighbors#` + point_selected.id(),
             showlegend: true,
             mode: "markers",
             marker: {
@@ -739,7 +739,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         });
         let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints, true);
         selectedPoints.push(point_selected)
-        selectedPointsNames.push("selected points - clicked");
+        selectedPointsNames.push(`${SELECTED_POINTS} - clicked`);
         
         if(selectedPoints.length > 4){  // make sure that the robot pose corresponding to the selected point is in the middle
             let temp = selectedPoints[4];
@@ -757,9 +757,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let plot_data = [];
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
-            if(!data.id.startsWith(N_NEIGHBORS) && !data.id.startsWith("selected points#neighbors"))
+            if(!data.id.startsWith(N_NEIGHBORS) && !data.id.startsWith(`${SELECTED_POINTS}#neighbors`))
                 plot_data.push(data);
-            else if(data.id.startsWith("selected points#neighbors")) this.selectedPointsCount--;
+            else if(data.id.startsWith(`${SELECTED_POINTS}#neighbors`)) this.selectedPointsCount--;
         }
         this.setState({
             plotly_data: plot_data,
@@ -781,7 +781,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 let point_selected = graph.getUmapPoint(point_selected_id);
                 if(point_selected === undefined) continue;
                 selectedPoints.add(point_selected);
-            } else if(data.id.startsWith("selected points#neighbors")){
+            } else if(data.id.startsWith(`${SELECTED_POINTS}#neighbors`)){
                 this.selectedPointsCount--;
                 continue;
             } 
@@ -803,8 +803,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     addSelectedPoints(plot_data: any[], selectedPoints: UmapPoint[], neighbors: boolean): string[] {
         let selectedPointsNames: string[] = [];
         for(const point of selectedPoints){
-            let pointName = "selected points " + this.selectedPointsCount;
-            let pointId = "selected points#" + (neighbors?"neighbors":"region") + "#" + point.id();
+            let pointName = `${SELECTED_POINTS} ` + this.selectedPointsCount;
+            let pointId = `${SELECTED_POINTS}#` + (neighbors?"neighbors":"region") + "#" + point.id();
             this.selectedPointsCount++;
             selectedPointsNames.push(pointName)
             plot_data.push({
@@ -871,7 +871,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if (index > -1) {
             graph.setDeleteLine(line_ids[index], line_colors[index]);
         } else{
-            if(line_id.startsWith("selected points")) this.selectedPointsCount--;
+            if(line_id.startsWith(SELECTED_POINTS)) this.selectedPointsCount--;
             // if (line_id.startsWith("nneighbor")) {
                 let plot_data = [];
                 for (let i = 0; i < plotly_data.length; i++) {
@@ -1015,9 +1015,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let plot_data = [];
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
-            if(!data.id.startsWith(POINTS_IN_REGION) && !data.id.startsWith("selected points#region"))
+            if(!data.id.startsWith(POINTS_IN_REGION) && !data.id.startsWith(`${SELECTED_POINTS}#region`))
                 plot_data.push(data);
-            else if(data.id.startsWith("selected points#region")) this.selectedPointsCount--;
+            else if(data.id.startsWith(`${SELECTED_POINTS}#region`)) this.selectedPointsCount--;
         }
         this.setState({
             plotly_data: plot_data,
