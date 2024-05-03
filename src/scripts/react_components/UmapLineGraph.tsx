@@ -1195,8 +1195,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         plot_data.push({
             x: gap_x,
             y: gap_y,
-            id: "gapAll",
-            name: "gapAll",
+            id: `${GAP}All`,
+            name: `${GAP}All`,
             mode: "lines",
             showlegend: false,
             line: {
@@ -1223,8 +1223,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             plot_data.push({
                 x: [data.pointIn2D()[0], prevPoint.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], prevPoint.pointIn2D()[1]],
-                id: "gap#" + data.id() + "#" + prevPoint.id(),
-                name: "Gap " + distance.distanceIn2D().toFixed(2),
+                id: `${GAP}#` + data.id() + "#" + prevPoint.id(),
+                name: `${GAP} ` + distance.distanceIn2D().toFixed(2),
                 mode: "lines",
                 visible: "legendonly",
                 line: {
@@ -1256,7 +1256,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
             let id = data.id as string;
-            if(id.startsWith("gap")) continue;
+            if(id.startsWith(GAP)) continue;
             plot_data.push(data);
         }
 
