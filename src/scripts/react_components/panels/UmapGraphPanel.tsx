@@ -263,25 +263,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             if (Math.abs(d1[i] - d2[i]) > 0.0001) return false;
         return true;
     }
-
-    /**
-     * filter the umap data based on joint data
-     * make sure that the umapdata is the same if jointdata is the same
-     * @param jointData 
-     * @param umapData 
-     * @returns 
-     */
-    filterUmapData(jointData: number[][], umapData: number[][]): number[][]
-    {
-        for(let i=1; i<jointData.length; i++)
-        {
-            if(this.compareJointData(jointData[i-1], jointData[i]))
-            {
-                umapData[i] = umapData[i-1];
-            }
-        }
-        return umapData;
-    }
     
     /**
      * filter the joint data, eleminate duplicates
