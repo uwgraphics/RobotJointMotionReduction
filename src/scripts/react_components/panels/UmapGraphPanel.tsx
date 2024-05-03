@@ -320,7 +320,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             let backgroundPointsCount = Math.floor(filteredJointData.length * this.props.graph.backgroundPointsRatio());
             let backgroundPoints = generateRandomPoints(backgroundPointsCount, filteredJointData[0].length, 
             this.props.graph.backgroundPointsMax(), this.props.graph.backgroundPointsMin());
-            console.log(backgroundPoints)
             filteredJointData = filteredJointData.concat(backgroundPoints);
             // console.log(backgroundPoints)
             let embedding = await this.sendDataToPython(filteredJointData);
