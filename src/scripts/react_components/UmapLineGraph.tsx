@@ -188,7 +188,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         if (prevProps.displayGap !== this.props.displayGap) {
             if(this.props.displayGap.valueOf()){
-                this.displayGaps(0.1, this.props.min2DGapDis);
+                this.displayGaps(this.props.min2DGapDis);
             } else{
                 this.removeGaps();
             }
@@ -196,7 +196,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         if (prevProps.min2DGapDis !== this.props.min2DGapDis) {
             if(this.props.displayGap.valueOf()){
-                this.displayGaps(0.1, this.props.min2DGapDis);
+                this.displayGaps(this.props.min2DGapDis);
             }
                 
         }
@@ -1113,7 +1113,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * but their distance in 2D is greater than min_dis
      * @param min_dis 
      */
-    displayGaps(max_dis_HD: number, min_dis_2D: number){
+    displayGaps(min_dis_2D: number){
         const { plotly_data } = this.state;
 
         let plot_data = [];
