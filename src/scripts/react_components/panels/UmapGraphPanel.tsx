@@ -225,54 +225,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         return umapData;
     };
 
-    // async convertJointDataToUmap(jointData: number[][]): Promise<umap_data_entry[]>
-    // {
-    //     APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "UMAP" });
-    //     //await Promise.all([]);
-    //     const {graph} = this.props;
-    //     let mt = new MersenneTwister(this.props.graph.randomSeed());
-    //     const umap = new UMAP({nNeighbors: graph.nNeighbors(), minDist: graph.minDis(), spread: graph.spread(), random: mt.random.bind(mt)});
-
-    //     // for (let i = 0; i < 1000; i++) {
-    //     //     let a = Array(jointData[0].length).fill(Math.random() * Math.PI * 2 - Math.PI);
-    //     //     jointData.push(a);
-    //     // }
-        
-    //     //const embedding = umap.fit(jointData);
-    //     let umapData: umap_data_entry[] = [];
-    //     const embedding = await umap.fitAsync(jointData, epochNumber => {
-    //         // check progress and give user feedback, or return `false` to stop
-    //       });
-
-    //     const {knnIndices, knnDistances} = nearestNeighbors(jointData, graph.nNeighbors());
-    //     let nneighbors: number[][][] = [];
-    //     for(let i=0; i<knnIndices.length; i++){
-    //         nneighbors[i] = [];
-    //         for(let j=0; j<knnIndices[i].length; j++){
-    //             let index: number = knnIndices[i][j];
-    //             nneighbors[i].push(embedding[index])
-    //         }
-    //     }
-
-    //     const {knnIndices:knnIndices_2d, knnDistances: knnDistances_2d} = nearestNeighbors(embedding, graph.nNeighbors());
-    //     let nneighbors_2d: number[][][] = [];
-    //     for(let i=0; i<knnIndices_2d.length; i++){
-    //         nneighbors_2d[i] = [];
-    //         for(let j=0; j<knnIndices_2d[i].length; j++){
-    //             let index: number = knnIndices_2d[i][j];
-    //             nneighbors_2d[i].push(embedding[index])
-    //         }
-    //     }
-
-    //     for(let i=0; i<embedding.length; i++){
-    //         umapData.push({x: embedding[i][0], y: embedding[i][1], nneighbors: nneighbors[i], nneighbors_2d: nneighbors_2d[i], point: jointData[i]});
-    //     }
-    //     // console.log(nneighbors);
-    //     APP.setPopupHelpPage({ page: PopupHelpPage.LoadingSuccess, type: "UMAP"});
-    //     return umapData;
-    // }
-   
-
     /**
      * given the eventName (line id), generate the line names that will be shown in the legend
      * @param eventName 
