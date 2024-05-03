@@ -365,6 +365,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 robotIndex++;
             }
 
+            // calculte the relative speed
             let max_speed = 0, min_speed = Number.MAX_VALUE;
             for(const trace of umapData){
                 for (let i = 1; i < trace.length; i++) {
@@ -373,7 +374,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                     if (speed > max_speed) max_speed = speed;
                 }
             }
-            
             if (max_speed > min_speed) {
                 for(const trace of umapData){
                     for (let i = 1; i < trace.length; i++) {
