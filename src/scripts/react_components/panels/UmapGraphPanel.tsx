@@ -336,6 +336,13 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
 
                 let j = 0;
                 let filterdUmapData: UmapPoint[] = [];
+                /**
+                 * restore data because the original data is filterd
+                 * simply assign the value of previous point to this point
+                 * This is done by comparing filterdTimes array and times array
+                 * i.e. if filteredTimes = [0, 2, 3] and times = [0, 1, 2, 3]
+                 * it means point at time 1 should be the same as the point at time 0
+                 */
                 for (let i = 0; i < times.length; i++) {
                     if (j+1 < filteredTimes[robotIndex].length && times[i] >= filteredTimes[robotIndex][j+1]) {
                         j++;
