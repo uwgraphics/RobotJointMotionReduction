@@ -527,44 +527,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             });
     }
 
-    
-    /**
-     * Handle dragging current time(red line on graph)
-     * @param newValue 
-     */
-    onCurrTimeChange(newValue:number) {
-        if(newValue <= this.props.robotSceneManager.currEndTime() && newValue >= this.props.robotSceneManager.currStartTime()){
-            this.props.robotSceneManager.setCurrTime(newValue);
-        }
-    }
-
-    /**
-     * Handle dragging start time(left edge of yellow rectangle on graph)
-     * @param newValue 
-     */
-    onStartTimeChange(newValue:number) {
-        if(this.props.robotSceneManager.currTime()<newValue){
-            this.props.robotSceneManager.setCurrTime(newValue);
-        }
-        if(this.props.robotSceneManager.currEndTime()>=newValue){
-            this.props.robotSceneManager.setCurrStartTime(newValue);
-        }
-    }
-
-    /**
-     * Handle dragging end tiem(right edge of yellow rectangle on graph)
-     * @param newValue 
-     */
-    onEndTimeChange(newValue:number) {
-        // log("in onEndTimeChange");
-        if(this.props.robotSceneManager.currTime()>newValue){
-            this.props.robotSceneManager.setCurrTime(newValue);
-        }
-        if(this.props.robotSceneManager.currStartTime()<=newValue){
-            this.props.robotSceneManager.setCurrEndTime(newValue);
-        }
-    }
-
     dataSize(): number{
         const { currRobots} = this.state;
         let size = 0;
