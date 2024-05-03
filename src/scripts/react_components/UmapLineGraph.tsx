@@ -157,7 +157,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         };
     }
     componentDidMount(): void {
-        
+
     }
     componentDidUpdate(prevProps:line_graph_props) {
 
@@ -291,6 +291,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             });
         }
 
+        /**
+         * if you want see the current points on the graph when playing the motion,
+         * uncomment this part and the part in calculateData function. 
+         * However, it does not work when there is a lot of data.
+         * This is because Plotly tries to do a full redraw when it updates.
+         */
         // if(currTimeChange){
         //     this.drawCurrentPoints();
         // }
@@ -478,6 +484,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         });
 
+        /**
+         * if you want see the current points on the graph when playing the motion,
+         * uncomment this part and the part in ComponentDidUpdate. 
+         * However, it does not work when there is a lot of data.
+         * This is because Plotly tries to do a full redraw when it updates.
+         */
         // for(let i=0; i<umapData.length; i++){
         //     let currTimeIndex = this.getCurrTimeIndex(times[i], currTime);
         //     let currPoint = umapData[i][currTimeIndex];
