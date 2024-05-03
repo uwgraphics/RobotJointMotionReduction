@@ -581,6 +581,10 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
     }
 
+    /**
+     * prevent the click event from propagation that causes bugs when clicking on points
+     * @param event 
+     */
     onPanelClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>){
         if(this.click_on_point) event.stopPropagation();
         this.click_on_point = false;
