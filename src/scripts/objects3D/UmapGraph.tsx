@@ -115,7 +115,7 @@ export class UmapGraph {
         this._min2DGapDis = 1;
         this._displayFalseProximity = new Boolean(false);
         this._minHDFoldDis = 1;
-        this._max2DFoldDis = 0.01;
+        this._max2DFoldDis = 0.1;
         this._displayStretch = new Boolean(false);
         this._min2DStretchDis = 1;
         this._showAllTraces = new Boolean(true);
