@@ -445,7 +445,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         x: x,
                         y: y,
                         name: line_names[i],
-                        id: "speed#" + j + "#" + line_ids[i],
+                        id: `${SPEED}#` + j + "#" + line_ids[i],
                         showlegend: showlegend,
                         legendgroup: line_names[i],
                         mode: mode,
@@ -582,7 +582,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 return;
             }
             point_idx = event.points[i].pointIndex;
-            if(line_id.startsWith("speed")){
+            if(line_id.startsWith(SPEED)){
                 let [, index, curve_id, robot_name] = line_id.split("#");
                 curve_id = curve_id + "#" + robot_name;
                 let index_num = parseInt(index);
@@ -858,7 +858,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const { line_ids, line_colors, graph } = this.props;
         const { plotly_data } = this.state;
         let line_id: string = plotly_data[event.curveNumber].id;
-        if(line_id.startsWith("speed")){
+        if(line_id.startsWith(SPEED)){
             let [, index, curve_id, robot_name] = line_id.split("#");
             line_id = curve_id + "#" + robot_name;
         }
@@ -901,7 +901,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 && typeof point.x === "number" && typeof point.y === "number"){
                     let line_id = plotly_data[point.curveNumber].id;
                     let point_idx = point.pointIndex;
-                    if(line_id.startsWith("speed")){
+                    if(line_id.startsWith(SPEED)){
                         let [, index, curve_id, robot_name] = line_id.split("#");
                         line_id = curve_id + "#" + robot_name;
                         point_idx = parseInt(index);
@@ -955,7 +955,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             for(const point of points){
                 let line_id = plotly_data[point.curveNumber].id;
                 let point_idx = point.pointIndex;
-                if(line_id.startsWith("speed")){
+                if(line_id.startsWith(SPEED)){
                     let [, index, curve_id, robot_name] = line_id.split("#");
                     line_id = curve_id + "#" + robot_name;
                     point_idx = parseInt(index);
@@ -993,7 +993,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(const point of points){
             let line_id = plotly_data[point.curveNumber].id;
             let point_idx = point.pointIndex;
-            if (line_id.startsWith("speed")) {
+            if (line_id.startsWith(SPEED)) {
                 let [, index, curve_id, robot_name] = line_id.split("#");
                 line_id = curve_id + "#" + robot_name;
                 point_idx = parseInt(index);
