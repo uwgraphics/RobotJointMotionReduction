@@ -96,6 +96,15 @@ interface PointInfo {
     curveNumber: number, 
     pointIndex: number,
 }
+
+const GAP = "gap";
+const FOLD = "fold";
+const BACKGROUND_POINTS = "backgroundPoints";
+const POINTS_IN_REGION = "points in region";
+const N_NEIGHBORS = "nneighbors";
+const SELECTED_POINTS = "selected points";
+const SPEED = "speed";
+const STRETCH = "stretch";
 export class UmapLineGraph extends Component<line_graph_props, line_graph_state> {
     protected _graphDiv: React.RefObject<HTMLDivElement>;
     protected click_on_point: boolean; // true if the onplotlyclick function is called, stop event from propogating
@@ -275,11 +284,11 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             let plot_data = [];
             let mode = (this.props.showLines.valueOf()) ? 'lines+markers' : 'markers';
             for (const data of this.state.plotly_data) {
-                if(data.id.startsWith("nneighbor") || data.id.startsWith("gap") || data.id.startsWith("stretch") 
-                || data.id.startsWith("false proximity") || data.id.startsWith("backgroundPoints") 
-                || data.id.startsWith("selected points")){
+                if(data.id.startsWith(N_NEIGHBORS) || data.id.startsWith(GAP) || data.id.startsWith(STRETCH) 
+                || data.id.startsWith(FOLD) || data.id.startsWith(BACKGROUND_POINTS) 
+                || data.id.startsWith(SELECTED_POINTS)){
                     plot_data.push(data);
-                } else if(data.id.startsWith("speed")){
+                } else if(data.id.startsWith(SPEED)){
                     plot_data.push({
                         x: data.x,
                         y: data.y,
@@ -432,7 +441,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                         x: x,
                         y: y,
                         name: line_names[i],
-                        id: "speed#" + j + "#" + line_ids[i],
+                        id: `${SPEED}#` + j + "#" + line_ids[i],
                         showlegend: showlegend,
                         legendgroup: line_names[i],
                         mode: mode,
@@ -485,8 +494,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         plot_data.push({
             x: x,
             y: y,
-            name: "backgroundPoints",
-            id: "backgroundPoints",
+            name: BACKGROUND_POINTS,
+            id: BACKGROUND_POINTS,
             visible: "legendonly",
             mode: "markers",
             marker: {
@@ -546,20 +555,20 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for (var i = 0; i < event.points.length; i++) {
             line_idx = event.points[i].curveNumber;
             let line_id: string = plotly_data[line_idx].id;
-            if(line_id.startsWith("gap") || line_id.startsWith("false proximity") 
-            || line_id.startsWith("backgroundPoints") || line_id.startsWith("points in region")) continue;
-            if(line_id.startsWith("nneighbor")) {
+            if(line_id.startsWith(GAP) || line_id.startsWith(FOLD) 
+            || line_id.startsWith(BACKGROUND_POINTS) || line_id.startsWith(POINTS_IN_REGION)) continue;
+            if(line_id.startsWith(N_NEIGHBORS)) {
                 let [, point_id] = line_id.split("#");
 
                 let point = this.props.graph.getUmapPoint(+point_id);
                 if(point === undefined) continue;
-                let neighbor = this.findNeighborPoints(point, [event.points[i].x, event.points[i].y], line_id.startsWith("nneighbors-before reduction"));
+                let neighbor = this.findNeighborPoints(point, [event.points[i].x, event.points[i].y], line_id.startsWith(`${N_NEIGHBORS}-before reduction`));
                 if(neighbor !== undefined) {
                     this.props.robotSceneManager.setCurrTime(neighbor.time());
                     return;
                 }
             }
-            if(line_id.startsWith("selected points")){
+            if(line_id.startsWith(SELECTED_POINTS)){
                 let [, , point_id] = line_id.split("#");
                 let sceneId = this.selectedPointsMap.get(point_id);
                 if(sceneId === undefined) continue;
@@ -569,7 +578,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 return;
             }
             point_idx = event.points[i].pointIndex;
-            if(line_id.startsWith("speed")){
+            if(line_id.startsWith(SPEED)){
                 let [, index, curve_id, robot_name] = line_id.split("#");
                 curve_id = curve_id + "#" + robot_name;
                 let index_num = parseInt(index);
@@ -610,14 +619,14 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             point_y = event.points[i].y as number;
         }
         let line_id: string = plotly_data[line_idx].id;
-        if(line_id.startsWith("speed")){
+        if(line_id.startsWith(SPEED)){
             let [, index, curve_id, robot_name] = line_id.split("#");
             line_id = curve_id + "#" + robot_name;
             point_idx = parseInt(index);
         }
-        if(line_id.startsWith("nneighbor") || line_id.startsWith("gap") 
-        || line_id.startsWith("false proximity") || line_id.startsWith("selected points")
-        || line_id.startsWith("points in region") || line_id.startsWith("speed")) return;
+        if(line_id.startsWith(N_NEIGHBORS) || line_id.startsWith(GAP) 
+        || line_id.startsWith(FOLD) || line_id.startsWith(SELECTED_POINTS)
+        || line_id.startsWith(POINTS_IN_REGION) || line_id.startsWith(SPEED)) return;
 
         let plot_data = [], points: PointInfo[] = [];
         for(let i=0; i<plotly_data.length; i++){
@@ -630,7 +639,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         let trace = zoomedUMAPData.get(line_id);
         if(trace === undefined) {
-            if(line_id.startsWith("backgroundPoints")){
+            if(line_id.startsWith(BACKGROUND_POINTS)){
                 trace = this.props.backgroundPoints;
             } else return;
         };
@@ -648,12 +657,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
     displayNeighbors(plot_data: any[], point_selected: UmapPoint, points: PointInfo[]){
         let nneighbors = point_selected.nneighborsInHD();
-        let nneighbors_id = "nneighbors-before reduction#" + point_selected.id(), nneighbors_name = "nneighbors"+ "<br>" + "before reduction";
+        let nneighbors_id = `${N_NEIGHBORS}-before reduction#` + point_selected.id(), nneighbors_name = `${N_NEIGHBORS}`+ "<br>" + "before reduction";
         if(!this.props.graph.nneighborMode().valueOf()){
             // show nneighbors after reduction
             nneighbors = point_selected.nneighborsIn2D();
-            nneighbors_id = "nneighbors-after reduction#" + point_selected.id();
-            nneighbors_name = "nneighbors"+ "<br>" + "after reduction";
+            nneighbors_id = `${N_NEIGHBORS}-after reduction#` + point_selected.id();
+            nneighbors_name = `${N_NEIGHBORS}`+ "<br>" + "after reduction";
         }
         let nneighbors_points: number[][] = [];
         // console.log(this.props.graph.neighborDistance())
@@ -711,8 +720,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         plot_data.push({
             x: [point_selected.pointIn2D()[0]],
             y: [point_selected.pointIn2D()[1]],
-            name: "selected points - clicked",
-            id: "selected points#neighbors#" + point_selected.id(),
+            name: `${SELECTED_POINTS} - clicked`,
+            id: `${SELECTED_POINTS}#neighbors#` + point_selected.id(),
             showlegend: true,
             mode: "markers",
             marker: {
@@ -722,7 +731,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         });
         let selectedPointsNames = this.addSelectedPoints(plot_data, selectedPoints, true);
         selectedPoints.push(point_selected)
-        selectedPointsNames.push("selected points - clicked");
+        selectedPointsNames.push(`${SELECTED_POINTS} - clicked`);
         
         if(selectedPoints.length > 4){  // make sure that the robot pose corresponding to the selected point is in the middle
             let temp = selectedPoints[4];
@@ -740,9 +749,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let plot_data = [];
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
-            if(!data.id.startsWith("nneighbors") && !data.id.startsWith("selected points#neighbors"))
+            if(!data.id.startsWith(N_NEIGHBORS) && !data.id.startsWith(`${SELECTED_POINTS}#neighbors`))
                 plot_data.push(data);
-            else if(data.id.startsWith("selected points#neighbors")) this.selectedPointsCount--;
+            else if(data.id.startsWith(`${SELECTED_POINTS}#neighbors`)) this.selectedPointsCount--;
         }
         this.setState({
             plotly_data: plot_data,
@@ -759,12 +768,12 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             for(let j=0; j<data.x.length; j++){
                 points.push({x: data.x[j], y: data.y[j], curveNumber: i, pointIndex: j, });
             }
-            if(data.id.startsWith("nneighbors")){
+            if(data.id.startsWith(N_NEIGHBORS)){
                 let [, point_selected_id] = data.id.split("#");
                 let point_selected = graph.getUmapPoint(point_selected_id);
                 if(point_selected === undefined) continue;
                 selectedPoints.add(point_selected);
-            } else if(data.id.startsWith("selected points#neighbors")){
+            } else if(data.id.startsWith(`${SELECTED_POINTS}#neighbors`)){
                 this.selectedPointsCount--;
                 continue;
             } 
@@ -786,8 +795,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     addSelectedPoints(plot_data: any[], selectedPoints: UmapPoint[], neighbors: boolean): string[] {
         let selectedPointsNames: string[] = [];
         for(const point of selectedPoints){
-            let pointName = "selected points " + this.selectedPointsCount;
-            let pointId = "selected points#" + (neighbors?"neighbors":"region") + "#" + point.id();
+            let pointName = `${SELECTED_POINTS} ` + this.selectedPointsCount;
+            let pointId = `${SELECTED_POINTS}#` + (neighbors?"neighbors":"region") + "#" + point.id();
             this.selectedPointsCount++;
             selectedPointsNames.push(pointName)
             plot_data.push({
@@ -816,7 +825,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const { graph, robotSceneManager } = this.props;
         const { plotly_data } = this.state;
         let line_id: string = plotly_data[event.curveNumber].id;
-        if((line_id.startsWith("gap") || line_id.startsWith("false proximity")) || line_id.startsWith("stretch")){
+        if((line_id.startsWith(GAP) || line_id.startsWith(FOLD)) || line_id.startsWith(STRETCH)){
             const [, point1_id, point2_id] = line_id.split("#");
             let point1 = graph.getUmapPoint(+point1_id);
             let point2 = graph.getUmapPoint(+point2_id);
@@ -841,7 +850,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         const { line_ids, line_colors, graph } = this.props;
         const { plotly_data } = this.state;
         let line_id: string = plotly_data[event.curveNumber].id;
-        if(line_id.startsWith("speed")){
+        if(line_id.startsWith(SPEED)){
             let [, index, curve_id, robot_name] = line_id.split("#");
             line_id = curve_id + "#" + robot_name;
         }
@@ -854,7 +863,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if (index > -1) {
             graph.setDeleteLine(line_ids[index], line_colors[index]);
         } else{
-            if(line_id.startsWith("selected points")) this.selectedPointsCount--;
+            if(line_id.startsWith(SELECTED_POINTS)) this.selectedPointsCount--;
             // if (line_id.startsWith("nneighbor")) {
                 let plot_data = [];
                 for (let i = 0; i < plotly_data.length; i++) {
@@ -884,7 +893,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 && typeof point.x === "number" && typeof point.y === "number"){
                     let line_id = plotly_data[point.curveNumber].id;
                     let point_idx = point.pointIndex;
-                    if(line_id.startsWith("speed")){
+                    if(line_id.startsWith(SPEED)){
                         let [, index, curve_id, robot_name] = line_id.split("#");
                         line_id = curve_id + "#" + robot_name;
                         point_idx = parseInt(index);
@@ -937,7 +946,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             for(const point of points){
                 let line_id = plotly_data[point.curveNumber].id;
                 let point_idx = point.pointIndex;
-                if(line_id.startsWith("speed")){
+                if(line_id.startsWith(SPEED)){
                     let [, index, curve_id, robot_name] = line_id.split("#");
                     line_id = curve_id + "#" + robot_name;
                     point_idx = parseInt(index);
@@ -960,8 +969,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         plot_data.push({
             x: x,
             y: y,
-            name: "points in region",
-            id: "points in region",
+            name: POINTS_IN_REGION,
+            id: POINTS_IN_REGION,
             showlegend: true,
             mode: "markers",
             marker: {
@@ -975,7 +984,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(const point of points){
             let line_id = plotly_data[point.curveNumber].id;
             let point_idx = point.pointIndex;
-            if (line_id.startsWith("speed")) {
+            if (line_id.startsWith(SPEED)) {
                 let [, index, curve_id, robot_name] = line_id.split("#");
                 line_id = curve_id + "#" + robot_name;
                 point_idx = parseInt(index);
@@ -997,9 +1006,9 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         let plot_data = [];
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
-            if(!data.id.startsWith("points in region") && !data.id.startsWith("selected points#region"))
+            if(!data.id.startsWith(POINTS_IN_REGION) && !data.id.startsWith(`${SELECTED_POINTS}#region`))
                 plot_data.push(data);
-            else if(data.id.startsWith("selected points#region")) this.selectedPointsCount--;
+            else if(data.id.startsWith(`${SELECTED_POINTS}#region`)) this.selectedPointsCount--;
         }
         this.setState({
             plotly_data: plot_data,
@@ -1140,8 +1149,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         plot_data.push({
             x: gap_x,
             y: gap_y,
-            id: "gapAll",
-            name: "gapAll",
+            id: `${GAP}All`,
+            name: `${GAP}All`,
             mode: "lines",
             line: {
                 color: 'rgb(242, 243, 174)',
@@ -1166,8 +1175,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             plot_data.push({
                 x: [data.pointIn2D()[0], prevPoint.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], prevPoint.pointIn2D()[1]],
-                id: "gap#" + data.id() + "#" + prevPoint.id(),
-                name: "gap " + distance.distanceIn2D().toFixed(2),
+                id: `${GAP}#` + data.id() + "#" + prevPoint.id(),
+                name: `${GAP} ` + distance.distanceIn2D().toFixed(2),
                 mode: "lines",
                 visible: "legendonly",
                 line: {
@@ -1199,7 +1208,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
             let id = data.id as string;
-            if(id.startsWith("gap")) continue;
+            if(id.startsWith(GAP)) continue;
             plot_data.push(data);
         }
 
@@ -1234,8 +1243,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         plot_data.push({
             x: stretch_x,
             y: stretch_y,
-            id: "stretchAll",
-            name: "stretchAll",
+            id: `${STRETCH}All`,
+            name: `${STRETCH}All`,
             mode: "lines",
             line: {
                 color: 'rgb(152, 203, 104)',
@@ -1261,8 +1270,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             plot_data.push({
                 x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
-                id: "stretch#" + data.id() + "#" + neighbor.id(),
-                name: "stretch " + distance.distanceIn2D().toFixed(2),
+                id: `${STRETCH}#` + data.id() + "#" + neighbor.id(),
+                name: `${STRETCH} ` + distance.distanceIn2D().toFixed(2),
                 mode: "lines",
                 visible: "legendonly",
                 line: {
@@ -1293,7 +1302,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
             let id = data.id as string;
-            if(id.startsWith("stretch")) continue;
+            if(id.startsWith(STRETCH)) continue;
             plot_data.push(data);
         }
 
@@ -1327,8 +1336,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         plot_data.push({
             x: fp_x,
             y: fp_y,
-            id: "false proximityAll",
-            name: "false proximityAll",
+            id: `${FOLD}All`,
+            name: `${FOLD}All`,
             mode: "markers",
             line: {
                 color: 'rgb(193, 131, 159)',
@@ -1354,8 +1363,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             plot_data.push({
                 x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
-                id: "false proximity#" + data.id() + "#" + neighbor.id(),
-                name: "false proximity " + distance.distanceInHD().toFixed(2),
+                id: `${FOLD}#` + data.id() + "#" + neighbor.id(),
+                name: `${FOLD} ` + distance.distanceInHD().toFixed(2),
                 mode: "markers",
                 visible: "legendonly",
                 marker: {
@@ -1386,7 +1395,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
             let id = data.id as string;
-            if(id.startsWith("false proximity")) continue;
+            if(id.startsWith(FOLD)) continue;
             plot_data.push(data);
         }
 
@@ -1406,7 +1415,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
             let id = data.id as string;
-            if(id.startsWith("gap") || id.startsWith("false proximity")){
+            if(id.startsWith(GAP) || id.startsWith(FOLD)){
                 plot_data.push(data);
                 continue;
             }
