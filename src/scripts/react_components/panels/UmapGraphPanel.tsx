@@ -238,17 +238,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         return scene?.name() + "_" + robotName;
     }
 
-    decomposeUmapData(umapData: number[][]): [number[], number[]]
-    {
-        let x = [], y = [];
-        for(let i=0; i<umapData.length; i++)
-        {
-            x.push(umapData[i][0]);
-            y.push(umapData[i][1]);
-        }
-        return [x, y];
-    }
-
     /**
      * compare two joint data vectors
      * @param d1 
