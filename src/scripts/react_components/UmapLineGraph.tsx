@@ -105,6 +105,7 @@ const N_NEIGHBORS = "nneighbors";
 const SELECTED_POINTS = "selected points";
 const SPEED = "speed";
 const STRETCH = "stretch";
+
 export class UmapLineGraph extends Component<line_graph_props, line_graph_state> {
     protected _graphDiv: React.RefObject<HTMLDivElement>;
     protected click_on_point: boolean; // true if the onplotlyclick function is called, stop event from propogating
@@ -250,7 +251,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         }
 
         if (prevProps.displaySpeed !== this.props.displaySpeed) {
-            this.calculateData(this.props.displaySpeed.valueOf());
+            this.drawTraces(this.props.displaySpeed.valueOf());
         }
 
 
@@ -293,7 +294,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
 
         /**
          * if you want see the current points on the graph when playing the motion,
-         * uncomment this part and the part in calculateData function. 
+         * uncomment this part and the part in drawTraces function. 
          * However, it does not work when there is a lot of data.
          * This is because Plotly tries to do a full redraw when it updates.
          */
@@ -304,7 +305,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         if (prevProps.times !== this.props.times || prevProps.umapData !== this.props.umapData ||
             colorChange || lineWidthChange || axisColorChange ||
             boundChangeInZoom) {
-            this.calculateData(this.props.displaySpeed.valueOf());
+            // redraw the traces
+            this.drawTraces(this.props.displaySpeed.valueOf());
         }
         
     }
@@ -387,7 +389,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     /**
      * draw the traces under the current time frames
      */
-    calculateData(displaySpeed: boolean){
+    drawTraces(displaySpeed: boolean){
         // return 1;
         const {times,
             startTime, endTime, currTime, 
