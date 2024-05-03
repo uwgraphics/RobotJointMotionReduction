@@ -1291,8 +1291,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         plot_data.push({
             x: stretch_x,
             y: stretch_y,
-            id: "stretchAll",
-            name: "stretchAll",
+            id: `${STRETCH}All`,
+            name: `${STRETCH}All`,
             mode: "lines",
             line: {
                 color: 'rgb(152, 203, 104)',
@@ -1318,8 +1318,8 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             plot_data.push({
                 x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
-                id: "stretch#" + data.id() + "#" + neighbor.id(),
-                name: "stretch " + distance.distanceIn2D().toFixed(2),
+                id: `${STRETCH}#` + data.id() + "#" + neighbor.id(),
+                name: `${STRETCH} ` + distance.distanceIn2D().toFixed(2),
                 mode: "lines",
                 visible: "legendonly",
                 line: {
@@ -1350,7 +1350,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         for(let i=0; i<plotly_data.length; i++){
             let data = plotly_data[i];
             let id = data.id as string;
-            if(id.startsWith("stretch")) continue;
+            if(id.startsWith(STRETCH)) continue;
             plot_data.push(data);
         }
 
