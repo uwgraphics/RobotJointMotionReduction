@@ -1412,7 +1412,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 x: [data.pointIn2D()[0], neighbor.pointIn2D()[0]],
                 y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
                 id: `${FOLD}#` + data.id() + "#" + neighbor.id(),
-                name: "fold " + distance.distanceInHD().toFixed(2),
+                name: `${FOLD} ` + distance.distanceInHD().toFixed(2),
                 mode: "markers",
                 visible: "legendonly",
                 marker: {
