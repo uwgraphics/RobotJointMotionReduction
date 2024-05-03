@@ -157,32 +157,6 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
         };
     }
     componentDidMount(): void {
-        // if(this._graphDiv.current && this._graphDiv.current.children.length > 0){
-        //     this._graphDiv.current.removeChild(this._graphDiv.current.children[0]);
-        // }
-        // const {w, h} = this.state;
-        const {height, width} = this.props;
-        // const layout = { "width": 600, "height": 600 };
-
-        // const data: Data[] = [];
-        // data.push({
-        //     x: [1, 2, 3, 4, 5],
-        //     y: [6, 7, 10, -2, 52],
-        //     name: "1",
-        //     mode: 'markers',
-        //     marker: {
-        //         size: 2
-        //     }
-        // });
-        // Plotly.react('UmapGraph', data, layout);
-        // let svg = this.drawGraph(true, true);
-        // if(svg){
-        //     d3.select(this._graphDiv.current)
-        //         .append("svg")
-        //         .attr("width", width)
-        //         .attr("height", height)
-        //         .node().appendChild(svg);
-        // }
         
     }
     componentDidUpdate(prevProps:line_graph_props) {
