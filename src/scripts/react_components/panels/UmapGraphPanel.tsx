@@ -192,6 +192,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         };
         let umapData: UmapPoint[] = [];
         try {
+            /**
+             * This part may need to change if the server is deployed
+             */
             const response = await axios.post('http://localhost:5000/api/data', dataToSend);
             // console.log(response.data);
             UmapPoint.resetCounter();
