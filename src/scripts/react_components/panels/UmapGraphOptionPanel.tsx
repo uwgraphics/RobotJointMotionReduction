@@ -154,7 +154,7 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
     }
 
     toggleDisplayFalseProximity() {
-      this.props.robotSceneManager.getCurrUmapGraph()?.toggleDisplayFalseProximity();
+      this.props.robotSceneManager.getCurrUmapGraph()?.toggleDisplayFolds();
       console.log("toggle display false proximity");
       this.setState({ // triggers scene option panel to update
         need_update: !this.state.need_update
@@ -535,14 +535,14 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                         onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMin2DStretchDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
                       />
                       <div>
-                        <label>display false proximity</label>
+                        <label>display fold</label>
                         <Switch
-                          checked={currSelectedGraph?.displayFalseProximity().valueOf()}
+                          checked={currSelectedGraph?.displayFolds().valueOf()}
                           onChange={this.toggleDisplayFalseProximity.bind(this)}
                         />
                       </div>
                       <LabeledSlider
-                        label={"min HD folds distance: "}
+                        label={"min HD fold distance: "}
                         min={0.1}
                         max={10}
                         step={0.01}
@@ -550,7 +550,7 @@ export class UmapGraphOptionPanel extends Component<graph_panel_props, graph_pan
                         onMouseUp={this.props.robotSceneManager.getCurrUmapGraph()?.setMinHDFoldDis.bind(this.props.robotSceneManager.getCurrUmapGraph())}
                       />
                       <LabeledSlider
-                        label={"max 2D folds distance: "}
+                        label={"max 2D fold distance: "}
                         min={0.0001}
                         max={1}
                         step={0.001}

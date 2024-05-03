@@ -41,7 +41,7 @@ interface line_graph_props {
     min2DGapDis: number,
     displayStretch: Boolean,
     min2DStretchDis: number,
-    displayFalseProximity: Boolean,
+    displayFolds: Boolean,
     minHDFoldDis: number,
     max2DFoldDis: number,
     showAllTraces: Boolean,
@@ -218,17 +218,17 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             }
         }
 
-        if (prevProps.displayFalseProximity !== this.props.displayFalseProximity) {
-            if(this.props.displayFalseProximity.valueOf()){
-                this.displayFalseProximity(this.props.max2DFoldDis, this.props.minHDFoldDis);
+        if (prevProps.displayFolds !== this.props.displayFolds) {
+            if(this.props.displayFolds.valueOf()){
+                this.displayFolds(this.props.max2DFoldDis, this.props.minHDFoldDis);
             } else{
-                this.removeFalseProximity();
+                this.removeFolds();
             }
         }
 
         if (prevProps.minHDFoldDis !== this.props.minHDFoldDis || prevProps.max2DFoldDis !== this.props.max2DFoldDis) {
-            if(this.props.displayFalseProximity.valueOf()){
-                this.displayFalseProximity(this.props.max2DFoldDis, this.props.minHDFoldDis);
+            if(this.props.displayFolds.valueOf()){
+                this.displayFolds(this.props.max2DFoldDis, this.props.minHDFoldDis);
             }
         }
 
@@ -1305,7 +1305,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
      * @param max_dis_2D
      * @param min_dis_HD 
      */
-    displayFalseProximity(max_dis_2D: number, min_dis_HD: number){
+    displayFolds(max_dis_2D: number, min_dis_HD: number){
         const { plotly_data} = this.state;
         let plot_data = [];
         for(let i=0; i<plotly_data.length; i++){
@@ -1377,7 +1377,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
     /**
      * remove all false proximity points
      */
-    removeFalseProximity(){
+    removeFolds(){
         const { plotly_data } = this.state;
         let plot_data = [];
         for(let i=0; i<plotly_data.length; i++){
