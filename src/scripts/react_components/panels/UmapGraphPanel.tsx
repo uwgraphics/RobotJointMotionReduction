@@ -250,7 +250,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
     }
 
     /**
-     * compare two joint data
+     * compare two joint data vectors
      * @param d1 
      * @param d2 
      * @returns true if two data arrays are the same
