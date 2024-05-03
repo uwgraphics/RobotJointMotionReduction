@@ -745,9 +745,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               displayPointsInRegion={this.props.graph.displayPointsInRegion()}
               displaySpeed={this.props.graph.displaySpeed()}
               onGraphUpdate={this.onGraphUpdate.bind(this)}
-              onCurrChange={this.onCurrTimeChange.bind(this)}
-              onStartChange={this.onStartTimeChange.bind(this)}
-              onEndChange={this.onEndTimeChange.bind(this)}
               addNewStaticRobotCanvasPanel={this.props.addNewStaticRobotCanvasPanel}
               removeTab={this.props.removeTab}
             />

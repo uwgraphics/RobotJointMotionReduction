@@ -51,9 +51,6 @@ interface line_graph_props {
     displayPointsInRegion: Boolean,
     displaySpeed: Boolean,
     onGraphUpdate: (updated:boolean) => boolean,
-    onCurrChange: (newValue:number) => void,
-    onStartChange: (newValue:number) => void,
-    onEndChange: (newValue:number) => void,
     addNewStaticRobotCanvasPanel: (targetSceneIds: string[], showNineScenes: boolean, selectedPointsNames: string[]) => void,
     removeTab: (tabId: string) => void,
 }
