@@ -691,28 +691,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
           onDragOver={this.dragOverHandler.bind(this)}
           onClick={this.clickHandler.bind(this)}
           style={{backgroundColor: this.props.graph.backgroundColor()}}>
-                {/* <div className="LegendMessage">
-                    <DragButton
-                        buttonValue={"Legend"}
-                        className={"Legend"}
-                        title={"Click and drag to open the legend"}
-                        getParentDockLayout={this.props.getParentDockLayout}
-                        onDragStart={() => {
-
-                            return [
-                                // Tab ID
-                                `UmapLegend&${newID(4)}&${this.props.graph.id()}`,
-
-                                // onDrop Callback
-                                (e) => {
-                                },
-                            ];
-                        }}
-                    />
-                    <button id="open-popup" className="OpenPop" onClick={() => APP.setPopupHelpPage(PopupHelpPage.UmapGraphPanel)}>
-                        <FontAwesomeIcon className="Icon" icon={faQuestion} />
-                    </button>
-                </div> */}
             <UmapLineGraph
               robotSceneManager={this.props.robotSceneManager}
               graph={this.props.graph}
