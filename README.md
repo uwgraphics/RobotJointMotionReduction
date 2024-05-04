@@ -8,7 +8,7 @@
   
 </div>
 
-Motion Projector is an web-based application to visualize robot joint motions. 
+Motion Projector is an web-based application to visualize robot motions. The high dimension robot data in joint space is reduced to 2D tracjectories which are displayed on a graph. Our tool provides interactive and diagonatic tools to evaluate the performance of the dimensionality reduction and help users understand the robot motions.
 
 ## Development/Deployment
 
