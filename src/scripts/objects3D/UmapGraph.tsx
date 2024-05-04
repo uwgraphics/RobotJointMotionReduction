@@ -1,14 +1,6 @@
 /**
- * class UmapGraph has similar functionalities as the RobotScene class. 
- * It is a bond between one graph panel and its corresponding legend panel.
- * A graph panel and its corresponding legend panel have a unique Graph object, 
- * through which two panels can "communicate with each other" such as adding or 
- * deleting a line.
- * 
- * The graph panel and legend panel are not parent-children relation. Instead, they
- * are siblings in React.js (They are both children of RobotWorkspace). The legend 
- * panel cannot access the state in the graph panel. This is the main reason why 
- * the Graph class is created.
+ * class UmapGraph is created to control the elements that will be displayed
+ * in this Umap graph panel.
  */
 
 import { RobotSceneManager } from "../RobotSceneManager";
@@ -155,6 +147,12 @@ export class UmapGraph {
         return this._selectedRobotPartName;
     }
 
+    /**
+     * this function is created mainly because we want to show the joint traces in a selected region
+     * Since each UMAP graph only contains traces of the same robot, such as panda,
+     * we only need to find one robot
+     * @returns 
+     */
     currRobot(): Robot | undefined {
         if(this._robotSceneManager === undefined) return;
         for(const [, point] of this._UMAPPoints){
