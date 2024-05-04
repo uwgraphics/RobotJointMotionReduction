@@ -10,16 +10,28 @@
 
 Motion Projector is an web-based application to visualize robot joint motions. 
 
-## Installation
-<!-- We recommend using the [hosted version of Motion Comparator](TODO).  -->
+## Development/Deployment
 
-If you would like to play around with the code, the dependencies of Motion Comparator can be isntalled by:
-```
-npm install
-npm start
-```
-Then you need to manually start the server locally. Please locate file "src/scripts/UMAPserver.py" and 
-then run that python file before using the UMAP features.
+*Note:* the code currently cannot be built on Linux. That being said, it can be built on Mac and Windows, and the deployed website can be veiwed from any updated browser).
+
+For development/deployment of the code:
+
+ - Clone the repo to your local machine
+
+ - cd into the RobotJointMotionReduction folder
+
+ - run `git submodule init` to initialize the git submodules that the app uses for a couple of dependencies
+
+ - run `git submodule update` to update the git submodules
+
+ - run `npm install` to install all npm dependencies
+
+ - `npm start` to develop the app localy
+
+### Warning
+
+ - running `npm update` to update all npm dependencies will break the application and make you unable to build it
+
 
 ## Contributing
 
