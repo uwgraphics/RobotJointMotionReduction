@@ -1,14 +1,6 @@
 /**
- * class UmapGraph has similar functionalities as the RobotScene class. 
- * It is a bond between one graph panel and its corresponding legend panel.
- * A graph panel and its corresponding legend panel have a unique Graph object, 
- * through which two panels can "communicate with each other" such as adding or 
- * deleting a line.
- * 
- * The graph panel and legend panel are not parent-children relation. Instead, they
- * are siblings in React.js (They are both children of RobotWorkspace). The legend 
- * panel cannot access the state in the graph panel. This is the main reason why 
- * the Graph class is created.
+ * class UmapGraph is created to control the elements that will be displayed
+ * in this Umap graph panel.
  */
 
 import { RobotSceneManager } from "../RobotSceneManager";
@@ -43,7 +35,7 @@ export class UmapGraph {
     protected _min2DGapDis: number; // the min gap distance in the 2D map
     protected _displayStretch: Boolean; // true if display the stetches (similar motion mapped to different places)
     protected _min2DStretchDis: number; // the min stetch distance in the 2D map
-    protected _displayFalseProximity: Boolean; // true if display the false proximity
+    protected _displayFolds: Boolean; // true if display the folds (false proximity)
     protected _minHDFoldDis: number; // the min folds distance in the original high dimension
     protected _max2DFoldDis: number; // the max folds distance in the 2D graph
     protected _randomSeed: number; // the random seed for the UMAP algo
@@ -91,8 +83,7 @@ export class UmapGraph {
         this._delete_line = delete_line;
 
         this._lineWidth = 1;
-        this._backgroundColor = "white"; //rgb(23, 24, 25)
-        // this._backgroundColor = "#171819"; //rgb(23, 24, 25)
+        this._backgroundColor = "#171819"; //rgb(23, 24, 25)
         this._axisColor = "#B7B7BD"; // rgb(183, 183, 189)
         if(backgroundColor !== undefined)
             this._backgroundColor = backgroundColor;
@@ -112,9 +103,9 @@ export class UmapGraph {
         this._showNineScenes = new Boolean(true);
         this._displayGap = new Boolean(false);
         this._min2DGapDis = 1;
-        this._displayFalseProximity = new Boolean(false);
+        this._displayFolds = new Boolean(false);
         this._minHDFoldDis = 1;
-        this._max2DFoldDis = 0.01;
+        this._max2DFoldDis = 0.1;
         this._displayStretch = new Boolean(false);
         this._min2DStretchDis = 1;
         this._showAllTraces = new Boolean(true);
@@ -156,6 +147,12 @@ export class UmapGraph {
         return this._selectedRobotPartName;
     }
 
+    /**
+     * this function is created mainly because we want to show the joint traces in a selected region
+     * Since each UMAP graph only contains traces of the same robot, such as panda,
+     * we only need to find one robot
+     * @returns 
+     */
     currRobot(): Robot | undefined {
         if(this._robotSceneManager === undefined) return;
         for(const [, point] of this._UMAPPoints){
@@ -303,12 +300,12 @@ export class UmapGraph {
         this._max2DFoldDis = dis;
     }
 
-    displayFalseProximity(): Boolean{
-        return this._displayFalseProximity;
+    displayFolds(): Boolean{
+        return this._displayFolds;
     }
 
-    toggleDisplayFalseProximity(){
-        this._displayFalseProximity = new Boolean(!this._displayFalseProximity.valueOf());
+    toggleDisplayFolds(){
+        this._displayFolds = new Boolean(!this._displayFolds.valueOf());
     }
 
     min2DGapDis(): number{

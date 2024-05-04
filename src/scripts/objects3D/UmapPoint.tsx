@@ -1,5 +1,9 @@
 import { Id } from "../Id";
-
+/**
+ * class Distances have all information about the distance between two UMAP points
+ * This class does not contain id because id is not needed. Note that there could be 
+ * n^2 number of Distances object when the UMAP graph is created
+ */
 export class Distances{
     
     protected _point1: UmapPoint; 
@@ -36,7 +40,7 @@ export class Distances{
 
 export class UmapPoint {
     static UmapPointCount: number = 0;
-    protected _id: number;
+    protected _id: number; // the id is a number because string will take up more memory
     protected _time: number; // the time frame of the corresponding robot pose
     protected _robotInfo: string; // the info of the corresponding robot pose in a format of sceneId#robotId
     

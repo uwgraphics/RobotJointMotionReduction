@@ -192,6 +192,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         };
         let umapData: UmapPoint[] = [];
         try {
+            /**
+             * This part may need to change if the server is deployed
+             */
             const response = await axios.post('http://localhost:5000/api/data', dataToSend);
             // console.log(response.data);
             UmapPoint.resetCounter();
@@ -225,54 +228,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         return umapData;
     };
 
-    // async convertJointDataToUmap(jointData: number[][]): Promise<umap_data_entry[]>
-    // {
-    //     APP.setPopupHelpPage({ page: PopupHelpPage.LoadingStarted, type: "UMAP" });
-    //     //await Promise.all([]);
-    //     const {graph} = this.props;
-    //     let mt = new MersenneTwister(this.props.graph.randomSeed());
-    //     const umap = new UMAP({nNeighbors: graph.nNeighbors(), minDist: graph.minDis(), spread: graph.spread(), random: mt.random.bind(mt)});
-
-    //     // for (let i = 0; i < 1000; i++) {
-    //     //     let a = Array(jointData[0].length).fill(Math.random() * Math.PI * 2 - Math.PI);
-    //     //     jointData.push(a);
-    //     // }
-        
-    //     //const embedding = umap.fit(jointData);
-    //     let umapData: umap_data_entry[] = [];
-    //     const embedding = await umap.fitAsync(jointData, epochNumber => {
-    //         // check progress and give user feedback, or return `false` to stop
-    //       });
-
-    //     const {knnIndices, knnDistances} = nearestNeighbors(jointData, graph.nNeighbors());
-    //     let nneighbors: number[][][] = [];
-    //     for(let i=0; i<knnIndices.length; i++){
-    //         nneighbors[i] = [];
-    //         for(let j=0; j<knnIndices[i].length; j++){
-    //             let index: number = knnIndices[i][j];
-    //             nneighbors[i].push(embedding[index])
-    //         }
-    //     }
-
-    //     const {knnIndices:knnIndices_2d, knnDistances: knnDistances_2d} = nearestNeighbors(embedding, graph.nNeighbors());
-    //     let nneighbors_2d: number[][][] = [];
-    //     for(let i=0; i<knnIndices_2d.length; i++){
-    //         nneighbors_2d[i] = [];
-    //         for(let j=0; j<knnIndices_2d[i].length; j++){
-    //             let index: number = knnIndices_2d[i][j];
-    //             nneighbors_2d[i].push(embedding[index])
-    //         }
-    //     }
-
-    //     for(let i=0; i<embedding.length; i++){
-    //         umapData.push({x: embedding[i][0], y: embedding[i][1], nneighbors: nneighbors[i], nneighbors_2d: nneighbors_2d[i], point: jointData[i]});
-    //     }
-    //     // console.log(nneighbors);
-    //     APP.setPopupHelpPage({ page: PopupHelpPage.LoadingSuccess, type: "UMAP"});
-    //     return umapData;
-    // }
-   
-
     /**
      * given the eventName (line id), generate the line names that will be shown in the legend
      * @param eventName 
@@ -286,19 +241,8 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
         return scene?.name() + "_" + robotName;
     }
 
-    decomposeUmapData(umapData: number[][]): [number[], number[]]
-    {
-        let x = [], y = [];
-        for(let i=0; i<umapData.length; i++)
-        {
-            x.push(umapData[i][0]);
-            y.push(umapData[i][1]);
-        }
-        return [x, y];
-    }
-
     /**
-     * compare two joint data
+     * compare two joint data vectors
      * @param d1 
      * @param d2 
      * @returns true if two data arrays are the same
@@ -310,25 +254,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             // if(d1[i] !== d2[i]) return false;
             if (Math.abs(d1[i] - d2[i]) > 0.0001) return false;
         return true;
-    }
-
-    /**
-     * filter the umap data based on joint data
-     * make sure that the umapdata is the same if jointdata is the same
-     * @param jointData 
-     * @param umapData 
-     * @returns 
-     */
-    filterUmapData(jointData: number[][], umapData: number[][]): number[][]
-    {
-        for(let i=1; i<jointData.length; i++)
-        {
-            if(this.compareJointData(jointData[i-1], jointData[i]))
-            {
-                umapData[i] = umapData[i-1];
-            }
-        }
-        return umapData;
     }
     
     /**
@@ -387,11 +312,9 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             let backgroundPointsCount = Math.floor(filteredJointData.length * this.props.graph.backgroundPointsRatio());
             let backgroundPoints = generateRandomPoints(backgroundPointsCount, filteredJointData[0].length, 
             this.props.graph.backgroundPointsMax(), this.props.graph.backgroundPointsMin());
-            console.log(backgroundPoints)
             filteredJointData = filteredJointData.concat(backgroundPoints);
             // console.log(backgroundPoints)
             let embedding = await this.sendDataToPython(filteredJointData);
-            // let embedding = await this.convertJointDataToUmap(filteredJointData);
 
             // console.log(embedding)
 
@@ -405,6 +328,13 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
 
                 let j = 0;
                 let filterdUmapData: UmapPoint[] = [];
+                /**
+                 * restore data because the original data is filterd
+                 * simply assign the value of previous point to this point
+                 * This is done by comparing filterdTimes array and times array
+                 * i.e. if filteredTimes = [0, 2, 3] and times = [0, 1, 2, 3]
+                 * it means point at time 1 should be the same as the point at time 0
+                 */
                 for (let i = 0; i < times.length; i++) {
                     if (j+1 < filteredTimes[robotIndex].length && times[i] >= filteredTimes[robotIndex][j+1]) {
                         j++;
@@ -434,6 +364,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                 robotIndex++;
             }
 
+            // calculte the relative speed
             let max_speed = 0, min_speed = Number.MAX_VALUE;
             for(const trace of umapData){
                 for (let i = 1; i < trace.length; i++) {
@@ -442,7 +373,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
                     if (speed > max_speed) max_speed = speed;
                 }
             }
-            
             if (max_speed > min_speed) {
                 for(const trace of umapData){
                     for (let i = 1; i < trace.length; i++) {
@@ -589,44 +519,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
             });
     }
 
-    
-    /**
-     * Handle dragging current time(red line on graph)
-     * @param newValue 
-     */
-    onCurrTimeChange(newValue:number) {
-        if(newValue <= this.props.robotSceneManager.currEndTime() && newValue >= this.props.robotSceneManager.currStartTime()){
-            this.props.robotSceneManager.setCurrTime(newValue);
-        }
-    }
-
-    /**
-     * Handle dragging start time(left edge of yellow rectangle on graph)
-     * @param newValue 
-     */
-    onStartTimeChange(newValue:number) {
-        if(this.props.robotSceneManager.currTime()<newValue){
-            this.props.robotSceneManager.setCurrTime(newValue);
-        }
-        if(this.props.robotSceneManager.currEndTime()>=newValue){
-            this.props.robotSceneManager.setCurrStartTime(newValue);
-        }
-    }
-
-    /**
-     * Handle dragging end tiem(right edge of yellow rectangle on graph)
-     * @param newValue 
-     */
-    onEndTimeChange(newValue:number) {
-        // log("in onEndTimeChange");
-        if(this.props.robotSceneManager.currTime()>newValue){
-            this.props.robotSceneManager.setCurrTime(newValue);
-        }
-        if(this.props.robotSceneManager.currStartTime()<=newValue){
-            this.props.robotSceneManager.setCurrEndTime(newValue);
-        }
-    }
-
     dataSize(): number{
         const { currRobots} = this.state;
         let size = 0;
@@ -753,28 +645,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
           onDragOver={this.dragOverHandler.bind(this)}
           onClick={this.clickHandler.bind(this)}
           style={{backgroundColor: this.props.graph.backgroundColor()}}>
-                {/* <div className="LegendMessage">
-                    <DragButton
-                        buttonValue={"Legend"}
-                        className={"Legend"}
-                        title={"Click and drag to open the legend"}
-                        getParentDockLayout={this.props.getParentDockLayout}
-                        onDragStart={() => {
-
-                            return [
-                                // Tab ID
-                                `UmapLegend&${newID(4)}&${this.props.graph.id()}`,
-
-                                // onDrop Callback
-                                (e) => {
-                                },
-                            ];
-                        }}
-                    />
-                    <button id="open-popup" className="OpenPop" onClick={() => APP.setPopupHelpPage(PopupHelpPage.UmapGraphPanel)}>
-                        <FontAwesomeIcon className="Icon" icon={faQuestion} />
-                    </button>
-                </div> */}
             <UmapLineGraph
               robotSceneManager={this.props.robotSceneManager}
               graph={this.props.graph}
@@ -797,7 +667,7 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               min2DGapDis={this.props.graph.min2DGapDis()}
               displayStretch={this.props.graph.displayStretch()}
               min2DStretchDis={this.props.graph.min2DStretchDis()}
-              displayFalseProximity={this.props.graph.displayFalseProximity()}
+              displayFolds={this.props.graph.displayFolds()}
               minHDFoldDis={this.props.graph.minHDFoldDis()}
               max2DFoldDis={this.props.graph.max2DFoldDis()}
               showAllTraces={this.props.graph.showAllTraces()}
@@ -807,9 +677,6 @@ export class UmapGraphPanel extends Component<graph_panel_props, graph_panel_sta
               displayPointsInRegion={this.props.graph.displayPointsInRegion()}
               displaySpeed={this.props.graph.displaySpeed()}
               onGraphUpdate={this.onGraphUpdate.bind(this)}
-              onCurrChange={this.onCurrTimeChange.bind(this)}
-              onStartChange={this.onStartTimeChange.bind(this)}
-              onEndChange={this.onEndTimeChange.bind(this)}
               addNewStaticRobotCanvasPanel={this.props.addNewStaticRobotCanvasPanel}
               removeTab={this.props.removeTab}
             />
