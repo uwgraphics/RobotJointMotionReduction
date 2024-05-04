@@ -55,6 +55,7 @@ import diagnose_tool_ordering from "../../assets/diagnose_tool_ordering.gif"
 import show_nneighbors_presentation from "../../assets/show_nneighbors_presentation.gif"
 import show_speed from "../../assets/display_speed.gif"
 import umap_parametricumap from "../../assets/Umap_ParametricUmap.gif"
+import tweak_parameters from "../../assets/tweak_parameters.gif"
 /**
  * An enum denoting what page of the popups should currently be shown.
  */
@@ -444,6 +445,13 @@ function popupHelpPageContent(params:PopupHelpPageParams): ReactElement | null {
                             algorithm is Parametric UMAP as it tends to generate smoother and more continuous traces                    
                         </p>
                         <img src={umap_parametricumap}/>
+                    
+                    <li>Tweak Parameters</li>
+                        <p>
+                            You can use the slider bar to control some parameters of UMAP and Parametric UMAP. 
+                            Note that the changes will be applied AFTER the mouse is released from the slider bar.
+                        </p>
+                        <img src={tweak_parameters}/>
                     <li>Compare motions</li>
                     <ul>
                         <li>
