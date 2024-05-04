@@ -1327,7 +1327,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
             y: fp_y,
             id: `${FOLD}All`,
             name: `${FOLD}All`,
-            mode: "lines",
+            mode: "lines+markers",
             line: {
                 color: 'rgb(193, 131, 159)',
                 width: 3,
@@ -1354,7 +1354,7 @@ export class UmapLineGraph extends Component<line_graph_props, line_graph_state>
                 y: [data.pointIn2D()[1], neighbor.pointIn2D()[1]],
                 id: `${FOLD}#` + data.id() + "#" + neighbor.id(),
                 name: `${FOLD} ` + distance.distanceInHD().toFixed(2),
-                mode: "lines",
+                mode: "lines+markers",
                 visible: "legendonly",
                 marker: {
                     color: 'rgb(195, 178, 153)',
