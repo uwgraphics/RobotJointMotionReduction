@@ -1,4 +1,4 @@
-![Motion Comparator](./public/teaser.jpg)
+![Motion Comparator](./public/cover_pic.jpg)
 
 <div align="center">
     <h1>Motion Projector</h1>
