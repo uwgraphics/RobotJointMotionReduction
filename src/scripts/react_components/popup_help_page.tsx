@@ -54,6 +54,7 @@ import select_show_traces from "../../assets/select_show_traces_enhancement.gif"
 import diagnose_tool_ordering from "../../assets/diagnose_tool_ordering.gif"
 import show_nneighbors_presentation from "../../assets/show_nneighbors_presentation.gif"
 import show_speed from "../../assets/display_speed.gif"
+import umap_parametricumap from "../../assets/Umap_ParametricUmap.gif"
 /**
  * An enum denoting what page of the popups should currently be shown.
  */
@@ -437,6 +438,12 @@ function popupHelpPageContent(params:PopupHelpPageParams): ReactElement | null {
 
                 <h3> Interact with 2D graph </h3>
                 <ul>
+                    <li>Parametric UMAP vs UMAP</li>
+                        <p>
+                            You can switch between Parametric UMAP and UMAP. The default dimensionality reduction 
+                            algorithm is Parametric UMAP as it tends to generate smoother and more continuous traces                    
+                        </p>
+                        <img src={umap_parametricumap}/>
                     <li>Compare motions</li>
                     <ul>
                         <li>
@@ -481,13 +488,13 @@ function popupHelpPageContent(params:PopupHelpPageParams): ReactElement | null {
                         
                     </ul>
                     <li>Display speed</li>
-                    <p>
-                        Click on "display speed" toggle button and the relative velocity of each segment 
-                        will be displayed in the graph. Note that it may take some time to update the graph.
-                        The lightness of color indicates the relative velocity of that segment. The higher velocity 
-                        is given a lighter color.
-                    </p>
-                    <img src={show_speed}/>
+                        <p>
+                            Click on "display speed" toggle button and the relative velocity of each segment 
+                            will be displayed in the graph. Note that it may take some time to update the graph.
+                            The lightness of color indicates the relative velocity of that segment. The higher velocity 
+                            is given a lighter color.
+                        </p>
+                        <img src={show_speed}/>
                 </ul>
                 {/* <h3> Control the settings of the selected UMAP Graph Panel </h3>
                 <ul>
