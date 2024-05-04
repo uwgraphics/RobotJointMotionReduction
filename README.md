@@ -50,7 +50,7 @@ Here are the files added/modified to create UMAP graphs. The rest of the files a
  - `src/scripts/react_components/RobotWorkspace.tsx`: some functions are added to this file to open/close the pop-up panel that displays the `StaticRobotScene`. 
  - `src/scripts/RobotSceneManager.tsx`: this file is updated so that the `RobotSceneManager` knows all active `StaticRobotScene` and `UmapGraph`.
 
-## branch overview
+## Branch Overview
  - `main` branch contains the latest version of the tool.
  - `figure` branch: the background color is changed to white to create better figures for the paper.
 
