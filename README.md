@@ -32,6 +32,11 @@ For development/deployment of the code:
 
  - running `npm update` to update all npm dependencies will break the application and make you unable to build it
 
+## Tutorial
+After you open the program, you can navigate to `UMAP Options` tab and click on the `?` icon to watch the tutorial.
+![tutorial](./public/tutorial.gif)
+
+
 ## File Overview
 
 Here are the files added/modified to create UMAP graphs. The rest of the files are identical to the files in [Motion Comparator](https://github.com/uwgraphics/MotionComparator). Please refer to [Motion Comparator](https://github.com/uwgraphics/MotionComparator) for more details.
