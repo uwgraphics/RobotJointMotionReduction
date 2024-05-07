@@ -26,6 +26,8 @@ For development/deployment of the code:
 
  - run `npm install` to install all npm dependencies
 
+ - run the python file `src/scripts/UMAPserver.py`. **Make sure the server is running when you use our program**
+
  - `npm start` to develop the app localy
 
 ### Warning
